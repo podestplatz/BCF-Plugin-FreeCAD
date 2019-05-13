@@ -1,193 +1,318 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
-<svg width="97cm" height="23cm" viewBox="34 -58 1938 448" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="118cm" height="51cm" viewBox="-213 -208 2343 1011" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <g>
-    <rect style="fill: #ffffff" x="715.012" y="144.201" width="194.8" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="715.012" y="144.201" width="194.8" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="812.412" y="164.201">Project</text>
-    <rect style="fill: #ffffff" x="715.012" y="172.201" width="194.8" height="52"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="715.012" y="172.201" width="194.8" height="52"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="718.012" y="187.001">+topicList: List (Topic)</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="718.012" y="203.001">+name: String</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="718.012" y="219.001">+id: UUID</text>
+    <rect style="fill: #ffffff" x="716.012" y="-28.7986" width="194.8" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="716.012" y="-28.7986" width="194.8" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="813.412" y="-8.7986">Project</text>
+    <rect style="fill: #ffffff" x="716.012" y="-0.7986" width="194.8" height="52"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="716.012" y="-0.7986" width="194.8" height="52"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="719.012" y="14.0014">+topicList: List (Topic)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="719.012" y="30.0014">+name: String</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="719.012" y="46.0014">+id: UUID</text>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="1290.77" y="131.813" width="125.5" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1290.77" y="131.813" width="125.5" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1353.52" y="151.813">Modification</text>
-    <rect style="fill: #ffffff" x="1290.77" y="159.813" width="125.5" height="36"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1290.77" y="159.813" width="125.5" height="36"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1293.77" y="174.613">+author: String</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1293.77" y="190.613">+date: DateTime</text>
+    <rect style="fill: #ffffff" x="1448.77" y="354.812" width="125.5" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1448.77" y="354.812" width="125.5" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1511.52" y="374.812">Modification</text>
+    <rect style="fill: #ffffff" x="1448.77" y="382.812" width="125.5" height="36"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1448.77" y="382.812" width="125.5" height="36"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1451.77" y="397.612">+author: String</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1451.77" y="413.612">+date: DateTime</text>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="709.443" y="-56.8101" width="86.8" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="709.443" y="-56.8101" width="86.8" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="752.843" y="-36.8101">Template</text>
-    <rect style="fill: #ffffff" x="709.443" y="-28.8101" width="86.8" height="8"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="709.443" y="-28.8101" width="86.8" height="8"/>
+    <rect style="fill: #ffffff" x="694.442" y="392.19" width="294.9" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="694.442" y="392.19" width="294.9" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="841.892" y="412.19">Markup</text>
+    <rect style="fill: #ffffff" x="694.442" y="420.19" width="294.9" height="116"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="694.442" y="420.19" width="294.9" height="116"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="697.442" y="434.99">+header: Header</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="697.442" y="450.99">+topic: List (Topic)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="697.442" y="466.99">+bimSnippet: BimSnippet</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="697.442" y="482.99">+docRefs: List (DocumentReference)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="697.442" y="498.99">+relatedTopic: UUID</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="697.442" y="514.99">+comments: List(Comment)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="697.442" y="530.99">+viewpoints: List(ViewpointReference)</text>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="1026.86" y="132.358" width="248.7" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1026.86" y="132.358" width="248.7" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1151.21" y="152.358">Topic</text>
-    <rect style="fill: #ffffff" x="1026.86" y="160.358" width="248.7" height="228"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1026.86" y="160.358" width="248.7" height="228"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="175.158">+id: UUID</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="191.158">+type: TopicType</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="207.158">+status: TopicStatus</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="223.158">+title: String</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="239.158">+refs: List (String)</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="255.158">+priority: TopicPriority</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="271.158">+index: Integer</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="287.158">+labels: List (String)</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="303.158">+creation: Modification</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="319.158">+lastModification: Modification</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="335.158">+dueDate: DateTime</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="351.158">+assignee: String</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="367.158">+description: String</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1029.86" y="383.158">+Stage: TopicStage</text>
+    <rect style="fill: #ffffff" x="1184.86" y="355.358" width="248.7" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1184.86" y="355.358" width="248.7" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1309.21" y="375.358">Topic</text>
+    <rect style="fill: #ffffff" x="1184.86" y="383.358" width="248.7" height="228"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1184.86" y="383.358" width="248.7" height="228"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="398.158">+id: UUID</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="414.158">+type: TopicType</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="430.158">+status: TopicStatus</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="446.158">+title: String</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="462.158">+refs: List (String)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="478.158">+priority: TopicPriority</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="494.158">+index: Integer</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="510.158">+labels: List (String)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="526.158">+creation: Modification</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="542.158">+lastModification: Modification</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="558.158">+dueDate: DateTime</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="574.158">+assignee: String</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="590.158">+description: String</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1187.86" y="606.158">+Stage: TopicStage</text>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1301.74,260.358 1353.52,260.358 1353.52,196.821 "/>
-    <polygon style="fill: #ffffff" points="1276.57,260.358 1290.57,255.558 1304.57,260.358 1290.57,265.158 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1276.57,260.358 1290.57,255.558 1304.57,260.358 1290.57,265.158 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1459.74,483.358 1511.52,483.358 1511.52,419.82 "/>
+    <polygon style="fill: #ffffff" points="1434.57,483.358 1448.57,478.558 1462.57,483.358 1448.57,488.158 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1434.57,483.358 1448.57,478.558 1462.57,483.358 1448.57,488.158 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="1473.04" y="479.358"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="1466.57" y="479.358"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="1515.52" y="431.82"/>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="1561.21" y="132.365" width="294.9" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1561.21" y="132.365" width="294.9" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1708.66" y="152.365">SchemaConstraint</text>
-    <rect style="fill: #ffffff" x="1561.21" y="160.365" width="294.9" height="36"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1561.21" y="160.365" width="294.9" height="36"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1564.21" y="175.165">+element: String</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1564.21" y="191.165">+validValues: List (String)</text>
-    <rect style="fill: #ffffff" x="1561.21" y="196.365" width="294.9" height="20"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1561.21" y="196.365" width="294.9" height="20"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1564.21" y="211.165">+TopicType(in type:String): TopicType</text>
+    <rect style="fill: #ffffff" x="1719.21" y="355.364" width="294.9" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1719.21" y="355.364" width="294.9" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1866.66" y="375.364">SchemaConstraint</text>
+    <rect style="fill: #ffffff" x="1719.21" y="383.364" width="294.9" height="36"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1719.21" y="383.364" width="294.9" height="36"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1722.21" y="398.164">+element: String</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1722.21" y="414.164">+validValues: List (String)</text>
+    <rect style="fill: #ffffff" x="1719.21" y="419.364" width="294.9" height="20"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1719.21" y="419.364" width="294.9" height="20"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="1722.21" y="434.164">+TopicType(in type:String): TopicType</text>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="1472.71" y="329.292" width="115.6" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1472.71" y="329.292" width="115.6" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1530.51" y="349.292">TopicStatus</text>
-    <rect style="fill: #ffffff" x="1472.71" y="357.292" width="115.6" height="8"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1472.71" y="357.292" width="115.6" height="8"/>
+    <rect style="fill: #ffffff" x="1630.71" y="552.292" width="115.6" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1630.71" y="552.292" width="115.6" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1688.51" y="572.292">TopicStatus</text>
+    <rect style="fill: #ffffff" x="1630.71" y="580.292" width="115.6" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1630.71" y="580.292" width="115.6" height="8"/>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="1864.92" y="330.337" width="106" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1864.92" y="330.337" width="106" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1917.92" y="350.337">TopicStage</text>
-    <rect style="fill: #ffffff" x="1864.92" y="358.337" width="106" height="8"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1864.92" y="358.337" width="106" height="8"/>
+    <rect style="fill: #ffffff" x="2022.92" y="553.338" width="106" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="2022.92" y="553.338" width="106" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="2075.92" y="573.338">TopicStage</text>
+    <rect style="fill: #ffffff" x="2022.92" y="581.338" width="106" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="2022.92" y="581.338" width="106" height="8"/>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="1752.87" y="329.603" width="96.4" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1752.87" y="329.603" width="96.4" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1801.07" y="349.603">TopicType</text>
-    <rect style="fill: #ffffff" x="1752.87" y="357.603" width="96.4" height="8"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1752.87" y="357.603" width="96.4" height="8"/>
+    <rect style="fill: #ffffff" x="1910.87" y="552.602" width="96.4" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1910.87" y="552.602" width="96.4" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1959.07" y="572.602">TopicType</text>
+    <rect style="fill: #ffffff" x="1910.87" y="580.602" width="96.4" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1910.87" y="580.602" width="96.4" height="8"/>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="1602.65" y="329.424" width="134.8" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1602.65" y="329.424" width="134.8" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1670.05" y="349.424">TopicPriority</text>
-    <rect style="fill: #ffffff" x="1602.65" y="357.424" width="134.8" height="8"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1602.65" y="357.424" width="134.8" height="8"/>
+    <rect style="fill: #ffffff" x="1760.65" y="552.424" width="134.8" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1760.65" y="552.424" width="134.8" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="1828.05" y="572.424">TopicPriority</text>
+    <rect style="fill: #ffffff" x="1760.65" y="580.424" width="134.8" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1760.65" y="580.424" width="134.8" height="8"/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1708.66,235.606 1708.66,280.826 1530.51,280.826 1530.51,328.283 "/>
-    <polygon style="fill: #ffffff" points="1716.66,235.606 1708.66,219.606 1700.66,235.606 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1716.66,235.606 1708.66,219.606 1700.66,235.606 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1866.66,458.605 1866.66,503.826 1688.51,503.826 1688.51,551.283 "/>
+    <polygon style="fill: #ffffff" points="1874.66,458.605 1866.66,442.605 1858.66,458.605 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1874.66,458.605 1866.66,442.605 1858.66,458.605 "/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1708.66,235.606 1708.66,280.892 1670.05,280.892 1670.05,328.415 "/>
-    <polygon style="fill: #ffffff" points="1716.66,235.606 1708.66,219.606 1700.66,235.606 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1716.66,235.606 1708.66,219.606 1700.66,235.606 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1866.66,458.605 1866.66,503.892 1828.05,503.892 1828.05,551.415 "/>
+    <polygon style="fill: #ffffff" points="1874.66,458.605 1866.66,442.605 1858.66,458.605 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1874.66,458.605 1866.66,442.605 1858.66,458.605 "/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1708.66,235.606 1708.66,280.982 1801.07,280.982 1801.07,328.593 "/>
-    <polygon style="fill: #ffffff" points="1716.66,235.606 1708.66,219.606 1700.66,235.606 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1716.66,235.606 1708.66,219.606 1700.66,235.606 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1866.66,458.605 1866.66,503.981 1959.07,503.981 1959.07,551.593 "/>
+    <polygon style="fill: #ffffff" points="1874.66,458.605 1866.66,442.605 1858.66,458.605 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1874.66,458.605 1866.66,442.605 1858.66,458.605 "/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1708.66,234.601 1708.66,280.846 1917.92,280.846 1917.92,329.328 "/>
-    <polygon style="fill: #ffffff" points="1716.66,234.601 1708.66,218.601 1700.66,234.601 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1716.66,234.601 1708.66,218.601 1700.66,234.601 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1866.66,457.6 1866.66,503.846 2075.92,503.846 2075.92,552.329 "/>
+    <polygon style="fill: #ffffff" points="1874.66,457.6 1866.66,441.6 1858.66,457.6 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1874.66,457.6 1866.66,441.6 1858.66,457.6 "/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1301.74,260.358 1425.39,260.358 1425.39,174.365 1560.2,174.365 "/>
-    <polygon style="fill: #ffffff" points="1276.57,260.358 1290.57,255.558 1304.57,260.358 1290.57,265.158 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1276.57,260.358 1290.57,255.558 1304.57,260.358 1290.57,265.158 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1459.74,483.358 1583.39,483.358 1583.39,397.364 1718.2,397.364 "/>
+    <polygon style="fill: #ffffff" points="1434.57,483.358 1448.57,478.558 1462.57,483.358 1448.57,488.158 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1434.57,483.358 1448.57,478.558 1462.57,483.358 1448.57,488.158 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="1585.39" y="436.361"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="1466.57" y="479.358"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:end;font-family:monospace;font-style:normal;font-weight:normal" x="1714.2" y="393.364"/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="935.99,184.201 975.337,184.201 975.337,260.358 1025.86,260.358 "/>
-    <polygon style="fill: #ffffff" points="910.818,184.201 924.818,179.401 938.818,184.201 924.818,189.001 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="910.818,184.201 924.818,179.401 938.818,184.201 924.818,189.001 "/>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="942.818" y="180.201">n</text>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:end;font-family:monospace;font-style:normal;font-weight:normal" x="1021.86" y="256.358">1</text>
+    <rect style="fill: #ffffff" x="128.176" y="480.384" width="96.4" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="128.176" y="480.384" width="96.4" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="176.376" y="500.384">Viewpoint</text>
+    <rect style="fill: #ffffff" x="128.176" y="508.384" width="96.4" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="128.176" y="508.384" width="96.4" height="8"/>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="96.1765" y="130.386" width="96.4" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="96.1765" y="130.386" width="96.4" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="144.376" y="150.386">Viewpoint</text>
-    <rect style="fill: #ffffff" x="96.1765" y="158.386" width="96.4" height="8"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="96.1765" y="158.386" width="96.4" height="8"/>
+    <rect style="fill: #ffffff" x="495.676" y="143.886" width="217.9" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="495.676" y="143.886" width="217.9" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="604.626" y="163.886">Comment</text>
+    <rect style="fill: #ffffff" x="495.676" y="171.886" width="217.9" height="84"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="495.676" y="171.886" width="217.9" height="84"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="498.676" y="186.686">+date: DateTime</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="498.676" y="202.686">+author: String</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="498.676" y="218.686">+comment: String</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="498.676" y="234.686">+viewpoint: Viewpoint</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="498.676" y="250.686">+modification: Modification</text>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="35.6768" y="260.885" width="217.9" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="35.6768" y="260.885" width="217.9" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="144.627" y="280.885">Comment</text>
-    <rect style="fill: #ffffff" x="35.6768" y="288.885" width="217.9" height="84"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="35.6768" y="288.885" width="217.9" height="84"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="38.6768" y="303.685">+date: DateTime</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="38.6768" y="319.685">+author: String</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="38.6768" y="335.685">+comment: String</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="38.6768" y="351.685">+viewpoint: Viewpoint</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="38.6768" y="367.685">+modification: Modification</text>
+    <rect style="fill: #ffffff" x="-147.826" y="547.384" width="194.8" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="-147.826" y="547.384" width="194.8" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="-50.4258" y="567.384">Camera</text>
+    <rect style="fill: #ffffff" x="-147.826" y="575.384" width="194.8" height="52"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="-147.826" y="575.384" width="194.8" height="52"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="-144.826" y="590.184">+viewPoint: Location</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="-144.826" y="606.184">+direction: Angle/Vector</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="-144.826" y="622.184">+upVector: Vector</text>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="144.376,167.372 144.376,213.137 144.627,213.137 144.627,259.882 "/>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="148.376" y="179.372">1</text>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="148.627" y="255.882">n</text>
+    <rect style="fill: #ffffff" x="-211.326" y="692.884" width="202.5" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="-211.326" y="692.884" width="202.5" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="-110.076" y="712.884">OrthogonalCamera</text>
+    <rect style="fill: #ffffff" x="-211.326" y="720.884" width="202.5" height="20"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="-211.326" y="720.884" width="202.5" height="20"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="-208.326" y="735.684">+viewToWorldScale: Double</text>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="364.175" y="108.386" width="194.8" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="364.175" y="108.386" width="194.8" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="461.575" y="128.386">Camera</text>
-    <rect style="fill: #ffffff" x="364.175" y="136.386" width="194.8" height="52"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="364.175" y="136.386" width="194.8" height="52"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="367.175" y="151.186">+viewPoint: Location</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="367.175" y="167.186">+direction: Angle/Vector</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="367.175" y="183.186">+upVector: Vector</text>
+    <rect style="fill: #ffffff" x="3.4223" y="695.284" width="210.2" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="3.4223" y="695.284" width="210.2" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="108.522" y="715.284">PerspectiveCamera</text>
+    <rect style="fill: #ffffff" x="3.4223" y="723.284" width="210.2" height="20"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="3.4223" y="723.284" width="210.2" height="20"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="6.4223" y="738.084">+fieldOfView: Angle/Degree</text>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="300.676" y="253.885" width="202.5" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="300.676" y="253.885" width="202.5" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="401.926" y="273.885">OrthogonalCamera</text>
-    <rect style="fill: #ffffff" x="300.676" y="281.885" width="202.5" height="20"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="300.676" y="281.885" width="202.5" height="20"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="303.676" y="296.685">+viewToWorldScale: Double</text>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-50.4258,645.62 -50.4258,669.334 108.522,669.334 108.522,695.284 "/>
+    <polygon style="fill: #ffffff" points="-42.4258,645.62 -50.4258,629.62 -58.4258,645.62 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-42.4258,645.62 -50.4258,629.62 -58.4258,645.62 "/>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="515.424" y="256.285" width="210.2" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="515.424" y="256.285" width="210.2" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="620.524" y="276.285">PerspectiveCamera</text>
-    <rect style="fill: #ffffff" x="515.424" y="284.285" width="210.2" height="20"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="515.424" y="284.285" width="210.2" height="20"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="518.424" y="299.085">+fieldOfView: Angle/Degree</text>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-50.4258,646.625 -50.4258,668.133 -110.076,668.133 -110.076,691.878 "/>
+    <polygon style="fill: #ffffff" points="-42.4258,646.625 -50.4258,630.625 -58.4258,646.625 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-42.4258,646.625 -50.4258,630.625 -58.4258,646.625 "/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="461.575,206.622 461.575,230.336 620.524,230.336 620.524,256.285 "/>
-    <polygon style="fill: #ffffff" points="469.575,206.622 461.575,190.622 453.575,206.622 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="469.575,206.622 461.575,190.622 453.575,206.622 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="101.998,498.384 80.5749,498.384 80.5749,587.384 47.9802,587.384 "/>
+    <polygon style="fill: #ffffff" points="127.17,498.384 113.17,503.184 99.1696,498.384 113.17,493.584 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="127.17,498.384 113.17,503.184 99.1696,498.384 113.17,493.584 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="82.5749" y="538.884"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:end;font-family:monospace;font-style:normal;font-weight:normal" x="95.1696" y="494.384"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="51.9802" y="583.384"/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="461.575,207.627 461.575,229.135 401.926,229.135 401.926,252.879 "/>
-    <polygon style="fill: #ffffff" points="469.575,207.627 461.575,191.627 453.575,207.627 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="469.575,207.627 461.575,191.627 453.575,207.627 "/>
+    <rect style="fill: #ffffff" x="356.8" y="599.8" width="148.6" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="356.8" y="599.8" width="148.6" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="431.1" y="619.8">BimSnippet</text>
+    <rect style="fill: #ffffff" x="356.8" y="627.8" width="148.6" height="68"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="356.8" y="627.8" width="148.6" height="68"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="359.8" y="642.6">+type: SnippetType</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="359.8" y="658.6">+external: Bool</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="359.8" y="674.6">+reference: Uri</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="359.8" y="690.6">+schema: Uri</text>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="218.754,148.386 285.376,148.386 285.376,148.386 363.169,148.386 "/>
-    <polygon style="fill: #ffffff" points="193.582,148.386 207.582,143.586 221.582,148.386 207.582,153.186 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="193.582,148.386 207.582,143.586 221.582,148.386 207.582,153.186 "/>
+    <rect style="fill: #ffffff" x="335.8" y="464.8" width="173.2" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="335.8" y="464.8" width="173.2" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="422.4" y="484.8">DocumentReference</text>
+    <rect style="fill: #ffffff" x="335.8" y="492.8" width="173.2" height="68"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="335.8" y="492.8" width="173.2" height="68"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="338.8" y="507.6">+id: UUID</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="338.8" y="523.6">+external: Bool</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="338.8" y="539.6">+reference: Uri</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="338.8" y="555.6">+description: String</text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="700.8" y="-131.2" width="86.8" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="700.8" y="-131.2" width="86.8" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="744.2" y="-111.2">Template</text>
+    <rect style="fill: #ffffff" x="700.8" y="-103.2" width="86.8" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="700.8" y="-103.2" width="86.8" height="8"/>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="910.5,-207 1363.1,-207 1375.1,-195 1375.1,-157 910.5,-157 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="910.5,-207 1363.1,-207 1375.1,-195 1375.1,-157 910.5,-157 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="1363.1,-207 1363.1,-195 1375.1,-195 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="917.5" y="-182.1">
+      <tspan x="917.5" y="-182.1">RelatedTopic will be realised through just a reference in </tspan>
+      <tspan x="917.5" y="-166.1">the class representing the markup file</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="329.05" y="351.8" width="182.8" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="329.05" y="351.8" width="182.8" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:Source Code Pro;font-style:normal;font-weight:700" x="420.45" y="371.8">ViewpointReference</text>
+    <rect style="fill: #ffffff" x="329.05" y="379.8" width="182.8" height="52"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="329.05" y="379.8" width="182.8" height="52"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="332.05" y="394.6">+file: Uri</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="332.05" y="410.6">+snapshot: Uri</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:Source Code Pro;font-style:normal;font-weight:normal" x="332.05" y="426.6">+index: Integer</text>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="879.75,-158 1386.25,-158 1398.25,-146 1398.25,-76 879.75,-76 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="879.75,-158 1386.25,-158 1398.25,-146 1398.25,-76 879.75,-76 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="1386.25,-158 1386.25,-146 1398.25,-146 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="886.75" y="-133.1">
+      <tspan x="886.75" y="-133.1">Let the viewpoint reference be the super class of the</tspan>
+      <tspan x="886.75" y="-117.1">representation of the viewpoint file. The super class then shall </tspan>
+      <tspan x="886.75" y="-101.1">also be a factory class for the viewpoint files, or at least </tspan>
+      <tspan x="886.75" y="-85.1">hold a reference to the associated viewpoint file representation</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="709.5" y="666" width="264.1" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="709.5" y="666" width="264.1" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="841.55" y="685">Header</text>
+    <rect style="fill: #ffffff" x="709.5" y="694" width="264.1" height="100"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="709.5" y="694" width="264.1" height="100"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="712.5" y="708">+ifcProjectId: UUID</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="712.5" y="724">+ifcSpatialStructureElement: UUID</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="712.5" y="740">+external: Bool</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="712.5" y="756">+filename: String</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="712.5" y="772">+date: DateTime</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="712.5" y="788">+reference: Uri</text>
+    <rect style="fill: #ffffff" x="709.5" y="794" width="264.1" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="709.5" y="794" width="264.1" height="8"/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="309.812,391.8 224.576,391.8 224.576,494.384 "/>
+    <polygon style="fill: #ffffff" points="309.812,399.8 325.812,391.8 309.812,383.8 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="309.812,399.8 325.812,391.8 309.812,383.8 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="512.856,391.8 603.649,391.8 603.649,392.19 694.442,392.19 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="605.649" y="387.995"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="516.856" y="387.8">1</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:end;font-family:monospace;font-style:normal;font-weight:normal" x="690.442" y="388.19">n</text>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="509.964,512.8 595.75,512.8 595.75,464.19 693.447,464.19 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="597.75" y="484.495"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="513.964" y="508.8">1</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:end;font-family:monospace;font-style:normal;font-weight:normal" x="689.447" y="460.19">n</text>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="505.4,613.8 505.4,600 694.442,600 694.442,536.19 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="599.921" y="596"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="509.4" y="609.8">1</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="698.442" y="548.19">1</text>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="841.55,664.994 841.55,608 841.892,608 841.892,537.192 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="841.721" y="604"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="845.55" y="660.994">1</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="845.892" y="549.192">1</text>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="1183.86,483.358 1086.6,483.358 1086.6,462.19 989.342,462.19 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="1088.6" y="468.774"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:end;font-family:monospace;font-style:normal;font-weight:normal" x="1179.86" y="479.358">1</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="993.342" y="458.19">1</text>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="494.675,199.886 176.376,199.886 176.376,480.384 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="335.525" y="195.886"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:end;font-family:monospace;font-style:normal;font-weight:normal" x="490.675" y="195.886">n</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="180.376" y="476.384">1</text>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="604.626,256.875 604.626,295.046 841.892,295.046 841.892,391.346 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="723.259" y="291.046"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="608.626" y="268.875">n</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="845.892" y="387.346">1</text>
   </g>
 </svg>
