@@ -5,7 +5,7 @@ from modification import Modification
 from uri import Uri
 from datetime import date
 
-class TopicConstraint:
+class SchemaConstraint:
 
     """
     Base class for
@@ -63,7 +63,7 @@ class TopicConstraint:
         return [None]
 
 
-class TopicStatus(TopicConstraint):
+class TopicStatus(SchemaConstraint):
 
     def __init__(self):
 
@@ -72,11 +72,11 @@ class TopicStatus(TopicConstraint):
         static method parseConstraints and then initializing the base class
         """
 
-        values = TopicConstraint.parseConstraints("TopicStatus")
+        values = SchemaConstraint.parseConstraints("TopicStatus")
         super(TopicStatus, self).__init__(values[0], values)
 
 
-class TopicType(TopicConstraint):
+class TopicType(SchemaConstraint):
 
     def __init__(self):
 
@@ -85,24 +85,11 @@ class TopicType(TopicConstraint):
         static method parseConstraints and then initializing the base class
         """
 
-        values = TopicConstraint.parseConstraints("TopicType")
-        super(TopicStatus, self).__init__(values[0], values)
+        values = SchemaConstraint.parseConstraints("TopicType")
+        super(TopicType, self).__init__(values[0], values)
 
 
-class TopicLabel(TopicConstraint):
-
-    def __init__(self):
-
-        """
-        First gets the valid values from extensions.xsd by calling the
-        static method parseConstraints and then initializing the base class
-        """
-
-        values = TopicConstraint.parseConstraints("TopicLabel")
-        super(TopicStatus, self).__init__(values[0], values)
-
-
-class TopicStage(TopicConstraint):
+class TopicLabel(SchemaConstraint):
 
     def __init__(self):
 
@@ -111,11 +98,11 @@ class TopicStage(TopicConstraint):
         static method parseConstraints and then initializing the base class
         """
 
-        values = TopicConstraint.parseConstraints("Stage")
-        super(TopicStatus, self).__init__(values[0], values)
+        values = SchemaConstraint.parseConstraints("TopicLabel")
+        super(TopicLabel, self).__init__(values[0], values)
 
 
-class TopicPriority(TopicConstraint):
+class TopicStage(SchemaConstraint):
 
     def __init__(self):
 
@@ -124,9 +111,34 @@ class TopicPriority(TopicConstraint):
         static method parseConstraints and then initializing the base class
         """
 
-        values = TopicConstraint.parseConstraints("Priority")
-        super(TopicStatus, self).__init__(values[0], values)
+        values = SchemaConstraint.parseConstraints("Stage")
+        super(TopicStage, self).__init__(values[0], values)
 
+
+class TopicPriority(SchemaConstraint):
+
+    def __init__(self):
+
+        """
+        First gets the valid values from extensions.xsd by calling the
+        static method parseConstraints and then initializing the base class
+        """
+
+        values = SchemaConstraint.parseConstraints("Priority")
+        super(TopicPriority, self).__init__(values[0], values)
+
+
+class SnippetType(SchemaConstraint):
+
+    def __init__(self):
+
+        """
+        First gets the valid values from extensions.xsd by calling the
+        static method parseConstraints and then initializing the base class
+        """
+
+        values = SchemaConstraint.parseConstraints("SnippetType")
+        super(SnippetType, self).__init__(values[0], values)
 
 
 class Topic:

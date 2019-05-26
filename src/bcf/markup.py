@@ -3,7 +3,7 @@ from datetime import datetime, date
 from uri import Uri
 from typing import List # used for custom type annotations
 from modification import Modification
-from topic import Topic, TopicConstraint
+from topic import Topic, SnippetType
 
 class Header:
     def __init__(self,
@@ -36,20 +36,6 @@ class DocumentReference:
         self.external = external
         self.reference = reference
         self.description = description
-
-
-class SnippetType(TopicConstraint):
-
-    """
-    This is not in the semantical sense a subclass of TopicConstraint, it
-    rather uses the facilities it offers. I should then rename
-    TopicConstraint in the future to not confuse the readers at this point
-    """
-
-    def __init__(self):
-
-        values = TopicConstraint.parseConstraints("SnippetType")
-        super(TopicStatus, self).__init__(values[0], values)
 
 
 class BimSnippet:
