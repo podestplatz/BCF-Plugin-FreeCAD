@@ -1,5 +1,7 @@
+import os
 import urllib.request
 from enum import Enum
+from xmlschema import XMLSchema
 
 class Schema(Enum):
     EXTENSION = 1
@@ -27,16 +29,69 @@ __schemaMap = {
             "",
             "visinfo.xsd")}
 
-#TODO: write error handling code, and document function
+
 def retrieveWebFile(schema: Schema, storePath: str):
+
+    """
+    Tries to retrieve the XML Schema Definition file, identified by `schema`
+    from the url stored in `__schemaMap`. If the file could be loaded it is
+    stored at `storePath`.
+    Returns `None` if an error occurs or the path of the written file if
+    successful.
+    """
+
     fileUrl = __schemaMap[schema]
-    print("Retrieving file from: {}".format(fileUrl))
-    with urllib.request.urlopen(fileUrl) as response:
-        schemaContent = response.read()
-        with open(storePath, "wb+") as file:
-            file.write(schemaContent)
+    try:
+        with urllib.request.urlopen(fileUrl) as response:
+            schemaContent = response.read()
+            with open(storePath, "wb+") as file:
+                file.write(schemaContent)
+    except URLError as e:
+        print("Could not retrieve {}".format(fileURL))
+        print("Here is the stack trace {}".format(str(e)))
+        return None
+    except Exception as e:
+        print("Error occured: {}".format(str(e)))
+        return None
+    else:
+        return storePath
+
+
+def schemaValidate(schemaPath: str, xmlFile: str):
+
+    """
+    Takes the schemaFile and loads it into the module xmlschema. With the
+    resulting object `xmlFile` is checked whether it adheres to the
+    specification or not.
+    Returns a tuple: first element is a boolean value, and the second is a
+    string containing the error message.
+    """
+
+    if not (os.path.exists(schemaPath) or os.path.exists(xmlFile)):
+        raise ValueError
+
+    schema = XMLSchema(schemaPath)
+    valid = schema.is_valid(xmlFile)
+    print("validating {} against {}".format(xmlFile, schemaPath))
+    if valid:
+        return (valid, "")
+    else:
+        try:
+            # it is going to fail. I want the error message to return it
+            schema.validate(xmlFile)
+        except Exception as e:
+            return (valid, str(e))
 
 
 if __name__ == "__main__":
     for key in __schemaMap:
         retrieveWebFile(key, "test{}".format(str(key)))
+    try:
+        (valid, error) = schemaValidate("testSchema.PROJECT", "project.bcfp")
+    except ValueError as e:
+        print("One of the files does not exist. Here is the stack trace:\
+                {}".format(str(e)))
+    if valid:
+        print("File is valid")
+    else:
+        print("File is not valid because:\n{}".format(error))
