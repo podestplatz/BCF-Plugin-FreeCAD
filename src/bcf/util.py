@@ -1,7 +1,6 @@
 import os
 import urllib.request
 from enum import Enum
-from xmlschema import XMLSchema
 
 class Schema(Enum):
     EXTENSION = 1
@@ -55,32 +54,6 @@ def retrieveWebFile(schema: Schema, storePath: str):
         return None
     else:
         return storePath
-
-
-def schemaValidate(schemaPath: str, xmlFile: str):
-
-    """
-    Takes the schemaFile and loads it into the module xmlschema. With the
-    resulting object `xmlFile` is checked whether it adheres to the
-    specification or not.
-    Returns a tuple: first element is a boolean value, and the second is a
-    string containing the error message.
-    """
-
-    if not (os.path.exists(schemaPath) or os.path.exists(xmlFile)):
-        raise ValueError
-
-    schema = XMLSchema(schemaPath)
-    valid = schema.is_valid(xmlFile)
-    print("validating {} against {}".format(xmlFile, schemaPath))
-    if valid:
-        return (valid, "")
-    else:
-        try:
-            # it is going to fail. I want the error message to return it
-            schema.validate(xmlFile)
-        except Exception as e:
-            return (valid, str(e))
 
 
 if __name__ == "__main__":

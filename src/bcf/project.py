@@ -4,7 +4,7 @@ from markup import Markup
 
 class Project:
     def __init__(self,
-            uuid: UUID = None,
+            uuid: UUID,
             name: str = "",
             extSchemaSrc: Uri = None):
         self.id = uuid
