@@ -53,7 +53,7 @@ class SchemaConstraint:
             self.value = newValue
 
     @staticmethod
-    def parseConstraints(self, elementName):
+    def parseConstraints(elementName):
 
         """ Returns a list of the values specified in extensions.xsd for the
         element with the name `elementName`"""
