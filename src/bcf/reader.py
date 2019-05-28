@@ -11,6 +11,16 @@ DEBUG = True
 if DEBUG:
     import pprint
 
+def getSystemTmp():
+
+    """
+    Depending on the system, the correct temporary folder is returned as string
+    """
+
+    if os.name == "nt":
+        return "C:\\Temp"
+    else:
+        return "/tmp/"
 
 def readFile(path: str):
 
@@ -100,12 +110,12 @@ def extractFileToTmp(zipFile: ZipFile, memberName: str):
     to the file is returned, otherwise None is returned.
     """
 
-    extractionPath = str()
-    if os.name == "nt":
-        extractionPath = "C:\\Temp\\"
-    else:
-        extractionPath = "/tmp/"
+    if not memberName in zipFile.namelist():
+        raise FileNotFoundError("'{}' is not part of the supplied zip archive"\
+            " {}. Make sure that it is a correct bcf"\
+            " archive!".format(memberName, zipFile.filename))
 
+    extractionPath = getSystemTmp()
     filePath = str()
     try:
         filePath = zipFile.extract(memberName, extractionPath)
@@ -118,6 +128,40 @@ def extractFileToTmp(zipFile: ZipFile, memberName: str):
         return None
 
     return filePath
+
+
+def getVersion(zipFile: ZipFile, versionSchemaPath: str):
+
+    """
+    Searches for the `bcf.version` member in the zip file `zipFile`. If found
+    it parses it into a python dictonary and returns the content of the
+    attribute `VersionId` of the element `Version`.
+
+    If `bcf.version` was not found a ValueError is raised. If `bcf.version`
+    does not parse against versionSchema then `None` is returned.
+    """
+
+    versionFileName = "bcf.version"
+    if not "bcf.version" in zipFile.namelist():
+        raise ValueError("{} was not found in the zip archive {}. Make sure"\
+                " that it is a correct bcf zip" \
+                " archive.".format(versionFileName, zipFile.filename))
+
+    try:
+        versionFilePath = extractFileToTmp(zipFile, versionFileName)
+    except FileNotFoundError as e:
+        print("It appears that {} is not a valid BCF archive.")
+        print(str(e))
+        raise FileNotFoundError(str(e))
+
+    versionSchema = XMLSchema(versionSchemaPath)
+    if not versionSchema.is_valid(versionFilePath):
+        return None
+
+    versionDict = versionSchema.to_dict(versionFilePath)
+    if DEBUG:
+        pprint.pprint(versionDict)
+    return versionDict["@VersionId"]
 
 
 ########## Object builder functions ##########
@@ -164,7 +208,11 @@ def buildProject(zipFile: ZipFile, projectSchema: str):
 
 if __name__ == "__main__":
     projectSchemaPath = "/tmp/project.xsd"
+    versionSchemaPath = "/tmp/version.xsd"
     util.retrieveWebFile(util.Schema.PROJECT, projectSchemaPath)
+    util.retrieveWebFile(util.Schema.VERSION, versionSchemaPath)
     with ZipFile(sys.argv[1]) as zipFile:
+        bcfVersion = getVersion(zipFile, versionSchemaPath)
         project = buildProject(zipFile, projectSchemaPath)
         print(project)
+        print("The version of the bcf file is {}".format(bcfVersion))
