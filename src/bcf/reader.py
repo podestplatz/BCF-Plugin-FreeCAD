@@ -71,6 +71,29 @@ def schemaValidate(schemaPath: str, xmlFile: str):
 
 
 def extractFileToTmp(zipFilePath: str):
+<<<<<<< HEAD
+=======
+
+    """
+    Extracts the zipFile to the temporary directory of the system.
+    """
+
+    zipFile = ZipFile(zipFilePath)
+
+    extractionPath = str()
+    if os.name == "nt":
+        extractionPath = "C:\\Temp\\"
+    else:
+        extractionPath = "/tmp/"
+    extractionPath += os.path.basename(zipFilePath)
+
+    if DEBUG:
+        print("Extracting {} to {}".format(zipFile.filename, extractionPath))
+    zipFile.extractall(extractionPath)
+    return extractionPath
+
+def extractMemberToTmp(zipFile: ZipFile, memberName: str):
+>>>>>>> reader.py: refactor buildProject, uses path instead of ZipFile
 
     """
     Extracts the zipFile to the temporary directory of the system.
@@ -121,10 +144,14 @@ def extractMemberToTmp(zipFile: ZipFile, memberName: str):
 
 def getVersion(extrBcfPath: str, versionSchemaPath: str):
 
+<<<<<<< HEAD
     """
     Tries to open `extrBcfPath`/bcf.version. If successful it parses it
     into a python dictonary and returns the content of the attribute
     `VersionId` of the element `Version`.
+=======
+def buildProject(projectFilePath: str, projectSchema: str):
+>>>>>>> reader.py: refactor buildProject, uses path instead of ZipFile
 
     If `bcf.version` was not found a ValueError is raised. If `bcf.version`
     does not parse against versionSchema then `None` is returned.
@@ -154,6 +181,7 @@ def getFileListByExtension(topDir: str, extension: str):
     Returns a list of files in the `topDir` directory that end with `extension`
     """
 
+<<<<<<< HEAD
     fileList = [ f for f in os.listdir(topDir)
                     if os.path.isfile(os.path.join(topDir, f)) ]
     return list(filter(lambda f: f.endswith(extension), fileList))
@@ -217,6 +245,8 @@ enough.
 
 def buildProject(projectFilePath: str, projectSchema: str):
 
+=======
+>>>>>>> reader.py: refactor buildProject, uses path instead of ZipFile
     if projectFilePath is None or projectSchema is None:
         return None
     if not os.path.exists(projectFilePath):
