@@ -81,9 +81,23 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOff</enum>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QAbstractScrollArea::AdjustIgnored</enum>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
          <item>
           <property name="text">
-           <string/>
+           <string>Greg: I noticed that the left wall is too short by a few milimeters. </string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Anthony: Changed it! Matches all the other walls now.</string>
           </property>
          </item>
         </widget>
@@ -130,6 +144,12 @@
            <verstretch>5</verstretch>
           </sizepolicy>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>50</height>
+          </size>
+         </property>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
@@ -146,6 +166,12 @@
        </item>
        <item>
         <widget class="QLabel" name="snapshotDisplay2">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>50</height>
+          </size>
+         </property>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
@@ -164,6 +190,12 @@ image: url(:/resources/snapshot1.jpg);
        </item>
        <item>
         <widget class="QLabel" name="snapshotDisplay1">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>50</height>
+          </size>
+         </property>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
@@ -192,11 +224,39 @@ image: url(:/resources/snapshot1.jpg);
        <item>
         <widget class="QPushButton" name="showBtn">
          <property name="text">
-          <string>Show</string>
+          <string>display Viewpoints</string>
          </property>
         </widget>
        </item>
       </layout>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="viewpointsLayout">
+     <item>
+      <widget class="QListWidget" name="viewpointsList">
+       <item>
+        <property name="text">
+         <string>viewpoint #1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>viewpoint #2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>viewpoint #3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>viewpoint #4</string>
+        </property>
+       </item>
+      </widget>
      </item>
     </layout>
    </item>
@@ -205,5 +265,22 @@ image: url(:/resources/snapshot1.jpg);
  <resources>
   <include location="resources.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>showBtn</sender>
+   <signal>clicked()</signal>
+   <receiver>viewpointsList</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>200</x>
+     <y>274</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>135</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
