@@ -92,7 +92,27 @@ def schemaValidate(schemaPath: str, xmlFile: str):
             return (valid, str(e))
 
 
-def extractFileToTmp(zipFile: ZipFile, memberName: str):
+def extractFileToTmp(zipFilePath: str):
+
+    """
+    Extracts the zipFile to the temporary directory of the system.
+    """
+
+    zipFile = ZipFile(zipFilePath)
+
+    extractionPath = str()
+    if os.name == "nt":
+        extractionPath = "C:\\Temp\\"
+    else:
+        extractionPath = "/tmp/"
+    extractionPath += os.path.basename(zipFilePath)
+
+    if DEBUG:
+        print("Extracting {} to {}".format(zipFile.filename, extractionPath))
+    zipFile.extractall(extractionPath)
+    return extractionPath
+
+def extractMemberToTmp(zipFile: ZipFile, memberName: str):
 
     """
     Tries to extract the file or directory with the name `memberName` from the
@@ -122,7 +142,7 @@ def extractFileToTmp(zipFile: ZipFile, memberName: str):
 
 ########## Object builder functions ##########
 
-def buildProject(zipFile: ZipFile, projectSchema: str):
+def buildProject(projectFilePath: str, projectSchema: str):
 
     """
     Parses the contents of the project.bcfv file from inside the ZipFile.
@@ -134,12 +154,11 @@ def buildProject(zipFile: ZipFile, projectSchema: str):
     extracted into a temporary location.
     """
 
-    projectFileName = "project.bcfp"
-    # Assumption: it is already validated that the BCF file (`zipFile`)
-    # contains the project.bcfp file
-    projectFilePath = extractFileToTmp(zipFile, projectFileName)
-
-    if projectFilePath is None:
+    if projectFilePath is None or projectSchema is None:
+        return None
+    if not os.path.exists(projectFilePath):
+        return None
+    if not os.path.exists(projectSchema):
         return None
 
     schema = XMLSchema(projectSchema)
@@ -165,6 +184,6 @@ def buildProject(zipFile: ZipFile, projectSchema: str):
 if __name__ == "__main__":
     projectSchemaPath = "/tmp/project.xsd"
     util.retrieveWebFile(util.Schema.PROJECT, projectSchemaPath)
-    with ZipFile(sys.argv[1]) as zipFile:
-        project = buildProject(zipFile, projectSchemaPath)
-        print(project)
+    extractedProjectPath = extractFileToTmp(sys.argv[1])
+    project = buildProject(extractedProjectPath + "/project.bcfp", projectSchemaPath)
+    print(project)
