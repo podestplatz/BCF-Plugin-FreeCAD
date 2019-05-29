@@ -4,7 +4,7 @@ from enum import Enum
 
 class Schema(Enum):
     EXTENSION = 1
-    VSINFO = 2 # viewpoint info
+    VISINFO = 2 # viewpoint info
     MARKUP = 3
     PROJECT = 4
     VERSION = 5
@@ -24,7 +24,7 @@ __schemaMap = {
         Schema.VERSION: __schemaSrc.format(__schemaVersion,
             "",
             "version.xsd"),
-        Schema.VSINFO: __schemaSrc.format(__schemaVersion,
+        Schema.VISINFO: __schemaSrc.format(__schemaVersion,
             "",
             "visinfo.xsd")}
 

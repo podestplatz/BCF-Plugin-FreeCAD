@@ -225,6 +225,43 @@ def buildProject(projectFilePath: str, projectSchema: str):
     return p
 
 
+def readInFile(bcfFile: str):
+
+    """
+    Reads the bcfFile into the memory. Before each file is parsed into the class
+    structure it gets validated against its corresponding XSD file.
+    If parsing went successful then a value other than a object of type Project
+    is returned.
+    """
+
+    tmpDir = getSystemTmp()
+
+    # download schema files into tmp folder
+    projectSchemaPath = util.retrieveWebFile(util.Schema.PROJECT,
+            tmpDir + "/project.xsd")
+    extensionsSchemaPath = util.retrieveWebFile(util.Schema.EXTENSIONS,
+            tmpDir + "/extensions.xsd")
+    markupSchemaPath = util.retrieveWebFile(util.Schema.MARKUP,
+            tmpDir + "/markup.xsd")
+    versionSchemaPath = util.retrieveWebFile(util.Schema.VERSION,
+            tmpDir + "/version.xsd")
+    visinfoSchemaPath = util.retrieveWebFile(util.Schema.VISINFO,
+            tmpDir + "/visinfo.xsd")
+
+    bcfExtractedPath = extractFileToTmp(bcfFile)
+
+    # before a file gets read into memory it gets validated
+    # (i.e.: before the corresponding build* function is called, parse with
+    # xmlschema
+    projectSchema = XMLSchema(projectSchemaPath)
+    projectFilePath = bcfExtractedPath + "/project.bcfp"
+    try:
+        projectSchema.validate(projectFilePath)
+    except Exception as e:
+        print("project.bcfp file inside {} is could not be validated against
+                {}".format(bcfFile, "project.xsd"))
+        return None
+
 if __name__ == "__main__":
     projectSchemaPath = "/tmp/project.xsd"
     versionSchemaPath = "/tmp/version.xsd"
