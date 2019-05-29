@@ -7,6 +7,7 @@ from xmlschema import XMLSchema
 from uuid import UUID
 
 DEBUG = True
+SUPPORTED_VERSIONS = ["2.1"]
 
 if DEBUG:
     import pprint
@@ -41,39 +42,6 @@ def readFile(path: str):
         return None
 
     return file
-
-def getDirectories(zipFile: ZipFile):
-
-    """
-    Reads out all directory names that are in the zipFile and returns a list of
-    strings, where each string represents the name of one directory.
-    """
-
-    if zipFile is None:
-        raise ValueError
-
-    zipDirectories = list()
-    for member in zipFile.infolist():
-        if member.filename[-1:] == "/":
-            zipDirectories.append(member.filename)
-
-    return zipDirectories
-
-def openProject(zipFile: ZipFile):
-
-    """
-    Looks for a project.bcfp file and returns a file handle if found
-    """
-
-    if zipFile is None:
-        raise ValueError
-
-    projectFileInfo = [ member for member in zipFile.infolist()
-                    if "project.bcfp" in member.filename]
-
-    if projectFileInfo is not []:
-        return zipFile.open(projectFileInfo[0].filename)
-    return None
 
 
 def schemaValidate(schemaPath: str, xmlFile: str):
@@ -122,6 +90,7 @@ def extractFileToTmp(zipFilePath: str):
     zipFile.extractall(extractionPath)
     return extractionPath
 
+
 def extractMemberToTmp(zipFile: ZipFile, memberName: str):
 
     """
@@ -150,29 +119,24 @@ def extractMemberToTmp(zipFile: ZipFile, memberName: str):
     return filePath
 
 
-def getVersion(zipFile: ZipFile, versionSchemaPath: str):
+def getVersion(extrBcfPath: str, versionSchemaPath: str):
 
     """
-    Searches for the `bcf.version` member in the zip file `zipFile`. If found
-    it parses it into a python dictonary and returns the content of the
-    attribute `VersionId` of the element `Version`.
+    Tries to open `extrBcfPath`/bcf.version. If successful it parses it
+    into a python dictonary and returns the content of the attribute
+    `VersionId` of the element `Version`.
 
     If `bcf.version` was not found a ValueError is raised. If `bcf.version`
     does not parse against versionSchema then `None` is returned.
     """
 
     versionFileName = "bcf.version"
-    if not "bcf.version" in zipFile.namelist():
-        raise ValueError("{} was not found in the zip archive {}. Make sure"\
-                " that it is a correct bcf zip" \
-                " archive.".format(versionFileName, zipFile.filename))
-
-    try:
-        versionFilePath = extractFileToTmp(zipFile, versionFileName)
-    except FileNotFoundError as e:
-        print("It appears that {} is not a valid BCF archive.")
-        print(str(e))
-        raise FileNotFoundError(str(e))
+    versionFilePath = os.path.join(extrBcfPath, versionFileName)
+    if not os.path.exists(versionFilePath):
+        raise ValueError("{} was not found in the extracted zip archive {}."\
+                "Make sure that you opened a correct bcf zip archive.".format(
+                    versionFileName,
+                    os.path.basename(extrBcfPath)))
 
     versionSchema = XMLSchema(versionSchemaPath)
     if not versionSchema.is_valid(versionFilePath):
@@ -184,18 +148,29 @@ def getVersion(zipFile: ZipFile, versionSchemaPath: str):
     return versionDict["@VersionId"]
 
 
+def getFileListByExtension(topDir: str, extension: str):
+
+    """
+    Returns a list of files in the `topDir` directory that end with `extension`
+    """
+
+    fileList = [ f for f in os.listdir(topDir)
+                    if os.path.isfile(os.path.join(topDir, f)) ]
+    return list(filter(lambda f: f.endswith(extension), fileList))
+
+
 ########## Object builder functions ##########
 
 def buildProject(projectFilePath: str, projectSchema: str):
 
     """
-    Parses the contents of the project.bcfv file from inside the ZipFile.
+    Parses the contents of the project.bcfv file pointed to by
+    `projectFilePath`.
     First the XML file is parsed into a python dictionary using
     xmlschema.XMLSchema.to_dict(xmlFilePath). Then this python dictionary is morphed
     into an objec of the Project class.
 
-    Due to limitations of the xmlschema library, project.bcfp is first
-    extracted into a temporary location.
+    This function assumes that project.bcfp was already successfully validated.
     """
 
     if projectFilePath is None or projectSchema is None:
@@ -207,9 +182,6 @@ def buildProject(projectFilePath: str, projectSchema: str):
 
     schema = XMLSchema(projectSchema)
     projectDict = schema.to_dict(projectFilePath)
-
-    if DEBUG:
-        pprint.pprint(projectDict)
 
     # can do that because the project file is valid and ProjectId is required
     # by the schema
@@ -225,7 +197,41 @@ def buildProject(projectFilePath: str, projectSchema: str):
     return p
 
 
-def readInFile(bcfFile: str):
+#TODO: implement that function
+def buildMarkup(markupFilePath: str, markupSchemaPath: str):
+    pass
+
+
+#TODO: implement that function
+def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
+    pass
+
+
+def validateFile(validateFilePath: str,
+        schemaPath: str,
+        bcfFile: str):
+
+    """
+    Validates `validateFileName` against the XSD file referenced by
+    `schemaPath`. If successful an empty string is returned, else an error
+    string is returned.
+    """
+
+    schema = XMLSchema(schemaPath)
+    try:
+        schema.validate(validateFilePath)
+    except Exception as e:
+        # get parent directory of file, useful for the user if the file is a
+        # markup.bcf file inside some topic
+        parentDir = os.path.abspath(os.path.join(validateFilePath, os.pardir))
+        return "{} file inside {} of {} could not be validated against"\
+                " {}\nError:{}".format(validateFilePath, parentDir, bcfFile,
+                    os.path.basename(schemaPath), str(e))
+
+    return ""
+
+
+def readBcfFile(bcfFile: str):
 
     """
     Reads the bcfFile into the memory. Before each file is parsed into the class
@@ -235,37 +241,76 @@ def readInFile(bcfFile: str):
     """
 
     tmpDir = getSystemTmp()
-
-    # download schema files into tmp folder
-    projectSchemaPath = util.retrieveWebFile(util.Schema.PROJECT,
-            tmpDir + "/project.xsd")
-    extensionsSchemaPath = util.retrieveWebFile(util.Schema.EXTENSIONS,
-            tmpDir + "/extensions.xsd")
-    markupSchemaPath = util.retrieveWebFile(util.Schema.MARKUP,
-            tmpDir + "/markup.xsd")
-    versionSchemaPath = util.retrieveWebFile(util.Schema.VERSION,
-            tmpDir + "/version.xsd")
-    visinfoSchemaPath = util.retrieveWebFile(util.Schema.VISINFO,
-            tmpDir + "/visinfo.xsd")
-
+    (projectSchemaPath, extensionsSchemaPath,\
+        markupSchemaPath, versionSchemaPath,\
+        visinfoSchemaPath) = util.downloadToDir(tmpDir)
     bcfExtractedPath = extractFileToTmp(bcfFile)
 
-    # before a file gets read into memory it gets validated
-    # (i.e.: before the corresponding build* function is called, parse with
-    # xmlschema
-    projectSchema = XMLSchema(projectSchemaPath)
-    projectFilePath = bcfExtractedPath + "/project.bcfp"
-    try:
-        projectSchema.validate(projectFilePath)
-    except Exception as e:
-        print("project.bcfp file inside {} is could not be validated against
-                {}".format(bcfFile, "project.xsd"))
+    # before a file gets read into memory it needs to get validated (i.e.:
+    # before the corresponding build* function is called, validate with
+    # xmlschema)
+    ### Check version ###
+    versionFilePath = os.path.join(bcfExtractedPath, "bcf.version")
+    if not os.path.exists(versionFilePath):
+        print("No bcf.version file found in {}. This file is not optional.",
+                file=sys.stderr)
+        return None
+    error = validateFile(versionFilePath, versionSchemaPath, bcfFile)
+    if error != "":
+        print(error, file=sys.stderr)
+        return None
+    version = getVersion(bcfExtractedPath, versionSchemaPath)
+    if version not in SUPPORTED_VERSIONS:
+        print("BCF version {} is not supported by this plugin. Supported"\
+                "versions are: {}".format(version, SUPPORTED_VERSIONS),
+                file=sys.stderr)
         return None
 
+    ### Validate project and build ###
+    # project.bcfp is optional, but it is necessary for the data model
+    proj = project.Project(UUID(int=0))
+    projectFilePath = os.path.join(bcfExtractedPath, "project.bcfp")
+    if os.path.exists(projectFilePath):
+        error = validateFile(projectFilePath, projectSchemaPath, bcfFile)
+        if error != "":
+            print(error, file=sys.stderr)
+            return None
+        proj = buildProject(projectFilePath, projectSchemaPath)
+
+    ### Iterate over the topic directories ###
+    topicDirectories = util.getDirectories(bcfExtractedPath)
+    for topic in topicDirectories:
+        ### Validate all viewpoint files in the directory, and build them ###
+        topicDir = os.path.join(bcfExtractedPath, topic)
+        viewpointFiles = getFileListByExtension(topicDir, ".bcfv")
+        errorList = [ validateFile(os.path.join(topicDir, viewpointFile),
+                                    visinfoSchemaPath,
+                                    bcfFile)
+                      for viewpointFile in viewpointFiles
+                    ]
+        # truncate to only contain non-empty strings == error messages
+        errorList = list(filter(lambda item: item != "", errorList))
+        if len(errorList) > 0:
+            print("One or more viewpoint.bcfv files could not be validated.\n"\
+                    "Error: {}".format(errorList))
+        viewpoints = [ buildViewpoint(viewpointFile, visinfoSchemaPath)
+                            for viewpointFile in viewpointFiles ]
+
+        # get list of all snapshots in the directory
+        snapshots = getFileListByExtension(topicDir, ".png")
+
+        markupFilePath = os.path.join(topicDir, "markup.bcf")
+        error = validateFile(markupFilePath, markupSchemaPath, bcfFile)
+        if error != "":
+            print(error, file=sys.stderr)
+            return None
+        markup = buildMarkup(markupFilePath, markupSchemaPath, viewpoints, snapshots)
+
+        # add the finished markup object to the project
+        proj.topicList.append(markup)
+
+
 if __name__ == "__main__":
-    projectSchemaPath = "/tmp/project.xsd"
-    versionSchemaPath = "/tmp/version.xsd"
-    util.retrieveWebFile(util.Schema.PROJECT, projectSchemaPath)
-    extractedProjectPath = extractFileToTmp(sys.argv[1])
-    project = buildProject(extractedProjectPath + "/project.bcfp", projectSchemaPath)
+    #extractedProjectPath = extractFileToTmp(sys.argv[1])
+    project = readBcfFile(sys.argv[1])
     print(project)

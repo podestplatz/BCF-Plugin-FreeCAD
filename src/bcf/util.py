@@ -1,6 +1,7 @@
 import os
 import urllib.request
 from enum import Enum
+from urllib.error import URLError
 
 class Schema(Enum):
     EXTENSION = 1
@@ -54,6 +55,43 @@ def retrieveWebFile(schema: Schema, storePath: str):
         return None
     else:
         return storePath
+
+
+def downloadToDir(dirPath: str):
+
+    """
+    Downloads all schema files, specified in `__schemaMap` to the specified
+    directory `dirPath`
+    """
+
+    print("Extracting to {}".format(dirPath))
+    projectSchemaPath = retrieveWebFile(Schema.PROJECT,
+            os.path.join(dirPath, "project.xsd"))
+    extensionsSchemaPath = retrieveWebFile(Schema.EXTENSION,
+            os.path.join(dirPath, "extensions.xsd"))
+    markupSchemaPath = retrieveWebFile(Schema.MARKUP,
+            os.path.join(dirPath, "markup.xsd"))
+    versionSchemaPath = retrieveWebFile(Schema.VERSION,
+            os.path.join(dirPath, "version.xsd"))
+    visinfoSchemaPath = retrieveWebFile(Schema.VISINFO,
+            os.path.join(dirPath, "visinfo.xsd"))
+
+    return (projectSchemaPath, extensionsSchemaPath,
+            markupSchemaPath, versionSchemaPath,
+            visinfoSchemaPath)
+
+
+def getDirectories(topDir: str):
+
+    """
+    Returns a list of all directories that are subdirectories of `topDir`.
+    """
+
+    subdirs = list()
+    for (dirpath, dirnames, filenames) in os.walk(topDir):
+        subdirs = dirnames
+        break
+    return subdirs
 
 
 if __name__ == "__main__":
