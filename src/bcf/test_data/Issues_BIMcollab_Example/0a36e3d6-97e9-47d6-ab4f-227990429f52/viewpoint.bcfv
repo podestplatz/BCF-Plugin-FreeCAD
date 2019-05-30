@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualizationInfo Guid="b496c251-2729-4dee-94a1-085168d36512">
+	<Components>
+		<ViewSetupHints SpacesVisible="false" SpaceBoundariesVisible="false" OpeningsVisible="false" />
+    <Visibility DefaultVisibility="true" />
+	</Components>
+</VisualizationInfo>
