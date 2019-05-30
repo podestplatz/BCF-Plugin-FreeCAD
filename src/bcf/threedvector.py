@@ -5,7 +5,7 @@ class ThreeDVector:
     specialised to a point or a direction vector
     """
 
-    def __init__(self, x: double, y: double, z: double):
+    def __init__(self, x: float, y: float, z: float):
         self.x = x
         self.y = y
         self.z = z
@@ -14,14 +14,14 @@ class Point(ThreeDVector):
 
     """ Represents a point in the three dimensional space """
 
-    def __init__(self, x: double, y: double, z: double):
+    def __init__(self, x: float, y: float, z: float):
         super(Point, self).__init__(x, y, z)
 
 class Direction(ThreeDVector):
 
     """ Represents a vector in the three dimensional space """
 
-    def __init__(self, x: double, y: double, z: double):
+    def __init__(self, x: float, y: float, z: float):
         super(Direction, self).__init__(x, y, z)
 
 class Line:

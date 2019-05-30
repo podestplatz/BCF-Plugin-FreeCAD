@@ -30,6 +30,18 @@ __schemaMap = {
             "visinfo.xsd")}
 
 
+def getSystemTmp():
+
+    """
+    Depending on the system, the correct temporary folder is returned as string
+    """
+
+    if os.name == "nt":
+        return "C:\\Temp"
+    else:
+        return "/tmp/"
+
+
 def retrieveWebFile(schema: Schema, storePath: str):
 
     """
@@ -92,6 +104,7 @@ def getDirectories(topDir: str):
         subdirs = dirnames
         break
     return subdirs
+    #return list(filter(lambda item: item != topDir, subdirs))
 
 
 if __name__ == "__main__":

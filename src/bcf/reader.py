@@ -2,26 +2,18 @@ import sys
 import os
 import util
 import project
+import viewpoint
 from zipfile import ZipFile
 from xmlschema import XMLSchema
 from uuid import UUID
+from typing import List
+from uri import Uri
 
 DEBUG = True
 SUPPORTED_VERSIONS = ["2.1"]
 
 if DEBUG:
     import pprint
-
-def getSystemTmp():
-
-    """
-    Depending on the system, the correct temporary folder is returned as string
-    """
-
-    if os.name == "nt":
-        return "C:\\Temp"
-    else:
-        return "/tmp/"
 
 def readFile(path: str):
 
@@ -104,7 +96,7 @@ def extractMemberToTmp(zipFile: ZipFile, memberName: str):
             " {}. Make sure that it is a correct bcf"\
             " archive!".format(memberName, zipFile.filename))
 
-    extractionPath = getSystemTmp()
+    extractionPath = util.getSystemTmp()
     filePath = str()
     try:
         filePath = zipFile.extract(memberName, extractionPath)
@@ -198,7 +190,9 @@ def buildProject(projectFilePath: str, projectSchema: str):
 
 
 #TODO: implement that function
-def buildMarkup(markupFilePath: str, markupSchemaPath: str):
+def buildMarkup(markupFilePath: str, markupSchemaPath: str,
+        viewpoints: List[viewpoint.Viewpoint],
+        snapshots: List[Uri]):
     pass
 
 
@@ -240,7 +234,7 @@ def readBcfFile(bcfFile: str):
     is returned.
     """
 
-    tmpDir = getSystemTmp()
+    tmpDir = util.getSystemTmp()
     (projectSchemaPath, extensionsSchemaPath,\
         markupSchemaPath, versionSchemaPath,\
         visinfoSchemaPath) = util.downloadToDir(tmpDir)
@@ -257,11 +251,11 @@ def readBcfFile(bcfFile: str):
         return None
     error = validateFile(versionFilePath, versionSchemaPath, bcfFile)
     if error != "":
-        print(error, file=sys.stderr)
+        pprint.pprint(error, file=sys.stderr)
         return None
     version = getVersion(bcfExtractedPath, versionSchemaPath)
     if version not in SUPPORTED_VERSIONS:
-        print("BCF version {} is not supported by this plugin. Supported"\
+        pprint.pprint("BCF version {} is not supported by this plugin. Supported"\
                 "versions are: {}".format(version, SUPPORTED_VERSIONS),
                 file=sys.stderr)
         return None
@@ -273,12 +267,13 @@ def readBcfFile(bcfFile: str):
     if os.path.exists(projectFilePath):
         error = validateFile(projectFilePath, projectSchemaPath, bcfFile)
         if error != "":
-            print(error, file=sys.stderr)
+            pprint.pprint(error, file=sys.stderr)
             return None
         proj = buildProject(projectFilePath, projectSchemaPath)
 
     ### Iterate over the topic directories ###
     topicDirectories = util.getDirectories(bcfExtractedPath)
+    pprint.pprint(topicDirectories)
     for topic in topicDirectories:
         ### Validate all viewpoint files in the directory, and build them ###
         topicDir = os.path.join(bcfExtractedPath, topic)
@@ -291,8 +286,10 @@ def readBcfFile(bcfFile: str):
         # truncate to only contain non-empty strings == error messages
         errorList = list(filter(lambda item: item != "", errorList))
         if len(errorList) > 0:
-            print("One or more viewpoint.bcfv files could not be validated.\n"\
-                    "Error: {}".format(errorList))
+            print("One or more viewpoint.bcfv files could not be validated.")
+            for error in errorList:
+                pprint.pprint(error)
+            continue
         viewpoints = [ buildViewpoint(viewpointFile, visinfoSchemaPath)
                             for viewpointFile in viewpointFiles ]
 
@@ -300,6 +297,7 @@ def readBcfFile(bcfFile: str):
         snapshots = getFileListByExtension(topicDir, ".png")
 
         markupFilePath = os.path.join(topicDir, "markup.bcf")
+        print("looking into topic {}".format(topicDir))
         error = validateFile(markupFilePath, markupSchemaPath, bcfFile)
         if error != "":
             print(error, file=sys.stderr)

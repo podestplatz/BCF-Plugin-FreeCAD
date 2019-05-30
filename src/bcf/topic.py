@@ -1,10 +1,14 @@
+import util
 from typing import List
 from enum import Enum
 from uuid import UUID
+from xmlschema import XMLSchema
 from modification import Modification
 from uri import Uri
 from datetime import date
 
+
+""" Is not used anymore """
 class SchemaConstraint:
 
     """
@@ -47,9 +51,14 @@ class SchemaConstraint:
     @value.setter
     def value(self, newValue: str):
 
-        """ Only sets if newValue is valid """
+        """
+        Only sets if newValue is contained in the list of valid values or,
+        if the list is equal to [None] then it also shall be added. Which means
+        no restrictions are put upon the value
+        """
 
-        if newValue in self.__validValues:
+        if (newValue in self.__validValues or
+                self._validValues == [None]):
             self.value = newValue
 
     @staticmethod
@@ -57,8 +66,6 @@ class SchemaConstraint:
 
         """ Returns a list of the values specified in extensions.xsd for the
         element with the name `elementName`"""
-
-        #TODO: write that function
 
         return [None]
 
@@ -149,17 +156,17 @@ class Topic:
             id: UUID,
             title: str,
             creation: Modification,
-            type: TopicType = None,
-            status: TopicStatus = None,
+            type: str = None,
+            status: str = None,
             refs: List[Uri] = list(),
-            priority: TopicPriority = None,
+            priority: str = None,
             index: int = 0,
             labels: List[str] = list(),
             lastModification: Modification = None,
             dueDate: date = None,
             assignee: str = "",
             description: str = "",
-            stage: TopicStage = None):
+            stage: str = None):
 
         """ Initialisation function of Topic """
 
