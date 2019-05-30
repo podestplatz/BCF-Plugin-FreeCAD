@@ -1,4 +1,4 @@
-set dirName "Example1"
+set dirName "Issues_BIMcollab_Example"
 cd $dirName 
 
 for issue in $argv
