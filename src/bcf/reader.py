@@ -1,13 +1,17 @@
 import sys
 import os
+import dateutil.parser
 import util
 import project
 import viewpoint
 from zipfile import ZipFile
 from xmlschema import XMLSchema
 from uuid import UUID
-from typing import List
+from typing import List, Dict
 from uri import Uri
+from modification import Modification
+from markup import (Comment, Markup, Header, ViewpointReference)
+from topic import (Topic, BimSnippet, DocumentReference)
 
 DEBUG = True
 SUPPORTED_VERSIONS = ["2.1"]
@@ -151,6 +155,13 @@ def getFileListByExtension(topDir: str, extension: str):
     return list(filter(lambda f: f.endswith(extension), fileList))
 
 
+def getOptionalFromDict(d: Dict, desiredValue: str, empty):
+
+    if desiredValue in d:
+        return d[desiredValue]
+    return empty
+
+
 ########## Object builder functions ##########
 
 def buildProject(projectFilePath: str, projectSchema: str):
@@ -189,11 +200,182 @@ def buildProject(projectFilePath: str, projectSchema: str):
     return p
 
 
+def buildComment(commentDict: Dict):
+
+    commentDate = dateutil.parser.parse(commentDict["Date"]) # parse ISO 8601 datetime
+    commentAuthor = commentDict["Author"]
+    creationData = Modification(commentAuthor, commentDate)
+
+    modifiedAuthor = None
+    modifiedDate = None
+    modifiedData = None
+    if ("ModifiedAuthor" in commentDict and
+           "ModifiedDate" in commentDict):
+        modifiedAuthor = commentDict["ModifiedAuthor"]
+        modifiedDate = dateutil.parser.parse(commentDict["ModifiedDate"])
+        modifiedData = Modification(modifiedAuthor, modifiedDate)
+
+    commentString = commentDict["Comment"]
+
+    viewpointRef = None
+    """ TODO: Refactor viewpoint situation.
+    if "Viewpoint" in commentDict:
+        viewpointUUID = UUID(commentDict["Viewpoint"])
+    """
+
+    comment = Comment(creationData, commentString, viewpointRef, modifiedData)
+    return comment
+
+
+def buildBimSnippet(snippetDict: Dict):
+
+    reference = Uri(snippetDict["Reference"])
+    referenceSchema = Uri(snippetDict["ReferenceSchema"])
+    snippetType = snippetDict["@SnippetType"]
+    isExternal = getOptionalFromDict(snippetDict, "@isExternal", False)
+
+    return BimSnippet(snippetType, isExternal, reference, referenceSchema)
+
+
+def buildDocRef(docDict: Dict):
+
+    docUri = getOptionalFromDict(docDict, "ReferencedDocument", None)
+    if docUri: # envelope a uri string into an object of Uri
+        docUri = Uri(docUri)
+
+    docName = getOptionalFromDict(docDict, "Description", None)
+    docId = getOptionalFromDict(docDict, "@Guid", None)
+    if docId: #envelope a guid in an UUID object
+        docId = UUID(docId)
+
+    docExternal = getOptionalFromDict(docDict, "@isExternal", False)
+
+    return DocumentReference(docId, docExternal, docUri, docName)
+
+
+def buildTopic(topicDict: Dict):
+
+    id = UUID(topicDict["@Guid"])
+    title = topicDict["Title"]
+
+    topicDate = dateutil.parser.parse(topicDict["CreationDate"])
+    topicAuthor = topicDict["CreationAuthor"]
+    creationData = Modification(topicAuthor, topicDate)
+
+    topicStatus = getOptionalFromDict(topicDict, "@TopicStatus", "")
+    topicType = getOptionalFromDict(topicDict, "@TopicType", "")
+    topicPriority = getOptionalFromDict(topicDict, "Priority", "")
+
+    modifiedDate = getOptionalFromDict(topicDict, "ModifiedDate", None)
+    modifiedAuthor = getOptionalFromDict(topicDict, "ModifiedAuthor", None)
+    modifiedData = None
+    if not (modifiedDate is None or modifiedAuthor is None):
+        modifiedData = Modification(modifiedAuthor, modifiedDate)
+
+    index = getOptionalFromDict(topicDict, "Index", 0)
+    dueDate = getOptionalFromDict(topicDict, "DueDate", None)
+    if dueDate is not None:
+        dueDate = dateutil.parser.parse(dueDate)
+
+    assignee = getOptionalFromDict(topicDict, "AssignedTo", "")
+    stage = getOptionalFromDict(topicDict, "State", "")
+    description = getOptionalFromDict(topicDict, "Description", "")
+
+    bimSnippet = None
+    if "BimSnippet" in topicDict:
+        bimSnippet = buildBimSnippet(topicDict["BimSnippet"])
+
+    labelList = getOptionalFromDict(topicDict, "Labels", list())
+
+    docRefList = getOptionalFromDict(topicDict, "DocumentReference", list())
+    docRefs = [ buildDocRef(docRef) for docRef in docRefList ]
+
+    relatedList = getOptionalFromDict(topicDict, "RelatedTopic", list())
+    relatedTopics = [ UUID(relTopic["@Guid"]) for relTopic in relatedList ]
+
+    topic = Topic(id, title, creationData,
+            topicType, topicStatus, docRefs,
+            topicPriority, index, labelList,
+            modifiedData, dueDate, assignee,
+            description, stage, relatedTopics)
+    return topic
+
+
+def buildHeader(headerDict):
+
+    fileDict = headerDict["File"]
+    filename = getOptionalFromDict(fileDict, "Filename", None)
+    filedate = getOptionalFromDict(fileDict, "Date", None)
+    if filedate:
+        filedate = dateutil.parser.parse(filedate)
+
+    reference = getOptionalFromDict(fileDict, "Reference", None)
+    if reference:
+        reference = Uri(reference)
+
+    ifcProjectId = getOptionalFromDict(fileDict, "@IfcProject", None)
+    if ifcProjectId:
+        ifcProjectId = UUID(ifcProjectId)
+
+    ifcSpatialStructureElement = getOptionalFromDict(fileDict,
+            "@IfcSpatialStructureElement", None)
+    if ifcSpatialStructureElement:
+        ifcSpatialStructureElement = UUID(ifcSpatialStructureElement)
+
+    isExternal = getOptionalFromDict(fileDict, "@isExternal", True)
+
+    header = Header(ifcProjectId, ifcSpatialStructureElement,
+            isExternal, filename, date, reference)
+    return header
+
+
+def buildViewpointReference(viewpointDict):
+
+    id = UUID(viewpointDict["@Guid"])
+    viewpointFile = getOptionalFromDict(viewpointDict, "Viewpoint", None)
+    if viewpointFile:
+        viewpointFile = Uri(viewpointFile)
+
+    snapshotFile = getOptionalFromDict(viewpointDict, "Snapshot", None)
+    if snapshotFile:
+        snapshotFile = Uri(snapshotFile)
+
+    index = getOptionalFromDict(viewpointDict, "Index", 0)
+
+    vpReference = ViewpointReference(id, viewpointFile, snapshotFile, index)
+    return vpReference
+
+
 #TODO: implement that function
 def buildMarkup(markupFilePath: str, markupSchemaPath: str,
         viewpoints: List[viewpoint.Viewpoint],
         snapshots: List[Uri]):
-    pass
+
+    markupSchema = XMLSchema(markupSchemaPath)
+    markupDict = markupSchema.to_dict(markupFilePath)
+
+    pprint.pprint(markupDict)
+    if "Comment" in markupDict:
+        comments = list()
+        for commentDict in markupDict["Comment"]:
+            comment = buildComment(commentDict)
+            comments.append(comment)
+
+    topicDict = markupDict["Topic"]
+    topic = buildTopic(topicDict)
+
+    headerDict = getOptionalFromDict(markupDict, "Header", None)
+    header = None
+    # there may be instances that define an empty header element
+    if headerDict and len(headerDict) > 0:
+        header = buildHeader(headerDict)
+
+    viewpointList = getOptionalFromDict(markupDict, "Viewpoints", list())
+    viewpoints = [ buildViewpointReference(vpDict)
+                    for vpDict in viewpointList ]
+
+    markup = Markup(header, topic, comments, viewpoints)
+    return markup
 
 
 #TODO: implement that function
@@ -306,6 +488,8 @@ def readBcfFile(bcfFile: str):
 
         # add the finished markup object to the project
         proj.topicList.append(markup)
+
+    return proj
 
 
 if __name__ == "__main__":

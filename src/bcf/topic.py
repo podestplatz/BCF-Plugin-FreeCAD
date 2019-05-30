@@ -148,6 +148,36 @@ class SnippetType(SchemaConstraint):
         super(SnippetType, self).__init__(values[0], values)
 
 
+class DocumentReference:
+    def __init__(self,
+                id: UUID = None,
+                external: bool = False,
+                reference: Uri = None,
+                description: str = ""):
+
+        """ Initialization function for DocumentReference """
+
+        self.id = id
+        self.external = external
+        self.reference = reference
+        self.description = description
+
+
+class BimSnippet:
+    def __init__(self,
+            type: SnippetType = None,
+            external: bool = False,
+            reference: Uri = None,
+            schema: Uri = None):
+
+        """ Initialization function for BimSnippet """
+
+        self.type = type
+        self.external = external
+        self.reference = reference
+        self.schema = schema
+
+
 class Topic:
 
     """ Topic contains all metadata about one ... topic """
@@ -158,7 +188,7 @@ class Topic:
             creation: Modification,
             type: str = None,
             status: str = None,
-            refs: List[Uri] = list(),
+            refs: List[DocumentReference] = list(),
             priority: str = None,
             index: int = 0,
             labels: List[str] = list(),
@@ -166,7 +196,8 @@ class Topic:
             dueDate: date = None,
             assignee: str = "",
             description: str = "",
-            stage: str = None):
+            stage: str = None,
+            relatedTopics: List[UUID] = None):
 
         """ Initialisation function of Topic """
 
@@ -184,4 +215,5 @@ class Topic:
         self.assignee = assignee
         self.description = description
         self.stage = stage
+        self.relatedTopics = relatedTopics
 

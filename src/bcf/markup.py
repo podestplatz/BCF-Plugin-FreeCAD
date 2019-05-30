@@ -23,50 +23,24 @@ class Header:
         self.time = time
         self.reference = reference
 
-class DocumentReference:
-    def __init__(self,
-                id: UUID = None,
-                external: bool = False,
-                reference: Uri = None,
-                description: str = ""):
-
-        """ Initialization function for DocumentReference """
-
-        self.id = id
-        self.external = external
-        self.reference = reference
-        self.description = description
-
-
-class BimSnippet:
-    def __init__(self,
-            type: SnippetType = None,
-            external: bool = True,
-            reference: Uri = None,
-            schema: Uri = None):
-
-        """ Initialization function for BimSnippet """
-
-        self.type = type
-        self.external = external
-        self.reference = reference
-        self.schema = schema
-
 
 class ViewpointReference:
 
     """ Base class for Viewpoint. """
 
     def __init__(self,
+            id: UUID,
             file: Uri = None,
             snapshot: Uri = None,
             index: int = 0):
 
         """ Initialisation function of ViewpointReference """
 
+        self.id = id
         self.file = file
         self.snapshot = snapshot
         self.index = index
+
 
 class Comment:
 
@@ -94,21 +68,13 @@ class Markup:
     def __init__(self,
             header: Header = None,
             topic: List[Topic] = list(),
-            bimSnippet: BimSnippet = None,
-            docRefs: List[DocumentReference] = list(),
-            relatedTopic: UUID = None,
             comments: List[Comment] = list(),
-            viewpoints: List[ViewpointReference] = list(),
-            snapshots: List[Uri] = list()):
+            viewpoints: List[ViewpointReference] = list()):
 
         """ Initialization function for Markup """
 
         self.header = header
         self.topic = topic
-        self.bimSnippet = bimSnippet
-        self.docRefs = docRefs
-        self.relatedTopic = relatedTopic
         self.comments = comments
         self.viewpoints = viewpoints
-        self.snapshots = snapshots
 
