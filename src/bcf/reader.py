@@ -12,6 +12,7 @@ from uri import Uri
 from modification import Modification
 from markup import (Comment, Markup, Header, ViewpointReference)
 from topic import (Topic, BimSnippet, DocumentReference)
+from viewpoint import (Viewpoint, Component, Components, ViewSetupHints)
 
 DEBUG = True
 SUPPORTED_VERSIONS = ["2.1"]
@@ -346,10 +347,7 @@ def buildViewpointReference(viewpointDict):
     return vpReference
 
 
-#TODO: implement that function
-def buildMarkup(markupFilePath: str, markupSchemaPath: str,
-        viewpoints: List[viewpoint.Viewpoint],
-        snapshots: List[Uri]):
+def buildMarkup(markupFilePath: str, markupSchemaPath: str):
 
     markupSchema = XMLSchema(markupSchemaPath)
     markupDict = markupSchema.to_dict(markupFilePath)
@@ -378,9 +376,62 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str,
     return markup
 
 
+def buildViewSetupHints(vshDict: Dict):
+
+    spacesVisible = getOptionalFromDict(vshDict, "@SpacesVisible", False)
+    spaceBoundariesVisible = getOptionalFromDict(vshDict,
+            "@SpaceBoundariesVisible", False)
+    openingsVisible = getOptionalFromDict(vshDict, "@OpeningsVisible", False)
+
+    vsh = ViewSetupHints(openingsVisible, spacesVisible,
+            spaceBoundariesVisible)
+    return vsh
+
+
+def buildComponent(componentDict: Dict):
+
+    id = getOptionalFromDict(componentDict, "@IfcGuid", None)
+    if id:
+        id = UUID(id)
+
+    authoringToolId = getOptionalFromDict(componentDict,
+            "AuthoringToolId", None)
+
+    originatingSystem = getOptionalFromDict(componentDict,
+            "OriginatingSystem", None)
+
+    component = Component(id, originatingSystem, authoringToolId)
+    return component
+
+
+def buildComponents(componentsDict: Dict):
+
+    vshDict = getOptionalFromDict(componentsDict, "ViewSetupHints", None)
+    if vshDict:
+        vsh = buildViewSetupHints(vshDict)
+
+    componentList = getOptionalFromDict(componentsDict, "Selection", list())
+    sel = [ buildComponent(cpDict) for cpDict in componentList ]
+
+    visibilityDict = componentsDict["Visibility"]
+    defaultVisibility = getOptionalFromDict(visibilityDict,
+            "@DefaultVisibility", True)
+
+
 #TODO: implement that function
-def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
-    pass
+def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str,
+        vpRef: ViewpointReference):
+
+    vpSchema = XMLSchema(viewpointSchemaPath)
+    vpDict = vpSchema.to_dict(viewpointFilePath)
+
+    id = vpDict["@Guid"]
+
+    pprint.pprint(vpDict)
+    componentsList = getOptionalFromDict(vpDict, "Components", list())
+    componentsList = [ buildComponents(cp) for cp in componentsList ]
+
+    return None
 
 
 def validateFile(validateFilePath: str,
@@ -459,24 +510,6 @@ def readBcfFile(bcfFile: str):
     for topic in topicDirectories:
         ### Validate all viewpoint files in the directory, and build them ###
         topicDir = os.path.join(bcfExtractedPath, topic)
-        viewpointFiles = getFileListByExtension(topicDir, ".bcfv")
-        errorList = [ validateFile(os.path.join(topicDir, viewpointFile),
-                                    visinfoSchemaPath,
-                                    bcfFile)
-                      for viewpointFile in viewpointFiles
-                    ]
-        # truncate to only contain non-empty strings == error messages
-        errorList = list(filter(lambda item: item != "", errorList))
-        if len(errorList) > 0:
-            print("One or more viewpoint.bcfv files could not be validated.")
-            for error in errorList:
-                pprint.pprint(error)
-            continue
-        viewpoints = [ buildViewpoint(viewpointFile, visinfoSchemaPath)
-                            for viewpointFile in viewpointFiles ]
-
-        # get list of all snapshots in the directory
-        snapshots = getFileListByExtension(topicDir, ".png")
 
         markupFilePath = os.path.join(topicDir, "markup.bcf")
         print("looking into topic {}".format(topicDir))
@@ -484,7 +517,14 @@ def readBcfFile(bcfFile: str):
         if error != "":
             print(error, file=sys.stderr)
             return None
-        markup = buildMarkup(markupFilePath, markupSchemaPath, viewpoints, snapshots)
+        markup = buildMarkup(markupFilePath, markupSchemaPath)
+
+        viewpointFiles = markup.getViewpointFileList()
+        viewpoints = list()
+        for (vpFile, vpRef) in viewpointFiles:
+            vpPath = os.path.join(topicDir, vpFile.uri)
+            vp = buildViewpoint(vpPath, visinfoSchemaPath, vpRef)
+            viewpoints.append(vp)
 
         # add the finished markup object to the project
         proj.topicList.append(markup)

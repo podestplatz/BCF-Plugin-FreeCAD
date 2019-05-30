@@ -98,13 +98,24 @@ class ComponentColor:
         self.components = components
 
 
+class ViewSetupHints:
+
+    def __init__(self, openingsVisible: bool = False,
+            spacesVisible: bool = False,
+            spaceBoundariesVisible: bool = False):
+
+        self.openingsVisible = openingsVisible
+        self.spaceBoundariesVisible = spaceBoundariesVisible
+        self.spacesVisible = spacesVisible
+
+
 class Components:
 
     def __init__(self,
             visibilityDefault: bool,
             visibilityExceptions: List[Component],
             selection: List[Component] = list(),
-            viewSetupHints: Dict = dict(),
+            viewSetupHints: ViewSetupHints = None,
             coloring: List[ComponentColor] = list()):
         self.viewSetuphints = viewSetuphints
         self.selection = selection

@@ -78,3 +78,29 @@ class Markup:
         self.comments = comments
         self.viewpoints = viewpoints
 
+
+    def getViewpointFileList(self):
+
+        """
+        From `self.viewpoints` extracts the `file` attributes and collects them in
+        a list. Only entries different from `None` are colleced. Every element
+        of the list is a tuple. Of this tuple the first element denotes the
+        filename and the second one is a reference to the
+        `ViewpointsReference` object it is contained in
+        """
+
+        vpList = [ (vp.file, vp) for vp in self.viewpoints
+                    if vp.file ]
+        return vpList
+
+
+    def getSnapshotFileList(self):
+
+        """
+        From self.snapshots extracts the `snapshot` attributes and collects them in
+        a list. Only entries different from `None` are colleced.
+        """
+
+        snapshotList = [ vp.snapshot for vp in self.viewpoints
+                            if vp.snapshot ]
+        return snapshotList
