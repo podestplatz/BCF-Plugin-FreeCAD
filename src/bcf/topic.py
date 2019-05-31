@@ -32,13 +32,13 @@ class SchemaConstraint:
     def __init__(self,
             initialValue: str,
             validValues: str):
-        self.validValues = validValues
+        self._validValues = validValues
         if initialValue in validValues:
-            self.value = initialValue
+            self._value = initialValue
 
     @property
     def validValues(self):
-        return self.validValues
+        return self._validValues
 
     @validValues.setter
     def validValues(self, values: List[str]):
@@ -59,7 +59,7 @@ class SchemaConstraint:
 
         if (newValue in self.__validValues or
                 self._validValues == [None]):
-            self.value = newValue
+            self._value = newValue
 
     @staticmethod
     def parseConstraints(elementName):

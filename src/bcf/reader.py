@@ -12,7 +12,11 @@ from uri import Uri
 from modification import Modification
 from markup import (Comment, Markup, Header, ViewpointReference)
 from topic import (Topic, BimSnippet, DocumentReference)
-from viewpoint import (Viewpoint, Component, Components, ViewSetupHints)
+from viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
+        ComponentColour, PerspectiveCamera, OrthogonalCamera, BitmapFormat,
+        Bitmap)
+from threedvector import (Point, Line, Direction, ClippingPlane)
+
 
 DEBUG = True
 SUPPORTED_VERSIONS = ["2.1"]
@@ -326,7 +330,7 @@ def buildHeader(headerDict):
     isExternal = getOptionalFromDict(fileDict, "@isExternal", True)
 
     header = Header(ifcProjectId, ifcSpatialStructureElement,
-            isExternal, filename, date, reference)
+            isExternal, filename, filedate, reference)
     return header
 
 
@@ -404,9 +408,23 @@ def buildComponent(componentDict: Dict):
     return component
 
 
+def buildComponentColour(ccDict: Dict):
+
+    colour = getOptionalFromDict(ccDict, "@Color", None)
+    colourComponents = list()
+    cc = None
+    if colour: # if a colour is defined then at least one component has to exist
+        colourComponentList = [ buildComponent(cp)
+                                for cp in ccDict["Component"] ]
+        cc = ComponentColor(colour, colourComponents)
+
+    return cc
+
+
 def buildComponents(componentsDict: Dict):
 
     vshDict = getOptionalFromDict(componentsDict, "ViewSetupHints", None)
+    vsh = None
     if vshDict:
         vsh = buildViewSetupHints(vshDict)
 
@@ -416,11 +434,88 @@ def buildComponents(componentsDict: Dict):
     visibilityDict = componentsDict["Visibility"]
     defaultVisibility = getOptionalFromDict(visibilityDict,
             "@DefaultVisibility", True)
+    exceptionList = getOptionalFromDict(visibilityDict, "Exceptions", list())
+    exceptions = [ buildComponent(cp) for cp in exceptionList ]
+    colourComponentList = getOptionalFromDict(componentsDict, "Coloring", list())
+    componentColours = [ buildComponentColour(ccDict)
+                            for ccDict in colourComponentList ]
+
+    components = Components(defaultVisibility, exceptionList, sel,
+            vsh, componentColours)
+    return components
 
 
-#TODO: implement that function
-def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str,
-        vpRef: ViewpointReference):
+def buildPoint(pointDict: Dict):
+
+    return Point(pointDict["X"], pointDict["Y"], pointDict["Z"])
+
+
+def buildDirection(dirDict: Dict):
+
+    return Direction(dirDict["X"], dirDict["Y"], dirDict["Z"])
+
+
+def buildOrthogonalCamera(oCamDict: Dict):
+
+    camViewpoint = buildPoint(oCamDict["CameraViewPoint"])
+    camDirection = buildDirection(oCamDict["CameraDirection"])
+    camUpVector = buildDirection(oCamDict["CameraUpVector"])
+    vWorldScale = oCamDict["ViewToWorldScale"]
+
+    cam = OrthogonalCamera(camViewpoint, camDirection, camUpVector, vWorldScale)
+    return cam
+
+
+def buildPerspectiveCamera(pCamDict: Dict):
+
+    camViewpoint = buildPoint(pCamDict["CameraViewPoint"])
+    camDirection = buildDirection(pCamDict["CameraDirection"])
+    camUpVector = buildDirection(pCamDict["CameraUpVector"])
+    fieldOfView = pCamDict["FieldOfView"] # [0, 360] in version 2.1
+
+    cam = PerspectiveCamera(camViewpoint, camDirection, camUpVector,
+            fieldOfView)
+    return cam
+
+
+def buildLine(lineDict: Dict):
+
+    start = buildPoint(lineDict["StartPoint"])
+    end = buildPoint(lineDict["EndPoint"])
+
+    line = Line(start, end)
+    return line
+
+
+def buildClippingPlane(clipDict: Dict):
+
+    location = buildPoint(clipDict["Location"])
+    direction = buildDirection(clipDict["Direction"])
+
+    cPlane = ClippingPlane(location, direction)
+    return cPlane
+
+
+def buildBitmap(bmDict: Dict):
+
+    bmFormatStr = bmDict["Bitmap"] # either JPG or PNG
+    bmFormat = BitmapFormat.PNG if bmFormatStr == "PNG" else BitmapFormat.JPG
+
+    reference = bmDict["Reference"]
+    location = buildPoint(bmDict["Location"])
+    normal = buildDirection(bmDict["Normal"])
+    up = buildDirection(bmDict["Up"])
+    height = bmDict["Height"]
+
+    bitmap = Bitmap(bmFormat, reference, location, normal, up, height)
+    return bitmap
+
+
+def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
+
+    """
+    Builds an object of type viewpoint.
+    """
 
     vpSchema = XMLSchema(viewpointSchemaPath)
     vpDict = vpSchema.to_dict(viewpointFilePath)
@@ -428,10 +523,41 @@ def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str,
     id = vpDict["@Guid"]
 
     pprint.pprint(vpDict)
-    componentsList = getOptionalFromDict(vpDict, "Components", list())
-    componentsList = [ buildComponents(cp) for cp in componentsList ]
+    componentsDict = getOptionalFromDict(vpDict, "Components", None)
+    components = None
+    if componentsDict:
+        components = buildComponents(componentsDict)
 
-    return None
+    oCamDict = getOptionalFromDict(vpDict, "OrthogonalCamera", None)
+    oCam = None
+    if oCamDict:
+        oCam = buildOrthogonalCamera(oCamDict)
+
+    pCamDict = getOptionalFromDict(vpDict, "PerspectiveCamera", None)
+    pCam = None
+    if pCamDict:
+        pCam = buildPerspectiveCamera(pCamDict)
+
+    linesDict = getOptionalFromDict(vpDict, "Lines", None)
+    lines = None
+    if linesDict:
+        linesList = getOptionalFromDict(linesDict, "Line", list())
+        lines = [ buildLine(line) for line in linesList ]
+
+    clippingPlaneDict = getOptionalFromDict(vpDict, "ClippingPlanes", None)
+    clippingPlanes = None
+    if clippingPlaneDict:
+        clippingPlaneList = getOptionalFromDict(clippingPlaneDict,
+                "ClippingPlane", list())
+        clippingPlanes = [ buildClippingPlane(clipDict)
+                            for clipDict in clippingPlaneList ]
+
+    bitmapList = getOptionalFromDict(vpDict, "Bitmap", list())
+    bitmaps = [ buildBitmap(bmDict) for bmDict in bitmapList ]
+
+    viewpoint = Viewpoint(id, components, oCam,
+            pCam, lines, clippingPlanes, bitmaps)
+    return viewpoint
 
 
 def validateFile(validateFilePath: str,
@@ -521,10 +647,10 @@ def readBcfFile(bcfFile: str):
 
         viewpointFiles = markup.getViewpointFileList()
         viewpoints = list()
-        for (vpFile, vpRef) in viewpointFiles:
-            vpPath = os.path.join(topicDir, vpFile.uri)
-            vp = buildViewpoint(vpPath, visinfoSchemaPath, vpRef)
-            viewpoints.append(vp)
+        for vpRef in markup.viewpoints:
+            vpPath = os.path.join(topicDir, vpRef.file.uri)
+            vp = buildViewpoint(vpPath, visinfoSchemaPath)
+            vpRef.viewpoint = vp
 
         # add the finished markup object to the project
         proj.topicList.append(markup)

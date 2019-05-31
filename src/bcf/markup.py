@@ -41,6 +41,14 @@ class ViewpointReference:
         self.snapshot = snapshot
         self.index = index
 
+    @property
+    def viewpoint(self):
+        return self._viewpoint
+
+    @viewpoint.setter
+    def viewpoint(self, newVal):
+        self._viewpoint = newVal
+
 
 class Comment:
 

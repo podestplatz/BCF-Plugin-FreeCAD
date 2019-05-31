@@ -71,7 +71,7 @@ class OrthogonalCamera(Camera):
 
         """ Initialisation function of OrthogonalCamera """
 
-        super(PerspectiveCamera, self).__init__(viewPoint, direction, upVector)
+        super(OrthogonalCamera, self).__init__(viewPoint, direction, upVector)
         self.viewWorldScale = viewWorldScale
 
 
@@ -86,15 +86,15 @@ class Component:
         self.authoringtoolId = authoringtoolId
 
 
-class ComponentColor:
+class ComponentColour:
 
     def __init__(self,
-            color: str,
-            components: List[UUID]): # has to have at least one element
+            colour: str,
+            components: List[Component]): # has to have at least one element
 
         if len(components) == 0:
             raise InvalidArgumentException
-        self.color = color
+        self.colour = colour
         self.components = components
 
 
@@ -116,30 +116,31 @@ class Components:
             visibilityExceptions: List[Component],
             selection: List[Component] = list(),
             viewSetupHints: ViewSetupHints = None,
-            coloring: List[ComponentColor] = list()):
-        self.viewSetuphints = viewSetuphints
+            colouring: List[ComponentColour] = list()):
+        self.viewSetuphints = viewSetupHints
         self.selection = selection
         self.visibilityDefault = visibilityDefault
         self.visibilityExceptions = visibilityExceptions
-        self.coloring = coloring
+        self.colouring = colouring
 
 
-class Viewpoint(ViewpointReference):
+class Viewpoint:
 
     """ """
 
     def __init__(self,
-            id: UUID = None,
-            components: Components = None, #TODO: define class
-            camSetting: Camera = None,
-            camSetting2: Camera = None,
+            id: UUID,
+            components: Components = None,
+            oCamera: OrthogonalCamera = None,
+            pCamera: PerspectiveCamera = None,
             lines: List[Line] = list(),
             clippingPlanes: List[ClippingPlane] = list(),
-            bitmaps: Bitmap = None):
+            bitmaps: List[Bitmap] = list()):
+
         self.id = id
         self.components = components
-        self.camSetting = camSetting
-        self.camSetting2 = camSetting2
+        self.oCamera = oCamera
+        self.pCamera = pCamera
         self.lines = lines
         self.clippingPlanes = clippingPlanes
         self.bitmaps = bitmaps
