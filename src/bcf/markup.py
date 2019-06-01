@@ -1,9 +1,9 @@
 from uuid import UUID
 from datetime import datetime, date
-from uri import Uri
 from typing import List # used for custom type annotations
-from modification import Modification
-from topic import Topic, SnippetType
+from bcf.uri import Uri
+from bcf.modification import Modification
+from bcf.topic import Topic, SnippetType
 
 class Header:
     def __init__(self,

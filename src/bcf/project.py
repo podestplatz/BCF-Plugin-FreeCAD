@@ -1,6 +1,6 @@
-from uri import Uri
 from uuid import UUID
-from markup import Markup
+from bcf.uri import Uri
+from bcf.markup import Markup
 
 class Project:
     def __init__(self,

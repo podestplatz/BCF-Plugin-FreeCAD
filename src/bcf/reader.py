@@ -1,22 +1,21 @@
 import sys
 import os
 import dateutil.parser
-import util
-import project
-import viewpoint
 from zipfile import ZipFile
 from xmlschema import XMLSchema
 from uuid import UUID
 from typing import List, Dict
-from uri import Uri
-from modification import Modification
-from markup import (Comment, Markup, Header, ViewpointReference)
-from topic import (Topic, BimSnippet, DocumentReference)
-from viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
+from bcf import project
+from bcf import viewpoint
+from bcf import util
+from bcf.uri import Uri as Uri
+from bcf.modification import Modification
+from bcf.markup import (Comment, Header, ViewpointReference)
+from bcf.topic import (Topic, BimSnippet, DocumentReference)
+from bcf.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         ComponentColour, PerspectiveCamera, OrthogonalCamera, BitmapFormat,
         Bitmap)
-from threedvector import (Point, Line, Direction, ClippingPlane)
-
+from bcf.threedvector import (Point, Line, Direction, ClippingPlane)
 
 DEBUG = True
 SUPPORTED_VERSIONS = ["2.1"]

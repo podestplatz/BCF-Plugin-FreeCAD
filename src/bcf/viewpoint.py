@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import List, Dict
-from markup import ViewpointReference
 from uuid import UUID
-from threedvector import *
+from bcf.markup import ViewpointReference
+from bcf.threedvector import *
 
 
 class BitmapFormat(Enum):

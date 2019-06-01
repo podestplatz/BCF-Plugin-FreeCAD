@@ -1,11 +1,11 @@
-import util
+import bcf.util
 from typing import List
 from enum import Enum
 from uuid import UUID
-from xmlschema import XMLSchema
-from modification import Modification
-from uri import Uri
 from datetime import date
+from xmlschema import XMLSchema
+from bcf.modification import Modification
+from bcf.uri import Uri
 
 
 """ Is not used anymore """
