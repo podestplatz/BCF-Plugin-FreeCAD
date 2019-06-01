@@ -168,18 +168,55 @@ def getOptionalFromDict(d: Dict, desiredValue: str, empty):
 
 
 ########## Object builder functions ##########
+"""
+Following, all functions prefixed with `build` fulfill the purpose of creating
+an object of the class that is specified after `build`. So `buildX` cretes an
+object of type `X`.
+The data for the object is supplied (in most cases) through a python dictionary.
+This dictionary was created by parsing an XML file against an accompanying XSD
+through the library `xmlschema`. All functions that expect such a dictionary
+further expect the dictonary to be the value of the key value pair that was
+generated for the according node from the XML. To make things clearer here a
+little example. We will start with the XML file, then show how it is represented
+as dictionary by xmlschema and lastly showing what each `buildX` function
+expects.
+
+XML
+------------------------------
+<topNode>
+    <comment></comment>
+    <comment id=2><author>a@b.c<author></comment>
+    <comment id=3></comment>
+</topNode>
+------------------------------
+
+Python dictonary:
+------------------------------
+{
+    'comment': [None,
+                {'@id': 2, 'author': 'a@b.c'},
+                {'@id': 3}
+               ]
+}
+
+buildComment now expects an element of the list value of 'comment'. So either
+ - None
+ - {'@id': 2, 'author': 'a@b.c'}
+ - {'@id': 3}
+
+------------------------------
+
+Note how the keys corresponding to attributes are prefixed
+with `@`.
+
+The other type of build functions expect a path to a file. These can be
+considered as somewhat top-level `build` functions. They receive the path to an
+xml file, as well as a path to the corresponding XSD. They then call the lower
+level `build` functions to generate objects of the nodes, if they are complex
+enough.
+"""
 
 def buildProject(projectFilePath: str, projectSchema: str):
-
-    """
-    Parses the contents of the project.bcfv file pointed to by
-    `projectFilePath`.
-    First the XML file is parsed into a python dictionary using
-    xmlschema.XMLSchema.to_dict(xmlFilePath). Then this python dictionary is morphed
-    into an objec of the Project class.
-
-    This function assumes that project.bcfp was already successfully validated.
-    """
 
     if projectFilePath is None or projectSchema is None:
         return None
