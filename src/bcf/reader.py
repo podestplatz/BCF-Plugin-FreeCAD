@@ -12,6 +12,11 @@ from uri import Uri
 from modification import Modification
 from markup import (Comment, Markup, Header, ViewpointReference)
 from topic import (Topic, BimSnippet, DocumentReference)
+from viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
+        ComponentColour, PerspectiveCamera, OrthogonalCamera, BitmapFormat,
+        Bitmap)
+from threedvector import (Point, Line, Direction, ClippingPlane)
+
 
 DEBUG = True
 SUPPORTED_VERSIONS = ["2.1"]
@@ -163,18 +168,55 @@ def getOptionalFromDict(d: Dict, desiredValue: str, empty):
 
 
 ########## Object builder functions ##########
+"""
+Following, all functions prefixed with `build` fulfill the purpose of creating
+an object of the class that is specified after `build`. So `buildX` cretes an
+object of type `X`.
+The data for the object is supplied (in most cases) through a python dictionary.
+This dictionary was created by parsing an XML file against an accompanying XSD
+through the library `xmlschema`. All functions that expect such a dictionary
+further expect the dictonary to be the value of the key value pair that was
+generated for the according node from the XML. To make things clearer here a
+little example. We will start with the XML file, then show how it is represented
+as dictionary by xmlschema and lastly showing what each `buildX` function
+expects.
+
+XML
+------------------------------
+<topNode>
+    <comment></comment>
+    <comment id=2><author>a@b.c<author></comment>
+    <comment id=3></comment>
+</topNode>
+------------------------------
+
+Python dictonary:
+------------------------------
+{
+    'comment': [None,
+                {'@id': 2, 'author': 'a@b.c'},
+                {'@id': 3}
+               ]
+}
+
+buildComment now expects an element of the list value of 'comment'. So either
+ - None
+ - {'@id': 2, 'author': 'a@b.c'}
+ - {'@id': 3}
+
+------------------------------
+
+Note how the keys corresponding to attributes are prefixed
+with `@`.
+
+The other type of build functions expect a path to a file. These can be
+considered as somewhat top-level `build` functions. They receive the path to an
+xml file, as well as a path to the corresponding XSD. They then call the lower
+level `build` functions to generate objects of the nodes, if they are complex
+enough.
+"""
 
 def buildProject(projectFilePath: str, projectSchema: str):
-
-    """
-    Parses the contents of the project.bcfv file pointed to by
-    `projectFilePath`.
-    First the XML file is parsed into a python dictionary using
-    xmlschema.XMLSchema.to_dict(xmlFilePath). Then this python dictionary is morphed
-    into an objec of the Project class.
-
-    This function assumes that project.bcfp was already successfully validated.
-    """
 
     if projectFilePath is None or projectSchema is None:
         return None
@@ -325,7 +367,7 @@ def buildHeader(headerDict):
     isExternal = getOptionalFromDict(fileDict, "@isExternal", True)
 
     header = Header(ifcProjectId, ifcSpatialStructureElement,
-            isExternal, filename, date, reference)
+            isExternal, filename, filedate, reference)
     return header
 
 
@@ -346,10 +388,7 @@ def buildViewpointReference(viewpointDict):
     return vpReference
 
 
-#TODO: implement that function
-def buildMarkup(markupFilePath: str, markupSchemaPath: str,
-        viewpoints: List[viewpoint.Viewpoint],
-        snapshots: List[Uri]):
+def buildMarkup(markupFilePath: str, markupSchemaPath: str):
 
     markupSchema = XMLSchema(markupSchemaPath)
     markupDict = markupSchema.to_dict(markupFilePath)
@@ -378,9 +417,184 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str,
     return markup
 
 
-#TODO: implement that function
+def buildViewSetupHints(vshDict: Dict):
+
+    spacesVisible = getOptionalFromDict(vshDict, "@SpacesVisible", False)
+    spaceBoundariesVisible = getOptionalFromDict(vshDict,
+            "@SpaceBoundariesVisible", False)
+    openingsVisible = getOptionalFromDict(vshDict, "@OpeningsVisible", False)
+
+    vsh = ViewSetupHints(openingsVisible, spacesVisible,
+            spaceBoundariesVisible)
+    return vsh
+
+
+def buildComponent(componentDict: Dict):
+
+    id = getOptionalFromDict(componentDict, "@IfcGuid", None)
+    if id:
+        id = UUID(id)
+
+    authoringToolId = getOptionalFromDict(componentDict,
+            "AuthoringToolId", None)
+
+    originatingSystem = getOptionalFromDict(componentDict,
+            "OriginatingSystem", None)
+
+    component = Component(id, originatingSystem, authoringToolId)
+    return component
+
+
+def buildComponentColour(ccDict: Dict):
+
+    colour = getOptionalFromDict(ccDict, "@Color", None)
+    colourComponents = list()
+    cc = None
+    if colour: # if a colour is defined then at least one component has to exist
+        colourComponentList = [ buildComponent(cp)
+                                for cp in ccDict["Component"] ]
+        cc = ComponentColor(colour, colourComponents)
+
+    return cc
+
+
+def buildComponents(componentsDict: Dict):
+
+    vshDict = getOptionalFromDict(componentsDict, "ViewSetupHints", None)
+    vsh = None
+    if vshDict:
+        vsh = buildViewSetupHints(vshDict)
+
+    componentList = getOptionalFromDict(componentsDict, "Selection", list())
+    sel = [ buildComponent(cpDict) for cpDict in componentList ]
+
+    visibilityDict = componentsDict["Visibility"]
+    defaultVisibility = getOptionalFromDict(visibilityDict,
+            "@DefaultVisibility", True)
+    exceptionList = getOptionalFromDict(visibilityDict, "Exceptions", list())
+    exceptions = [ buildComponent(cp) for cp in exceptionList ]
+    colourComponentList = getOptionalFromDict(componentsDict, "Coloring", list())
+    componentColours = [ buildComponentColour(ccDict)
+                            for ccDict in colourComponentList ]
+
+    components = Components(defaultVisibility, exceptionList, sel,
+            vsh, componentColours)
+    return components
+
+
+def buildPoint(pointDict: Dict):
+
+    return Point(pointDict["X"], pointDict["Y"], pointDict["Z"])
+
+
+def buildDirection(dirDict: Dict):
+
+    return Direction(dirDict["X"], dirDict["Y"], dirDict["Z"])
+
+
+def buildOrthogonalCamera(oCamDict: Dict):
+
+    camViewpoint = buildPoint(oCamDict["CameraViewPoint"])
+    camDirection = buildDirection(oCamDict["CameraDirection"])
+    camUpVector = buildDirection(oCamDict["CameraUpVector"])
+    vWorldScale = oCamDict["ViewToWorldScale"]
+
+    cam = OrthogonalCamera(camViewpoint, camDirection, camUpVector, vWorldScale)
+    return cam
+
+
+def buildPerspectiveCamera(pCamDict: Dict):
+
+    camViewpoint = buildPoint(pCamDict["CameraViewPoint"])
+    camDirection = buildDirection(pCamDict["CameraDirection"])
+    camUpVector = buildDirection(pCamDict["CameraUpVector"])
+    fieldOfView = pCamDict["FieldOfView"] # [0, 360] in version 2.1
+
+    cam = PerspectiveCamera(camViewpoint, camDirection, camUpVector,
+            fieldOfView)
+    return cam
+
+
+def buildLine(lineDict: Dict):
+
+    start = buildPoint(lineDict["StartPoint"])
+    end = buildPoint(lineDict["EndPoint"])
+
+    line = Line(start, end)
+    return line
+
+
+def buildClippingPlane(clipDict: Dict):
+
+    location = buildPoint(clipDict["Location"])
+    direction = buildDirection(clipDict["Direction"])
+
+    cPlane = ClippingPlane(location, direction)
+    return cPlane
+
+
+def buildBitmap(bmDict: Dict):
+
+    bmFormatStr = bmDict["Bitmap"] # either JPG or PNG
+    bmFormat = BitmapFormat.PNG if bmFormatStr == "PNG" else BitmapFormat.JPG
+
+    reference = bmDict["Reference"]
+    location = buildPoint(bmDict["Location"])
+    normal = buildDirection(bmDict["Normal"])
+    up = buildDirection(bmDict["Up"])
+    height = bmDict["Height"]
+
+    bitmap = Bitmap(bmFormat, reference, location, normal, up, height)
+    return bitmap
+
+
 def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
-    pass
+
+    """
+    Builds an object of type viewpoint.
+    """
+
+    vpSchema = XMLSchema(viewpointSchemaPath)
+    vpDict = vpSchema.to_dict(viewpointFilePath)
+
+    id = vpDict["@Guid"]
+
+    pprint.pprint(vpDict)
+    componentsDict = getOptionalFromDict(vpDict, "Components", None)
+    components = None
+    if componentsDict:
+        components = buildComponents(componentsDict)
+
+    oCamDict = getOptionalFromDict(vpDict, "OrthogonalCamera", None)
+    oCam = None
+    if oCamDict:
+        oCam = buildOrthogonalCamera(oCamDict)
+
+    pCamDict = getOptionalFromDict(vpDict, "PerspectiveCamera", None)
+    pCam = None
+    if pCamDict:
+        pCam = buildPerspectiveCamera(pCamDict)
+
+    linesDict = getOptionalFromDict(vpDict, "Lines", None)
+    lines = None
+    if linesDict:
+        linesList = getOptionalFromDict(linesDict, "Line", list())
+        lines = [ buildLine(line) for line in linesList ]
+
+    clippingPlaneDict = getOptionalFromDict(vpDict, "ClippingPlanes", None)
+    clippingPlanes = None
+    if clippingPlaneDict:
+        clippingPlaneList = getOptionalFromDict(clippingPlaneDict,
+                "ClippingPlane", list())
+        clippingPlanes = [ buildClippingPlane(clipDict)
+                            for clipDict in clippingPlaneList ]
+
+    bitmapList = getOptionalFromDict(vpDict, "Bitmap", list())
+    bitmaps = [ buildBitmap(bmDict) for bmDict in bitmapList ]
+
+    viewpoint = Viewpoint(id, components, oCam,
+            pCam, lines, clippingPlanes, bitmaps)
+    return viewpoint
 
 
 def validateFile(validateFilePath: str,
@@ -459,24 +673,6 @@ def readBcfFile(bcfFile: str):
     for topic in topicDirectories:
         ### Validate all viewpoint files in the directory, and build them ###
         topicDir = os.path.join(bcfExtractedPath, topic)
-        viewpointFiles = getFileListByExtension(topicDir, ".bcfv")
-        errorList = [ validateFile(os.path.join(topicDir, viewpointFile),
-                                    visinfoSchemaPath,
-                                    bcfFile)
-                      for viewpointFile in viewpointFiles
-                    ]
-        # truncate to only contain non-empty strings == error messages
-        errorList = list(filter(lambda item: item != "", errorList))
-        if len(errorList) > 0:
-            print("One or more viewpoint.bcfv files could not be validated.")
-            for error in errorList:
-                pprint.pprint(error)
-            continue
-        viewpoints = [ buildViewpoint(viewpointFile, visinfoSchemaPath)
-                            for viewpointFile in viewpointFiles ]
-
-        # get list of all snapshots in the directory
-        snapshots = getFileListByExtension(topicDir, ".png")
 
         markupFilePath = os.path.join(topicDir, "markup.bcf")
         print("looking into topic {}".format(topicDir))
@@ -484,7 +680,14 @@ def readBcfFile(bcfFile: str):
         if error != "":
             print(error, file=sys.stderr)
             return None
-        markup = buildMarkup(markupFilePath, markupSchemaPath, viewpoints, snapshots)
+        markup = buildMarkup(markupFilePath, markupSchemaPath)
+
+        viewpointFiles = markup.getViewpointFileList()
+        viewpoints = list()
+        for vpRef in markup.viewpoints:
+            vpPath = os.path.join(topicDir, vpRef.file.uri)
+            vp = buildViewpoint(vpPath, visinfoSchemaPath)
+            vpRef.viewpoint = vp
 
         # add the finished markup object to the project
         proj.topicList.append(markup)

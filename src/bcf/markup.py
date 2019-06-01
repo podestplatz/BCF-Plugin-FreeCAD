@@ -24,6 +24,21 @@ class Header:
         self.reference = reference
 
 
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.ifcProjectId == other.ifcProjectId and
+                self.ifcSpacialStructureElement ==
+                other.ifcSpacialStructureElement and
+                self.external == other.external and
+                self.filename == other.filename and
+                self.time == other.time and
+                self.reference == other.reference)
+
+
 class ViewpointReference:
 
     """ Base class for Viewpoint. """
@@ -40,6 +55,27 @@ class ViewpointReference:
         self.file = file
         self.snapshot = snapshot
         self.index = index
+
+    @property
+    def viewpoint(self):
+        return self._viewpoint
+
+
+    @viewpoint.setter
+    def viewpoint(self, newVal):
+        self._viewpoint = newVal
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.id == other.id and
+                self.file == other.file and
+                self.snapshot == other.snapshot and
+                self.index == other.index)
 
 
 class Comment:
@@ -60,6 +96,18 @@ class Comment:
         self.lastModification = lastModification
 
 
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.creation == other.creation and
+                self.comment == other.comment and
+                self.viewpoint == other.viewpoint and
+                self.lastModification == other.lastModification)
+
+
 class Markup:
 
     """ Every topic folder has exactly one markup.bcf file. This forms the
@@ -78,3 +126,41 @@ class Markup:
         self.comments = comments
         self.viewpoints = viewpoints
 
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.header == other.header and
+                self.topic == other.topic and
+                self.comments == other.comments and
+                self.viewpoints == other.viewpoints)
+
+
+    def getViewpointFileList(self):
+
+        """
+        From `self.viewpoints` extracts the `file` attributes and collects them in
+        a list. Only entries different from `None` are colleced. Every element
+        of the list is a tuple. Of this tuple the first element denotes the
+        filename and the second one is a reference to the
+        `ViewpointsReference` object it is contained in
+        """
+
+        vpList = [ (vp.file, vp) for vp in self.viewpoints
+                    if vp.file ]
+        return vpList
+
+
+    def getSnapshotFileList(self):
+
+        """
+        From self.snapshots extracts the `snapshot` attributes and collects them in
+        a list. Only entries different from `None` are colleced.
+        """
+
+        snapshotList = [ vp.snapshot for vp in self.viewpoints
+                            if vp.snapshot ]
+        return snapshotList
