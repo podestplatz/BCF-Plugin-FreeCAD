@@ -163,6 +163,18 @@ class DocumentReference:
         self.description = description
 
 
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.id == other.id and
+                self.external == other.external and
+                self.reference == other.reference and
+                self.description == other.description)
+
+
 class BimSnippet:
     def __init__(self,
             type: SnippetType = None,
@@ -176,6 +188,18 @@ class BimSnippet:
         self.external = external
         self.reference = reference
         self.schema = schema
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.type == other.type and
+                self.external == other.external and
+                self.reference == other.reference and
+                self.schema == other.schema)
 
 
 class Topic:
@@ -216,4 +240,27 @@ class Topic:
         self.description = description
         self.stage = stage
         self.relatedTopics = relatedTopics
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.id == other.id and
+                self.title == other.title and
+                self.creation == other.creation and
+                self.type == other.type and
+                self.status == other.status and
+                self.refs == other.refs and
+                self.priority == other.priority and
+                self.index == other.index and
+                self.labels == other.labels and
+                self.lastModification == other.lastModification and
+                self.dueDate == other.dueDate and
+                self.assignee == other.assignee and
+                self.description == other.description and
+                self.stage == other.stage and
+                self.relatedTopics == other.relatedTopics)
 

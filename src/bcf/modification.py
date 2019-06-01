@@ -16,3 +16,12 @@ class Modification:
 
         self.author = author
         self.date = date
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return self.author == other.author and self.date == other.date

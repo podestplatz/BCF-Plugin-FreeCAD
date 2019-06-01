@@ -24,6 +24,21 @@ class Header:
         self.reference = reference
 
 
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.ifcProjectId == other.ifcProjectId and
+                self.ifcSpacialStructureElement ==
+                other.ifcSpacialStructureElement and
+                self.external == other.external and
+                self.filename == other.filename and
+                self.time == other.time and
+                self.reference == other.reference)
+
+
 class ViewpointReference:
 
     """ Base class for Viewpoint. """
@@ -45,9 +60,22 @@ class ViewpointReference:
     def viewpoint(self):
         return self._viewpoint
 
+
     @viewpoint.setter
     def viewpoint(self, newVal):
         self._viewpoint = newVal
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.id == other.id and
+                self.file == other.file and
+                self.snapshot == other.snapshot and
+                self.index == other.index)
 
 
 class Comment:
@@ -68,6 +96,18 @@ class Comment:
         self.lastModification = lastModification
 
 
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.creation == other.creation and
+                self.comment == other.comment and
+                self.viewpoint == other.viewpoint and
+                self.lastModification == other.lastModification)
+
+
 class Markup:
 
     """ Every topic folder has exactly one markup.bcf file. This forms the
@@ -85,6 +125,18 @@ class Markup:
         self.topic = topic
         self.comments = comments
         self.viewpoints = viewpoints
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.header == other.header and
+                self.topic == other.topic and
+                self.comments == other.comments and
+                self.viewpoints == other.viewpoints)
 
 
     def getViewpointFileList(self):

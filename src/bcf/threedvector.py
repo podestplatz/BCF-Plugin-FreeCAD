@@ -10,6 +10,16 @@ class ThreeDVector:
         self.y = y
         self.z = z
 
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return self.x == other.x and self.y == other.y and self.z == other.z
+
+
 class Point(ThreeDVector):
 
     """ Represents a point in the three dimensional space """
@@ -17,12 +27,14 @@ class Point(ThreeDVector):
     def __init__(self, x: float, y: float, z: float):
         super(Point, self).__init__(x, y, z)
 
+
 class Direction(ThreeDVector):
 
     """ Represents a vector in the three dimensional space """
 
     def __init__(self, x: float, y: float, z: float):
         super(Direction, self).__init__(x, y, z)
+
 
 class Line:
 
@@ -32,6 +44,16 @@ class Line:
         self.start = start
         self.end = end
 
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return self.start == other.start and self.end == other.end
+
+
 class ClippingPlane:
 
     """ TODO: check out what for the clipping plane is used """
@@ -39,3 +61,14 @@ class ClippingPlane:
     def __init__(self, location: Point, direction: Direction):
         self.location = location
         self.direction = direction
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.location == other.location and
+                self.direction == other.direction)
+

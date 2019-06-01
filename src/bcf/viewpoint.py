@@ -4,9 +4,11 @@ from markup import ViewpointReference
 from uuid import UUID
 from threedvector import *
 
-class BitmapFormat(Enum): #TODO integrate it with SchemaConstraint
+
+class BitmapFormat(Enum):
     JPG = 1
     PNG = 2
+
 
 class Bitmap:
 
@@ -32,6 +34,21 @@ class Bitmap:
         self.upVector = upVector
         self.height = height
 
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.format == other.format and
+                self.reference == other.reference and
+                self.location == other.location and
+                self.normal == other.normal and
+                self.upVector == other.upVector and
+                self.height == other.height)
+
+
 class Camera:
 
     """ Base class of PerspectiveCamera and OrthogonalCamera """
@@ -47,6 +64,18 @@ class Camera:
         self.direction = direction
         self.upVector = upVector
 
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.viewPoint == other.viewPoint and
+                self.direction == other.direction and
+                self.upVector == other.upVector)
+
+
 class PerspectiveCamera(Camera):
 
     """ """
@@ -58,6 +87,18 @@ class PerspectiveCamera(Camera):
             fieldOfView: int):
         super(PerspectiveCamera, self).__init__(viewPoint, direction, upVector)
         self.fieldOfView = fieldOfView
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+        superEqual = super(PerspectiveCamera, self).__eq__(other)
+        if (superEqual and type(self) == type(other)):
+            return self.fieldOfView == other.fieldOfView
+        return False
+
 
 class OrthogonalCamera(Camera):
 
@@ -75,6 +116,18 @@ class OrthogonalCamera(Camera):
         self.viewWorldScale = viewWorldScale
 
 
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        superEqual = super(OrthogonalCamera, self).__eq__(other)
+        if (superEqual and type(self) == type(other)):
+            return self.viewWorldScale == other.viewWorldScale
+        return False
+
+
 class Component:
 
     def __init__(self,
@@ -84,6 +137,18 @@ class Component:
         self.ifcId = ifcId
         self.originatingSystem = originatingSystem
         self.authoringtoolId = authoringtoolId
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.ifcId == other.ifcId and
+                self.originatingSystem == other.originatingSystem and
+                self.authoringtoolId == other.authoringtoolId)
+
 
 
 class ComponentColour:
@@ -98,6 +163,17 @@ class ComponentColour:
         self.components = components
 
 
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.colour == other.colour and
+                self.components == other.components)
+
+
+
 class ViewSetupHints:
 
     def __init__(self, openingsVisible: bool = False,
@@ -109,19 +185,45 @@ class ViewSetupHints:
         self.spacesVisible = spacesVisible
 
 
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.openingsVisible == other.openingsVisible and
+                self.spaceBoundariesVisible == other.spaceBoundariesVisible and
+                self.spacesVisible == other.spacesVisible)
+
+
+
 class Components:
 
     def __init__(self,
             visibilityDefault: bool,
             visibilityExceptions: List[Component],
             selection: List[Component] = list(),
-            viewSetupHints: ViewSetupHints = None,
+            viewSetuphints: ViewSetupHints = None,
             colouring: List[ComponentColour] = list()):
-        self.viewSetuphints = viewSetupHints
+
+        self.viewSetuphints = viewSetuphints
         self.selection = selection
         self.visibilityDefault = visibilityDefault
         self.visibilityExceptions = visibilityExceptions
         self.colouring = colouring
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.viewSetuphints == other.viewSetuphints and
+                self.selection == other.selection and
+                self.visibilityDefault == other.visibilityDefault and
+                self.visibilityExceptions == other.visibilityExceptions and
+                self.colouring == other.colouring)
 
 
 class Viewpoint:
@@ -144,3 +246,18 @@ class Viewpoint:
         self.lines = lines
         self.clippingPlanes = clippingPlanes
         self.bitmaps = bitmaps
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        return (self.id == other.id and
+                self.components == other.components and
+                self.oCamera == other.oCamera and
+                self.pCamera == other.pCamera and
+                self.lines == other.lines and
+                self.clippingPlanes == other.clippingPlanes and
+                self.bitmaps == other.bitmaps)
