@@ -10,7 +10,7 @@ from bcf import viewpoint
 from bcf import util
 from bcf.uri import Uri as Uri
 from bcf.modification import Modification
-from bcf.markup import (Comment, Header, ViewpointReference)
+from bcf.markup import (Comment, Header, ViewpointReference, Markup)
 from bcf.topic import (Topic, BimSnippet, DocumentReference)
 from bcf.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         ComponentColour, PerspectiveCamera, OrthogonalCamera, BitmapFormat,
@@ -89,34 +89,6 @@ def extractFileToTmp(zipFilePath: str):
         print("Extracting {} to {}".format(zipFile.filename, extractionPath))
     zipFile.extractall(extractionPath)
     return extractionPath
-
-
-def extractMemberToTmp(zipFile: ZipFile, memberName: str):
-
-    """
-    Tries to extract the file or directory with the name `memberName` from the
-    given zipFile `zipFile` into a temporary directory. If successful the path
-    to the file is returned, otherwise None is returned.
-    """
-
-    if not memberName in zipFile.namelist():
-        raise FileNotFoundError("'{}' is not part of the supplied zip archive"\
-            " {}. Make sure that it is a correct bcf"\
-            " archive!".format(memberName, zipFile.filename))
-
-    extractionPath = util.getSystemTmp()
-    filePath = str()
-    try:
-        filePath = zipFile.extract(memberName, extractionPath)
-    except Exception as e:
-        print("Error during extracting '{}' to"\
-                " {}".format(memberName, extractionPath))
-        print("Make sure that '{}' exists exactly like that in the zipFile "\
-                "and does not reside in any additional"\
-                " subdirectory".format(memberName))
-        return None
-
-    return filePath
 
 
 def getVersion(extrBcfPath: str, versionSchemaPath: str):
@@ -258,11 +230,9 @@ def buildComment(commentDict: Dict):
 
     commentString = commentDict["Comment"]
 
-    viewpointRef = None
-    """ TODO: Refactor viewpoint situation.
-    if "Viewpoint" in commentDict:
-        viewpointUUID = UUID(commentDict["Viewpoint"])
-    """
+    viewpointRef = getOptionalFromDict(commentDict, "Viewpoint", None)
+    if viewpointRef:
+        viewpointRef = ViewpointReference(id=UUID(viewpointRef["@Guid"]))
 
     comment = Comment(creationData, commentString, viewpointRef, modifiedData)
     return comment
@@ -311,6 +281,7 @@ def buildTopic(topicDict: Dict):
     modifiedAuthor = getOptionalFromDict(topicDict, "ModifiedAuthor", None)
     modifiedData = None
     if not (modifiedDate is None or modifiedAuthor is None):
+        modifiedDate = dateutil.parser.parse(modifiedDate)
         modifiedData = Modification(modifiedAuthor, modifiedDate)
 
     index = getOptionalFromDict(topicDict, "Index", 0)
@@ -319,19 +290,19 @@ def buildTopic(topicDict: Dict):
         dueDate = dateutil.parser.parse(dueDate)
 
     assignee = getOptionalFromDict(topicDict, "AssignedTo", "")
-    stage = getOptionalFromDict(topicDict, "State", "")
+    stage = getOptionalFromDict(topicDict, "Stage", "")
     description = getOptionalFromDict(topicDict, "Description", "")
 
     bimSnippet = None
     if "BimSnippet" in topicDict:
         bimSnippet = buildBimSnippet(topicDict["BimSnippet"])
 
-    labelList = getOptionalFromDict(topicDict, "Labels", list())
+    labelList = getOptionalFromDict(topicDict, "Labels", [])
 
-    docRefList = getOptionalFromDict(topicDict, "DocumentReference", list())
+    docRefList = getOptionalFromDict(topicDict, "DocumentReference", [])
     docRefs = [ buildDocRef(docRef) for docRef in docRefList ]
 
-    relatedList = getOptionalFromDict(topicDict, "RelatedTopic", list())
+    relatedList = getOptionalFromDict(topicDict, "RelatedTopic", [])
     relatedTopics = [ UUID(relTopic["@Guid"]) for relTopic in relatedList ]
 
     topic = Topic(id, title, creationData,
@@ -392,12 +363,11 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
     markupSchema = XMLSchema(markupSchemaPath)
     markupDict = markupSchema.to_dict(markupFilePath)
 
-    pprint.pprint(markupDict)
-    if "Comment" in markupDict:
-        comments = list()
-        for commentDict in markupDict["Comment"]:
-            comment = buildComment(commentDict)
-            comments.append(comment)
+    if DEBUG:
+        pprint.pprint(markupDict)
+
+    commentList = getOptionalFromDict(markupDict, "Comment", list())
+    comments = [ buildComment(comment) for comment in commentList ]
 
     topicDict = markupDict["Topic"]
     topic = buildTopic(topicDict)
@@ -413,6 +383,19 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
                     for vpDict in viewpointList ]
 
     markup = Markup(header, topic, comments, viewpoints)
+
+    # Add the right viewpoint references to each comment
+    for comment in comments:
+        if DEBUG:
+            print("comment with viewpoint {}".format(comment.viewpoint))
+        if comment.viewpoint:
+            cViewpointRefGuid = comment.viewpoint.id
+            viewpointRef = markup.getViewpointRefByGuid(cViewpointRefGuid)
+            if DEBUG:
+                print("Comment references to {}, found"\
+                        " {}".format(cViewpointRefGuid, viewpointRef))
+            comment.viewpoint = viewpointRef
+
     return markup
 
 

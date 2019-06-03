@@ -72,10 +72,20 @@ class ViewpointReference:
         Returns true if every variable member of both classes are the same
         """
 
+        if other is None:
+            return False
+
         return (self.id == other.id and
                 self.file == other.file and
                 self.snapshot == other.snapshot and
                 self.index == other.index)
+
+
+    def __str__(self):
+        ret_str = ("ViewpointReference(id='{}', file='{}', snapshot='{}',"\
+                        " index='{}'").format(self.id, self.file, self.snapshot,
+                        self.index)
+        return ret_str
 
 
 class Comment:
@@ -102,10 +112,21 @@ class Comment:
         Returns true if every variable member of both classes are the same
         """
 
+        if other is None:
+            return False
+
         return (self.creation == other.creation and
                 self.comment == other.comment and
                 self.viewpoint == other.viewpoint and
                 self.lastModification == other.lastModification)
+
+
+    def __str__(self):
+
+        ret_str = ("Comment(\n\tcreation='{}', \n\tcomment='{}', \n\tviewpoint='{}',"\
+                "\n\tlastModification='{}')").format(self.creation, self.comment,
+                str(self.viewpoint), self.lastModification)
+        return ret_str
 
 
 class Markup:
@@ -137,6 +158,24 @@ class Markup:
                 self.topic == other.topic and
                 self.comments == other.comments and
                 self.viewpoints == other.viewpoints)
+
+
+    def getViewpointRefByGuid(self, guid: UUID):
+
+        """
+        Searches in the list of viewpoints for one whose id matches `guid` and
+        returns the first one found if more than one were found (wich should not
+        happen btw). If none were found or the viewpoints list is `None` then
+        `None` is returned.
+        """
+
+        if self.viewpoints is None:
+            return None
+
+        resultList = list(filter(lambda item: item.id == guid, self.viewpoints))
+        if len(resultList) >= 1:
+            return resultList[0]
+        return None
 
 
     def getViewpointFileList(self):
