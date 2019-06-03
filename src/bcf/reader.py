@@ -91,55 +91,6 @@ def extractFileToTmp(zipFilePath: str):
     return extractionPath
 
 
-def extractMemberToTmp(zipFile: ZipFile, memberName: str):
-
-    """
-    Extracts the zipFile to the temporary directory of the system.
-    """
-
-    zipFile = ZipFile(zipFilePath)
-
-    extractionPath = str()
-    if os.name == "nt":
-        extractionPath = "C:\\Temp\\"
-    else:
-        extractionPath = "/tmp/"
-    extractionPath += os.path.basename(zipFilePath)
-
-    if DEBUG:
-        print("Extracting {} to {}".format(zipFile.filename, extractionPath))
-    zipFile.extractall(extractionPath)
-    return extractionPath
-
-
-def extractMemberToTmp(zipFile: ZipFile, memberName: str):
-
-    """
-    Tries to extract the file or directory with the name `memberName` from the
-    given zipFile `zipFile` into a temporary directory. If successful the path
-    to the file is returned, otherwise None is returned.
-    """
-
-    if not memberName in zipFile.namelist():
-        raise FileNotFoundError("'{}' is not part of the supplied zip archive"\
-            " {}. Make sure that it is a correct bcf"\
-            " archive!".format(memberName, zipFile.filename))
-
-    extractionPath = util.getSystemTmp()
-    filePath = str()
-    try:
-        filePath = zipFile.extract(memberName, extractionPath)
-    except Exception as e:
-        print("Error during extracting '{}' to"\
-                " {}".format(memberName, extractionPath))
-        print("Make sure that '{}' exists exactly like that in the zipFile "\
-                "and does not reside in any additional"\
-                " subdirectory".format(memberName))
-        return None
-
-    return filePath
-
-
 def getVersion(extrBcfPath: str, versionSchemaPath: str):
 
     """
