@@ -25,3 +25,10 @@ class Modification:
         """
 
         return self.author == other.author and self.date == other.date
+
+
+    def __str__(self):
+
+        ret_str = "Modification(author='{}', datetime='{}')".format(self.author,
+                self.date)
+        return ret_str
