@@ -129,14 +129,15 @@ class Comment:
         if other is None:
             return False
 
-        if self.creation != other.creation:
-            print("Creation is different")
-        if self.comment != other.comment:
-            print("Comment is different")
-        if self.viewpoint != other.viewpoint:
-            print("Viewpoint is different")
-        if self.lastModification != other.lastModification:
-            print("LastModification is different")
+        if reader.DEBUG:
+            if self.creation != other.creation:
+                print("Creation is different")
+            if self.comment != other.comment:
+                print("Comment is different")
+            if self.viewpoint != other.viewpoint:
+                print("Viewpoint is different")
+            if self.lastModification != other.lastModification:
+                print("LastModification is different")
 
         return (self.creation == other.creation and
                 self.comment == other.comment and
