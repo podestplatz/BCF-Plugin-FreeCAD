@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Markup>
+	<Topic Guid="0a36e3d6-97e9-47d6-ab4f-227990429f52" TopicType="Inquiry" TopicStatus="Active">
+		<Title>Ceiling above reception</Title>
+		<Priority>Normal</Priority>
+		<Index>21</Index>
+		<Labels>architecture</Labels>
+		<CreationDate>2014-10-16T14:35:29+00:00</CreationDate>
+		<CreationAuthor>bgreen@bim.col</CreationAuthor>
+		<ModifiedDate>2017-10-10T14:24:31+00:00</ModifiedDate>
+		<ModifiedAuthor>fleopard@bim.col</ModifiedAuthor>
+		<DueDate>2017-10-10T08:00:00+00:00</DueDate>
+		<AssignedTo>irenfroe@bim.col</AssignedTo>
+		<Stage>01. Design phase</Stage>
+	</Topic>
+	<Comment Guid="2b1e79c8-9d2d-419d-887a-fcff8fec7595">
+		<Date>2014-10-16T14:35:29+00:00</Date>
+		<Author>bgreen@bim.col</Author>
+		<Comment>Do you mean this one?</Comment>
+		<Viewpoint Guid="b496c251-2729-4dee-94a1-085168d36512" />
+		<ModifiedDate>2014-10-16T14:35:29+00:00</ModifiedDate>
+		<ModifiedAuthor>bgreen@bim.col</ModifiedAuthor>
+	</Comment>
+	<Viewpoints Guid="b496c251-2729-4dee-94a1-085168d36512">
+		<Viewpoint>viewpoint.bcfv</Viewpoint>
+		<Snapshot>snapshot.png</Snapshot>
+	</Viewpoints>
+</Markup>
