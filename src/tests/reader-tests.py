@@ -17,6 +17,8 @@ import bcf.topic as topic
 import bcf.uri as uri
 import bcf.util as util
 import bcf.markup as markup
+import bcf.viewpoint as viewpoint
+import bcf.threedvector as tdv
 
 
 class BuildProjectTest(unittest.TestCase):
@@ -399,6 +401,195 @@ class buildCommentTest(unittest.TestCase):
             self.assertTrue(a.__eq__(b),
                     "\nExpected:\n{}\n\n\nActual:\n{}".format(a,
                     b))
+
+
+class buildViewpointTest(unittest.TestCase):
+
+    def setUp(self):
+
+        self.fileDirectory = "./reader_tests/"
+        self.bcfFile = "Issues-Example.bcf"
+
+        # comments are contained in markup.bcf
+        self.topicGuid = "0a36e3d6-97e9-47d6-ab4f-227990429f52"
+        self.extractionPath = reader.extractFileToTmp(self.fileDirectory+self.bcfFile)
+        self.viewpointFiles = ["viewpoint_complete.bcfv",
+                "viewpoint_minimal.bcfv", "viewpoint_original.bcfv"]
+        self.viewpointFilePath = map(
+                lambda item: os.path.join(self.extractionPath, self.topicGuid, item),
+                self.viewpointFiles)
+        self.viewpointDestinationPath = os.path.join(util.getSystemTmp(),
+                self.extractionPath,
+                self.topicGuid,
+                "viewpoint.bcfv")
+        self.viewpointSchemaPath = self.fileDirectory + "visinfo.xsd"
+
+
+    def tearDown(self):
+        rmtree(self.extractionPath) # remove extracted zip
+
+
+    def test_complete_viewpoint(self):
+
+        # copy the prepared project file to the temporary directory
+        srcFilePath = os.path.join(self.fileDirectory, self.viewpointFiles[0])
+        copyfile(srcFilePath, self.viewpointDestinationPath)
+
+        actualViewpoint = reader.buildViewpoint(srcFilePath,
+                self.viewpointSchemaPath)
+
+        # building the expected viewpoint object
+        expectedExceptions = [
+                viewpoint.Component(ifcId="0T_ZmDTXnD8vMdc6O2ywGw"),
+                viewpoint.Component(ifcId="1R5DibLMjDRAjgX7wvDhFw")]
+
+        expectedSelection = [
+                viewpoint.Component(ifcId="2WxlJcqgXiHhEvEmREXH8o"),
+                viewpoint.Component(ifcId="3WxlJcqgXiHhEvEmREXH8o"),
+                viewpoint.Component(ifcId="4WxlJcqgXiHhEvEmREXH8o"),
+                viewpoint.Component(ifcId="5WxlJcqgXiHhEvEmREXH8o")]
+
+        expectedViewSetuphints = viewpoint.ViewSetupHints(
+                openingsVisible=False,
+                spacesVisible=False,
+                spaceBoundariesVisible=False)
+
+        expectedColouring = [
+                viewpoint.ComponentColour(colour="AABBCC", components=expectedExceptions),
+                viewpoint.ComponentColour(colour="DDEEFF", components=expectedExceptions)]
+
+        expectedComponents = viewpoint.Components(
+                visibilityDefault=False,
+                visibilityExceptions=expectedExceptions,
+                selection=expectedSelection,
+                viewSetuphints=expectedViewSetuphints,
+                colouring=expectedColouring
+                )
+
+        expectedOCamera = viewpoint.OrthogonalCamera(
+                tdv.Point(31.831852245718924, 8.3991482482556918,
+                    16.610063251737976),
+                tdv.Direction(-0.33103085679096667,
+                    0.53391253908149949, -0.77804625342185463),
+                tdv.Direction(-0.40998798211340642,
+                    0.66126078591306314, 0.62820699417963755),
+                23.6)
+
+        expectedPCamera = viewpoint.PerspectiveCamera(
+                tdv.Point(31.831852245718924, 8.3991482482556918,
+                    16.610063251737976),
+                tdv.Direction(-0.33103085679096667,
+                    0.53391253908149949, -0.77804625342185463),
+                tdv.Direction(-0.40998798211340642,
+                    0.66126078591306314, 0.62820699417963755),
+                60)
+
+        point = tdv.Point(-0.40998798211340642, 0.66126078591306314,
+                0.62820699417963755)
+        line = tdv.Line(start = point, end = point)
+        expectedLines = [ line, line ]
+
+        clippingPlane = viewpoint.ClippingPlane(location=point, direction=point)
+        expectedClippingPlanes = [ clippingPlane, clippingPlane ]
+
+        bitmap = viewpoint.Bitmap(format=viewpoint.BitmapFormat.JPG,
+                reference="/path/to/bitmap",
+                location=point,
+                normal=point,
+                upVector=point,
+                height=10)
+        expectedBitmaps = [ bitmap, bitmap, bitmap ]
+
+        expectedViewpoint = viewpoint.Viewpoint(
+                id=UUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                components=expectedComponents,
+                oCamera=expectedOCamera,
+                pCamera=expectedPCamera,
+                lines=expectedLines,
+                clippingPlanes=expectedClippingPlanes,
+                bitmaps=expectedBitmaps)
+
+        self.assertEqual(expectedViewpoint, actualViewpoint,
+                "\n\nExpected:\n{}, \n\nActual:\n{}\n".format(
+                    str(expectedViewpoint),
+                    str(actualViewpoint)))
+
+
+    def test_minimal_viewpoint(self):
+
+        # copy the prepared project file to the temporary directory
+        srcFilePath = os.path.join(self.fileDirectory, self.viewpointFiles[1])
+        copyfile(srcFilePath, self.viewpointDestinationPath)
+
+        actualViewpoint = reader.buildViewpoint(srcFilePath,
+                self.viewpointSchemaPath)
+
+        # building the expected viewpoint object
+        expectedViewpoint = viewpoint.Viewpoint(
+                id=UUID("a7230ae3-d17d-46fa-8fbd-775d1a0e3efb"),
+                components=None,
+                oCamera=None,
+                pCamera=None,
+                lines=list(),
+                clippingPlanes=list(),
+                bitmaps=list())
+
+        self.assertEqual(expectedViewpoint, actualViewpoint,
+                "\n\nExpected:\n{}, \n\nActual:\n{}\n".format(
+                    str(expectedViewpoint),
+                    str(actualViewpoint)))
+
+
+    def tests_original_viewpoint(self):
+
+        # copy the prepared project file to the temporary directory
+        srcFilePath = os.path.join(self.fileDirectory, self.viewpointFiles[1])
+        copyfile(srcFilePath, self.viewpointDestinationPath)
+
+        actualViewpoint = reader.buildViewpoint(srcFilePath,
+                self.viewpointSchemaPath)
+
+        # building the expected viewpoint object
+        expectedExceptions = [
+                viewpoint.Component(ifcId="0T_ZmDTXnD8vMdc6O2ywGw"),
+                viewpoint.Component(ifcId="1R5DibLMjDRAjgX7wvDhFw")]
+
+        expectedSelection = [
+                viewpoint.Component(ifcId="2WxlJcqgXiHhEvEmREXH8o")]
+
+        expectedViewSetuphints = viewpoint.ViewSetupHints(
+                openingsVisible=False,
+                spacesVisible=False,
+                spaceBoundariesVisible=False)
+
+        expectedComponents = viewpoint.Components(
+                visibilityDefault=False,
+                visibilityExceptions=expectedExceptions,
+                selection=expectedSelection,
+                viewSetuphints=expectedViewSetuphints,
+                colouring=list()
+                )
+
+        expectedPCamera = viewpoint.PerspectiveCamera(
+                tdv.Point(31.831852245718924, 8.3991482482556918,
+                    16.610063251737976),
+                tdv.Direction(-0.33103085679096667,
+                    0.53391253908149949, -0.77804625342185463),
+                tdv.Direction(-0.40998798211340642,
+                    0.66126078591306314, 0.62820699417963755),
+                60)
+
+
+        expectedViewpoint = viewpoint.Viewpoint(
+                id=UUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                components=expectedComponents,
+                oCamera=None,
+                pCamera=expectedPCamera,
+                lines=[],
+                clippingPlanes=[],
+                bitmaps=[])
+
+
 
 
 if __name__ == "__main__":
