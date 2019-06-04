@@ -1,3 +1,4 @@
+import bcf.reader as reader
 from enum import Enum
 from typing import List, Dict
 from uuid import UUID
@@ -132,8 +133,8 @@ class Component:
 
     def __init__(self,
             ifcId: UUID,
-            originatingSystem: str = None,
-            authoringtoolId: str = None):
+            originatingSystem: str = "",
+            authoringtoolId: str = ""):
         self.ifcId = ifcId
         self.originatingSystem = originatingSystem
         self.authoringtoolId = authoringtoolId
@@ -150,6 +151,14 @@ class Component:
                 self.authoringtoolId == other.authoringtoolId)
 
 
+    def __str__(self):
+
+        ret_str = ("Component(ifcId='{}', originatingSystem='{}',"\
+                " authoringToolId='{}')").format(self.ifcId,
+                        self.originatingSystem, self.authoringtoolId)
+        return ret_str
+
+
 
 class ComponentColour:
 
@@ -158,7 +167,7 @@ class ComponentColour:
             components: List[Component]): # has to have at least one element
 
         if len(components) == 0:
-            raise InvalidArgumentException
+            raise ValueError("`components` has to have at least one element")
         self.colour = colour
         self.components = components
 
@@ -171,6 +180,13 @@ class ComponentColour:
 
         return (self.colour == other.colour and
                 self.components == other.components)
+
+
+    def __str__(self):
+
+        ret_str = "ComponentColor(colour='{}',\n\t\tcomponents={})".format(
+                self.colour, self.components)
+        return ret_str
 
 
 
@@ -226,6 +242,20 @@ class Components:
                 self.colouring == other.colouring)
 
 
+    def __str__(self):
+
+        visibilityExcStr = [ str(exc) for exc in self.visibilityExceptions ]
+        selectionStr = [ str(sel) for sel in self.selection ]
+        ret_str = """Components(visibilityDefault='{}',
+        visibilityExceptions='{}',
+        selection='{}',
+        viewSetupHints='{}',
+        colouring='{}')""".format(self.visibilityDefault,
+                visibilityExcStr, selectionStr,
+                str(self.viewSetuphints), str(self.colouring))
+        return ret_str
+
+
 class Viewpoint:
 
     """ """
@@ -254,6 +284,35 @@ class Viewpoint:
         Returns true if every variable member of both classes are the same
         """
 
+        if reader.DEBUG:
+            if self.id != other.id:
+                print("Viewpoint: id is different {}\n{}".format(self.id,
+                    other.id))
+
+            if self.components != other.components:
+                print("Viewpoint: components is different\n{}\n{}".format(
+                    self.components, other.components))
+
+            if self.oCamera != other.oCamera:
+                print("Viewpoint: oCamera is different {}\n{}".format(
+                    self.oCamera, other.oCamera))
+
+            if self.pCamera != other.pCamera:
+                print("Viewpoint: pCamera is different {}\n{}".format(
+                    self.pCamera, other.pCamera))
+
+            if self.lines != other.lines:
+                print("Viewpoint: lines are different {}\n{}".format(
+                    self.lines, other.lines))
+
+            if self.clippingPlanes != other.clippingPlanes:
+                print("Viewpoint: clippingPlanes are different {}\n{}".format(
+                    self.clippingPlanes, other.clippingPlanes))
+
+            if self.bitmaps != other.bitmaps:
+                print("Viewpoint: bitmaps are different {}\n{}".format(
+                    self.bitmaps, other.bitmaps))
+
         return (self.id == other.id and
                 self.components == other.components and
                 self.oCamera == other.oCamera and
@@ -261,3 +320,17 @@ class Viewpoint:
                 self.lines == other.lines and
                 self.clippingPlanes == other.clippingPlanes and
                 self.bitmaps == other.bitmaps)
+
+
+    def __str__(self):
+        ret_str = """Viewpoint(
+\tID='{}',
+\tcomponents='{}',
+\toCamera='{}',
+\tpCamera='{}',
+\tlines='{}',
+\tclippingPlanes='{}',
+\tbitmaps='{}')""".format(self.id, str(self.components), str(self.oCamera),
+                str(self.pCamera), str(self.lines), str(self.clippingPlanes),
+                str(self.bitmaps))
+        return ret_str
