@@ -1,3 +1,4 @@
+import bcf.reader as reader
 from uuid import UUID
 from datetime import datetime, date
 from typing import List # used for custom type annotations
@@ -75,6 +76,19 @@ class ViewpointReference:
         if other is None:
             return False
 
+        if reader.DEBUG:
+            if self.id != other.id:
+                print("Viewpoint: id is different {} {}".format(self.id, other.id))
+            if self.file != other.file:
+                print("Viewpoint: file is different {} {}".format(
+                    self.file, other.file))
+            if self.snapshot != other.snapshot:
+                print("Viewpoint: snapshot is different {} {}".format(
+                    self.snapshot, other.snapshot))
+            if self.index != other.index:
+                print("Viewpoint: index is different {} {}".format(
+                    self.index, other.index))
+
         return (self.id == other.id and
                 self.file == other.file and
                 self.snapshot == other.snapshot and
@@ -83,7 +97,7 @@ class ViewpointReference:
 
     def __str__(self):
         ret_str = ("ViewpointReference(id='{}', file='{}', snapshot='{}',"\
-                        " index='{}'").format(self.id, self.file, self.snapshot,
+                        " index='{}')").format(self.id, self.file, self.snapshot,
                         self.index)
         return ret_str
 
@@ -114,6 +128,15 @@ class Comment:
 
         if other is None:
             return False
+
+        if self.creation != other.creation:
+            print("Creation is different")
+        if self.comment != other.comment:
+            print("Comment is different")
+        if self.viewpoint != other.viewpoint:
+            print("Viewpoint is different")
+        if self.lastModification != other.lastModification:
+            print("LastModification is different")
 
         return (self.creation == other.creation and
                 self.comment == other.comment and

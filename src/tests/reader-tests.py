@@ -350,8 +350,9 @@ class buildCommentTest(unittest.TestCase):
                 date=dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
         expectedModification = modification.Modification(author="bgreen@bim.col",
                 date=dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
-        expectedViewpoint = markup.ViewpointReference(id="b496c251-2729-4dee-94a1-085168d36512",
-                file=uri.Uri("viewpoint.bcf"),
+        expectedViewpoint = markup.ViewpointReference(
+                id=UUID("b496c251-2729-4dee-94a1-085168d36512"),
+                file=uri.Uri("viewpoint.bcfv"),
                 snapshot=uri.Uri("snapshot.png"),
                 index=2)
         expectedComment = markup.Comment(
@@ -380,10 +381,11 @@ class buildCommentTest(unittest.TestCase):
         # building the expected comment object
         expectedCreation = modification.Modification(author="bgreen@bim.col",
                 date=dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
-        expectedViewpoint = markup.ViewpointReference(id="b496c251-2729-4dee-94a1-085168d36512",
-                file=uri.Uri("viewpoint.bcf"),
+        expectedViewpoint = markup.ViewpointReference(
+                id=UUID("b496c251-2729-4dee-94a1-085168d36512"),
+                file=uri.Uri("viewpoint.bcfv"),
                 snapshot=uri.Uri("snapshot.png"),
-                index=2)
+                index=0)
         expectedComment = markup.Comment(
                 creation = expectedCreation,
                 comment = "Do you mean this one?",
@@ -394,7 +396,7 @@ class buildCommentTest(unittest.TestCase):
 
         # compare expected and actual
         for (a, b) in zip(expectedCommentList, actualMarkup.comments):
-            self.assertEqual(a, b,
+            self.assertTrue(a.__eq__(b),
                     "\nExpected:\n{}\n\n\nActual:\n{}".format(a,
                     b))
 

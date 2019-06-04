@@ -17,7 +17,7 @@ from bcf.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         Bitmap)
 from bcf.threedvector import (Point, Line, Direction, ClippingPlane)
 
-DEBUG = True
+DEBUG = False
 SUPPORTED_VERSIONS = ["2.1"]
 
 if DEBUG:
@@ -386,15 +386,13 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
 
     # Add the right viewpoint references to each comment
     for comment in comments:
-        if DEBUG:
-            print("comment with viewpoint {}".format(comment.viewpoint))
         if comment.viewpoint:
             cViewpointRefGuid = comment.viewpoint.id
             viewpointRef = markup.getViewpointRefByGuid(cViewpointRefGuid)
-            if DEBUG:
-                print("Comment references to {}, found"\
-                        " {}".format(cViewpointRefGuid, viewpointRef))
             comment.viewpoint = viewpointRef
+            if DEBUG:
+                print("Comment references object {}, real object {}".format(
+                    id(comment.viewpoint), id(viewpointRef)))
 
     return markup
 
