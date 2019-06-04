@@ -17,7 +17,7 @@ from bcf.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         Bitmap)
 from bcf.threedvector import (Point, Line, Direction, ClippingPlane)
 
-DEBUG = False
+DEBUG = True
 SUPPORTED_VERSIONS = ["2.1"]
 
 if DEBUG:
@@ -115,8 +115,6 @@ def getVersion(extrBcfPath: str, versionSchemaPath: str):
         return None
 
     versionDict = versionSchema.to_dict(versionFilePath)
-    if DEBUG:
-        pprint.pprint(versionDict)
     return versionDict["@VersionId"]
 
 
@@ -363,9 +361,6 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
     markupSchema = XMLSchema(markupSchemaPath)
     markupDict = markupSchema.to_dict(markupFilePath)
 
-    if DEBUG:
-        pprint.pprint(markupDict)
-
     commentList = getOptionalFromDict(markupDict, "Comment", list())
     comments = [ buildComment(comment) for comment in commentList ]
 
@@ -390,9 +385,6 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
             cViewpointRefGuid = comment.viewpoint.id
             viewpointRef = markup.getViewpointRefByGuid(cViewpointRefGuid)
             comment.viewpoint = viewpointRef
-            if DEBUG:
-                print("Comment references object {}, real object {}".format(
-                    id(comment.viewpoint), id(viewpointRef)))
 
     return markup
 
@@ -411,15 +403,13 @@ def buildViewSetupHints(vshDict: Dict):
 
 def buildComponent(componentDict: Dict):
 
-    id = getOptionalFromDict(componentDict, "@IfcGuid", None)
-    if id:
-        id = UUID(id)
+    id = getOptionalFromDict(componentDict, "@IfcGuid", None) # is no UUID
 
     authoringToolId = getOptionalFromDict(componentDict,
-            "AuthoringToolId", None)
+            "AuthoringToolId", "")
 
     originatingSystem = getOptionalFromDict(componentDict,
-            "OriginatingSystem", None)
+            "OriginatingSystem", "")
 
     component = Component(id, originatingSystem, authoringToolId)
     return component
@@ -433,7 +423,7 @@ def buildComponentColour(ccDict: Dict):
     if colour: # if a colour is defined then at least one component has to exist
         colourComponentList = [ buildComponent(cp)
                                 for cp in ccDict["Component"] ]
-        cc = ComponentColor(colour, colourComponents)
+        cc = ComponentColour(colour, colourComponentList)
 
     return cc
 
@@ -445,19 +435,26 @@ def buildComponents(componentsDict: Dict):
     if vshDict:
         vsh = buildViewSetupHints(vshDict)
 
-    componentList = getOptionalFromDict(componentsDict, "Selection", list())
-    sel = [ buildComponent(cpDict) for cpDict in componentList ]
+    componentDict = getOptionalFromDict(componentsDict, "Selection", None)
+    sel = list()
+    if componentDict:
+        componentList = componentDict["Component"]
+        sel = [ buildComponent(cpDict) for cpDict in componentList ]
 
     visibilityDict = componentsDict["Visibility"]
     defaultVisibility = getOptionalFromDict(visibilityDict,
             "@DefaultVisibility", True)
-    exceptionList = getOptionalFromDict(visibilityDict, "Exceptions", list())
+
+    exceptionDict = getOptionalFromDict(visibilityDict, "Exceptions", list())
+    exceptionList = exceptionDict["Component"] # at least one element has to be present
     exceptions = [ buildComponent(cp) for cp in exceptionList ]
-    colourComponentList = getOptionalFromDict(componentsDict, "Coloring", list())
+
+    colourComponentDict = getOptionalFromDict(componentsDict, "Coloring", list())
+    colourComponentList = colourComponentDict["Color"] # at least one color is required
     componentColours = [ buildComponentColour(ccDict)
                             for ccDict in colourComponentList ]
 
-    components = Components(defaultVisibility, exceptionList, sel,
+    components = Components(defaultVisibility, exceptions, sel,
             vsh, componentColours)
     return components
 
@@ -537,9 +534,8 @@ def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
     vpSchema = XMLSchema(viewpointSchemaPath)
     vpDict = vpSchema.to_dict(viewpointFilePath)
 
-    id = vpDict["@Guid"]
+    id = UUID(vpDict["@Guid"])
 
-    pprint.pprint(vpDict)
     componentsDict = getOptionalFromDict(vpDict, "Components", None)
     components = None
     if componentsDict:
@@ -556,13 +552,13 @@ def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
         pCam = buildPerspectiveCamera(pCamDict)
 
     linesDict = getOptionalFromDict(vpDict, "Lines", None)
-    lines = None
+    lines = list()
     if linesDict:
         linesList = getOptionalFromDict(linesDict, "Line", list())
         lines = [ buildLine(line) for line in linesList ]
 
     clippingPlaneDict = getOptionalFromDict(vpDict, "ClippingPlanes", None)
-    clippingPlanes = None
+    clippingPlanes = list()
     if clippingPlaneDict:
         clippingPlaneList = getOptionalFromDict(clippingPlaneDict,
                 "ClippingPlane", list())
