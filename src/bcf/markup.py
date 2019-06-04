@@ -92,7 +92,8 @@ class ViewpointReference:
         return (self.id == other.id and
                 self.file == other.file and
                 self.snapshot == other.snapshot and
-                self.index == other.index)
+                self.index == other.index and
+                self.viewpoint == other.viewpoint)
 
 
     def __str__(self):
