@@ -78,12 +78,8 @@ def extractFileToTmp(zipFilePath: str):
 
     zipFile = ZipFile(zipFilePath)
 
-    extractionPath = str()
-    if os.name == "nt":
-        extractionPath = "C:\\Temp\\"
-    else:
-        extractionPath = "/tmp/"
-    extractionPath += os.path.basename(zipFilePath)
+    tmpDir = util.getSystemTmp()
+    extractionPath = os.path.join(tmpDir, os.path.basename(zipFilePath))
 
     if DEBUG:
         print("Extracting {} to {}".format(zipFile.filename, extractionPath))

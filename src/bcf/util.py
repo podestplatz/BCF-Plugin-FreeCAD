@@ -1,5 +1,6 @@
 import os
 import urllib.request
+import tempfile
 from enum import Enum
 from urllib.error import URLError
 
@@ -29,17 +30,20 @@ __schemaMap = {
             "",
             "visinfo.xsd")}
 
-
+tempDir = None
 def getSystemTmp():
 
     """
-    Depending on the system, the correct temporary folder is returned as string
+    On first call creates a new temporary directory and returns the absolute
+    path to it. On every subsequent call, during the runtime of the
+    application, only the once created absolute path is returned.
     """
 
-    if os.name == "nt":
-        return "C:\\Temp"
-    else:
-        return "/tmp/"
+    global tempDir
+    if tempDir is None:
+        tempDir = tempfile.TemporaryDirectory()
+
+    return tempDir.name
 
 
 def retrieveWebFile(schema: Schema, storePath: str):
