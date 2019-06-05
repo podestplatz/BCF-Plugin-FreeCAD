@@ -56,6 +56,7 @@ class ViewpointReference:
         self.file = file
         self.snapshot = snapshot
         self.index = index
+        self._viewpoint = None
 
     @property
     def viewpoint(self):
