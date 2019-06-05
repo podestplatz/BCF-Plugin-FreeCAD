@@ -19,6 +19,7 @@ import bcf.util as util
 import bcf.markup as markup
 import bcf.viewpoint as viewpoint
 import bcf.threedvector as tdv
+import interfaces.hierarchy as hierarchy
 
 
 class BuildProjectTest(unittest.TestCase):
@@ -590,6 +591,41 @@ class buildViewpointTest(unittest.TestCase):
                 bitmaps=[])
 
 
+class HierarchyTest(unittest.TestCase):
+
+    def setUp(self):
+        self.testFile = "../bcf/test_data/Issues_BIMcollab_Example.bcf"
+        self.proj = reader.readBcfFile(self.testFile)
+
+    def test_comment_hierarchy(self):
+        topic = self.proj.topicList[0]
+        comment = topic.comments[0]
+
+        expectedHierarchy = [ comment, topic, self.proj ]
+        actualHierarchy = comment.getHierarchyList()
+
+        self.assertEqual(expectedHierarchy, actualHierarchy,
+                "\nExpected:\n{}\n\nActual:\n{}\n\n".format(expectedHierarchy,
+                    actualHierarchy))
+
+
+class readBcfFileTest(unittest.TestCase):
+
+    def setUp(self):
+        self.testFile = "../bcf/test_data/Issues_BIMcollab_Example.bcf"
+        self.proj = reader.readBcfFile(self.testFile)
+
+    def test_viewpointreference(self):
+        """
+        This testcase shall test whether the `viewpoint` object inside
+        `markup.viewpoint` (yes I am sorry for the unfortunate naming) object
+        is assigned an actual object of type viewpoint
+        """
+
+        for markup in self.proj.topicList:
+            for vpRef in markup.viewpoints:
+                self.assertTrue(vpRef.viewpoint is not None)
+                print(vpRef.viewpoint)
 
 
 if __name__ == "__main__":

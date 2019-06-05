@@ -6,6 +6,9 @@ from datetime import date
 from xmlschema import XMLSchema
 from bcf.modification import Modification
 from bcf.uri import Uri
+from interfaces.hierarchy import Hierarchy
+from interfaces.identifiable import Identifiable
+from interfaces.state import State
 
 
 """ Is not used anymore """
@@ -148,16 +151,20 @@ class SnippetType(SchemaConstraint):
         super(SnippetType, self).__init__(values[0], values)
 
 
-class DocumentReference:
+class DocumentReference(Hierarchy, Identifiable, State):
     def __init__(self,
                 id: UUID = None,
                 external: bool = False,
                 reference: Uri = None,
-                description: str = ""):
+                description: str = "",
+                containingElement = None,
+                state: State.States = State.States.ORIGINAL):
 
         """ Initialization function for DocumentReference """
 
-        self.id = id
+        Hierarchy.__init__(self, containingElement)
+        Identifiable.__init__(self, id)
+        State.__init__(self, state)
         self.external = external
         self.reference = reference
         self.description = description
@@ -183,15 +190,19 @@ class DocumentReference:
         return str_ret
 
 
-class BimSnippet:
+class BimSnippet(Hierarchy, State):
     def __init__(self,
             type: SnippetType = None,
             external: bool = False,
             reference: Uri = None,
-            schema: Uri = None):
+            schema: Uri = None,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
         """ Initialization function for BimSnippet """
 
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.type = type
         self.external = external
         self.reference = reference
@@ -210,7 +221,7 @@ class BimSnippet:
                 self.schema == other.schema)
 
 
-class Topic:
+class Topic(Hierarchy, Identifiable, State):
 
     """ Topic contains all metadata about one ... topic """
 
@@ -229,11 +240,16 @@ class Topic:
             assignee: str = "",
             description: str = "",
             stage: str = "",
-            relatedTopics: List[UUID] = []):
+            relatedTopics: List[UUID] = [],
+            bimSnippet: BimSnippet = None,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
         """ Initialisation function of Topic """
 
-        self.id = id
+        Hierarchy.__init__(self, containingElement)
+        Identifiable.__init__(self, id)
+        State.__init__(self, state)
         self.title = title
         self.creation = creation
         self.type = type
@@ -248,6 +264,7 @@ class Topic:
         self.description = description
         self.stage = stage
         self.relatedTopics = relatedTopics
+        self.bimSnippet = bimSnippet
 
 
     def __checkNone(self, this, that):
@@ -291,6 +308,8 @@ class Topic:
             other.lastModification), "lastModification")
         self.__printEquality(self.__checkNone(self.dueDate,
             other.dueDate), "dueDate")
+        self.__printEquality(self.__checkNone(self.bimSnippet,
+            other.bimSnippet), "bimSnippet")
 
         return (self.id == other.id and
                 self.title == other.title and
@@ -306,7 +325,8 @@ class Topic:
                 self.assignee == other.assignee and
                 self.description == other.description and
                 self.stage == other.stage and
-                self.relatedTopics == other.relatedTopics)
+                self.relatedTopics == other.relatedTopics and
+                self.bimSnippet == other.bimSnippet)
 
     def __str__(self):
         import pprint

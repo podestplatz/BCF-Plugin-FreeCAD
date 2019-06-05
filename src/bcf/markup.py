@@ -5,18 +5,25 @@ from typing import List # used for custom type annotations
 from bcf.uri import Uri
 from bcf.modification import Modification
 from bcf.topic import Topic, SnippetType
+from interfaces.state import State
+from interfaces.hierarchy import Hierarchy
+from interfaces.identifiable import Identifiable
 
-class Header:
+class Header(Hierarchy, State):
     def __init__(self,
                 ifcProjectId: UUID = None,
                 ifcSpacialStructureElement: UUID = None,
                 external: bool = True,
                 filename: str = "",
                 time: datetime = None,
-                reference: Uri = None):
+                reference: Uri = None,
+                containingElement = None,
+                state: State.States = State.States.ORIGINAL):
 
         """ Initialization function for Header """
 
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.ifcProjectId = ifcProjectId
         self.ifcSpacialStructureElement = ifcSpacialStructureElement
         self.external = external
@@ -40,7 +47,7 @@ class Header:
                 self.reference == other.reference)
 
 
-class ViewpointReference:
+class ViewpointReference(Hierarchy, State, Identifiable):
 
     """ Base class for Viewpoint. """
 
@@ -48,11 +55,15 @@ class ViewpointReference:
             id: UUID,
             file: Uri = None,
             snapshot: Uri = None,
-            index: int = 0):
+            index: int = 0,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
         """ Initialisation function of ViewpointReference """
 
-        self.id = id
+        Hierarchy.__init__(self, containingElement)
+        Identifiable.__init__(self, id)
+        State.__init__(self, state)
         self.file = file
         self.snapshot = snapshot
         self.index = index
@@ -104,7 +115,7 @@ class ViewpointReference:
         return ret_str
 
 
-class Comment:
+class Comment(Hierarchy, Identifiable, State):
 
     """ Class holding all data about a comment """
 
@@ -112,10 +123,15 @@ class Comment:
             creation: Modification,
             comment: str,
             viewpoint: ViewpointReference = None,
-            lastModification: Modification = None):
+            lastModification: Modification = None,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
         """ Initialisation function of Comment """
 
+        Hierarchy.__init__(self, containingElement)
+        Identifiable.__init__(self, id(self))
+        State.__init__(self, state)
         self.creation = creation
         self.comment = comment
         self.viewpoint = viewpoint
@@ -155,7 +171,7 @@ class Comment:
         return ret_str
 
 
-class Markup:
+class Markup(Hierarchy, State):
 
     """ Every topic folder has exactly one markup.bcf file. This forms the
     starting point for the ui to get the data """
@@ -164,10 +180,14 @@ class Markup:
             header: Header = None,
             topic: List[Topic] = list(),
             comments: List[Comment] = list(),
-            viewpoints: List[ViewpointReference] = list()):
+            viewpoints: List[ViewpointReference] = list(),
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
         """ Initialization function for Markup """
 
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.header = header
         self.topic = topic
         self.comments = comments

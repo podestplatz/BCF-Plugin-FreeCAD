@@ -4,6 +4,8 @@ from typing import List, Dict
 from uuid import UUID
 from bcf.markup import ViewpointReference
 from bcf.threedvector import *
+from interfaces.hierarchy import Hierarchy
+from interfaces.state import State
 
 
 class BitmapFormat(Enum):
@@ -11,7 +13,7 @@ class BitmapFormat(Enum):
     PNG = 2
 
 
-class Bitmap:
+class Bitmap(Hierarchy, State):
 
     """
     Represents a bitmap, to which the according file is stored inside the
@@ -24,10 +26,14 @@ class Bitmap:
             location: Point,
             normal: Direction,
             upVector: Direction,
-            height: float):
+            height: float,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
         """ Initialisation function of Bitmap """
 
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.format = format
         self.reference = reference
         self.location = location
@@ -50,17 +56,21 @@ class Bitmap:
                 self.height == other.height)
 
 
-class Camera:
+class Camera(Hierarchy, State):
 
     """ Base class of PerspectiveCamera and OrthogonalCamera """
 
     def __init__(self,
             viewPoint: Point,
             direction: Direction,
-            upVector: Direction):
+            upVector: Direction,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
         """ Initialisation function of Camera """
 
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.viewPoint = viewPoint
         self.direction = direction
         self.upVector = upVector
@@ -85,8 +95,14 @@ class PerspectiveCamera(Camera):
             viewPoint: Point,
             direction: Direction,
             upVector: Direction,
-            fieldOfView: int):
-        super(PerspectiveCamera, self).__init__(viewPoint, direction, upVector)
+            fieldOfView: int,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
+        super().__init__(viewPoint,
+                direction,
+                upVector,
+                containingElement,
+                state)
         self.fieldOfView = fieldOfView
 
 
@@ -109,11 +125,17 @@ class OrthogonalCamera(Camera):
             viewPoint: Point,
             direction: Direction,
             upVector: Direction,
-            viewWorldScale: int):
+            viewWorldScale: int,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
         """ Initialisation function of OrthogonalCamera """
 
-        super(OrthogonalCamera, self).__init__(viewPoint, direction, upVector)
+        super(OrthogonalCamera, self).__init__(viewPoint,
+                direction,
+                upVector,
+                containingElement,
+                state)
         self.viewWorldScale = viewWorldScale
 
 
@@ -129,12 +151,17 @@ class OrthogonalCamera(Camera):
         return False
 
 
-class Component:
+class Component(Hierarchy, State):
 
     def __init__(self,
             ifcId: UUID,
             originatingSystem: str = "",
-            authoringtoolId: str = ""):
+            authoringtoolId: str = "",
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
+
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.ifcId = ifcId
         self.originatingSystem = originatingSystem
         self.authoringtoolId = authoringtoolId
@@ -160,12 +187,16 @@ class Component:
 
 
 
-class ComponentColour:
+class ComponentColour(Hierarchy, State):
 
     def __init__(self,
             colour: str,
-            components: List[Component]): # has to have at least one element
+            components: List[Component], # has to have at least one element
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         if len(components) == 0:
             raise ValueError("`components` has to have at least one element")
         self.colour = colour
@@ -190,12 +221,16 @@ class ComponentColour:
 
 
 
-class ViewSetupHints:
+class ViewSetupHints(Hierarchy, State):
 
     def __init__(self, openingsVisible: bool = False,
             spacesVisible: bool = False,
-            spaceBoundariesVisible: bool = False):
+            spaceBoundariesVisible: bool = False,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.openingsVisible = openingsVisible
         self.spaceBoundariesVisible = spaceBoundariesVisible
         self.spacesVisible = spacesVisible
@@ -213,15 +248,19 @@ class ViewSetupHints:
 
 
 
-class Components:
+class Components(Hierarchy, State):
 
     def __init__(self,
             visibilityDefault: bool,
             visibilityExceptions: List[Component],
             selection: List[Component] = list(),
             viewSetuphints: ViewSetupHints = None,
-            colouring: List[ComponentColour] = list()):
+            colouring: List[ComponentColour] = list(),
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.viewSetuphints = viewSetuphints
         self.selection = selection
         self.visibilityDefault = visibilityDefault
@@ -256,7 +295,7 @@ class Components:
         return ret_str
 
 
-class Viewpoint:
+class Viewpoint(Hierarchy, State):
 
     """ """
 
@@ -267,8 +306,12 @@ class Viewpoint:
             pCamera: PerspectiveCamera = None,
             lines: List[Line] = list(),
             clippingPlanes: List[ClippingPlane] = list(),
-            bitmaps: List[Bitmap] = list()):
+            bitmaps: List[Bitmap] = list(),
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.id = id
         self.components = components
         self.oCamera = oCamera

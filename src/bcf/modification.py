@@ -1,6 +1,8 @@
 from datetime import datetime
+from interfaces.hierarchy import Hierarchy
+from interfaces.state import State
 
-class Modification:
+class Modification(Hierarchy, State):
 
     """
     This class is used by Topic and Comment to for one denote the author
@@ -10,10 +12,14 @@ class Modification:
 
     def __init__(self,
             author: str,
-            date: datetime):
+            date: datetime,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
         """ Initialisation function for Modification """
 
+        State.__init__(self, state)
+        Hierarchy.__init__(self, containingElement)
         self.author = author
         self.date = date
 

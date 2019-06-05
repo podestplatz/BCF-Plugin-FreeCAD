@@ -1,11 +1,22 @@
-class ThreeDVector:
+from interfaces.hierarchy import Hierarchy
+from interfaces.state import State
+
+class ThreeDVector(Hierarchy, State):
 
     """
     General representation of a three dimensional vector which can be
     specialised to a point or a direction vector
     """
 
-    def __init__(self, x: float, y: float, z: float):
+    def __init__(self,
+            x: float,
+            y: float,
+            z: float,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
+
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.x = x
         self.y = y
         self.z = z
@@ -24,23 +35,42 @@ class Point(ThreeDVector):
 
     """ Represents a point in the three dimensional space """
 
-    def __init__(self, x: float, y: float, z: float):
-        super(Point, self).__init__(x, y, z)
+    def __init__(self,
+            x: float,
+            y: float,
+            z: float,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
+
+        ThreeDVector.__init__(self, x, y, z, containingElement, state)
 
 
 class Direction(ThreeDVector):
 
     """ Represents a vector in the three dimensional space """
 
-    def __init__(self, x: float, y: float, z: float):
-        super(Direction, self).__init__(x, y, z)
+    def __init__(self,
+            x: float,
+            y: float,
+            z: float,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
+
+        ThreeDVector.__init__(self, x, y, z, containingElement, state)
 
 
-class Line:
+class Line(Hierarchy, State):
 
     """ Represents a line that goes throught the three dimensional space """
 
-    def __init__(self, start: Point, end: Point):
+    def __init__(self,
+            start: Point,
+            end: Point,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
+
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.start = start
         self.end = end
 
@@ -54,11 +84,16 @@ class Line:
         return self.start == other.start and self.end == other.end
 
 
-class ClippingPlane:
+class ClippingPlane(Hierarchy, State):
 
-    """ TODO: check out what for the clipping plane is used """
+    def __init__(self,
+            location: Point,
+            direction: Direction,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
 
-    def __init__(self, location: Point, direction: Direction):
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.location = location
         self.direction = direction
 

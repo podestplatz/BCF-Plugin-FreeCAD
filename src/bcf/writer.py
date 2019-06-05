@@ -1,3 +1,6 @@
+from interfaces.hierarchy import Hierarchy
+from interfaces.identifiable import Identifiable
+
 """
 `elementHierarchy` contains for each element, the writer supports writing, the
 hierarchy of the element in its corresponding XML file. Thereby hierarchy is
@@ -52,3 +55,21 @@ elementOrder = {"Markup": ["Header", "Topic", "Comment", "Viewpoints"],
 A list of elements that can occur multiple times in the corresponding XML file
 """
 listElements = ["Comment", "DocumentReference", "RelatedTopic", "Labels"]
+
+
+
+def getUniqueIdOfListElementInHierarchy(element):
+
+    #TODO: handle labels correctly
+    elementHierarchy = hierarchy.Hierarchy.checkAndGetHierarchy(element)
+    if not elementHierarchy:
+        return None
+
+    listElement = None
+    for item in elementHierarchy:
+        if item.__class__.__name__ in listElements:
+            listElement = item
+
+    if isinstanceof(item, identifiable.Identifiable):
+        return item.id
+    return None

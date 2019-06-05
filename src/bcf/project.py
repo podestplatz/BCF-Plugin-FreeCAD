@@ -1,15 +1,20 @@
 from uuid import UUID
 from bcf.uri import Uri
 from bcf.markup import Markup
+from interfaces.hierarchy import Hierarchy
+from interfaces.state import State
 
-class Project:
+class Project(Hierarchy, State):
     def __init__(self,
             uuid: UUID,
             name: str = "",
-            extSchemaSrc: Uri = None):
+            extSchemaSrc: Uri = None,
+            state: State.States = State.States.ORIGINAL):
 
         """ Initialisation function of Project """
 
+        Hierarchy.__init__(self, None) # Project is the topmost element
+        State.__init__(self, state)
         self.id = uuid
         self.name = name
         self.extSchemaSrc = extSchemaSrc
@@ -21,7 +26,21 @@ class Project:
         Returns true if every variable member of both classes are the same
         """
 
+        if type(self) != type(other):
+            return False
+
         return self.id == other.id \
             and self.name == other.name \
             and self.extSchemaSrc == other.extSchemaSrc \
             and self.topicList == other.topicList
+
+
+    def __str__(self):
+
+        ret_str = """Project(
+id='{}',
+name='{}',
+extSchemaSrc='{}',
+topicList='{}')""".format(self.id, self.name, self.extSchemaSrc,
+                self.topicList)
+        return ret_str

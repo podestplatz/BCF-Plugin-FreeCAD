@@ -132,6 +132,17 @@ def getOptionalFromDict(d: Dict, desiredValue: str, empty):
     return empty
 
 
+def setContainingElement(item, cE):
+    if item:
+        item.containingObject = cE
+
+
+def listSetContainingElement(l, cE):
+    if l:
+        for item in l:
+            setContainingElement(item, cE)
+
+
 ########## Object builder functions ##########
 """
 Following, all functions prefixed with `build` fulfill the purpose of creating
@@ -229,6 +240,11 @@ def buildComment(commentDict: Dict):
         viewpointRef = ViewpointReference(id=UUID(viewpointRef["@Guid"]))
 
     comment = Comment(creationData, commentString, viewpointRef, modifiedData)
+
+    setContainingElement(creationData, comment)
+    setContainingElement(modifiedData, comment)
+    setContainingElement(viewpointRef, comment)
+
     return comment
 
 
@@ -239,7 +255,12 @@ def buildBimSnippet(snippetDict: Dict):
     snippetType = snippetDict["@SnippetType"]
     isExternal = getOptionalFromDict(snippetDict, "@isExternal", False)
 
-    return BimSnippet(snippetType, isExternal, reference, referenceSchema)
+    bimSnippet = BimSnippet(snippetType, isExternal, reference, referenceSchema)
+
+    setContainingElement(reference, bimSnippet)
+    setContainingElement(referenceSchema, bimSnippet)
+
+    return bimSnippet
 
 
 def buildDocRef(docDict: Dict):
@@ -303,7 +324,14 @@ def buildTopic(topicDict: Dict):
             topicType, topicStatus, docRefs,
             topicPriority, index, labelList,
             modifiedData, dueDate, assignee,
-            description, stage, relatedTopics)
+            description, stage, relatedTopics,
+            bimSnippet)
+
+    listSetContainingElement(docRefs, topic)
+    setContainingElement(creationData, topic)
+    setContainingElement(modifiedData, topic)
+    setContainingElement(bimSnippet, topic)
+
     return topic
 
 
@@ -332,6 +360,9 @@ def buildHeader(headerDict):
 
     header = Header(ifcProjectId, ifcSpatialStructureElement,
             isExternal, filename, filedate, reference)
+
+    setContainingElement(reference, header)
+
     return header
 
 
@@ -349,6 +380,10 @@ def buildViewpointReference(viewpointDict):
     index = getOptionalFromDict(viewpointDict, "Index", 0)
 
     vpReference = ViewpointReference(id, viewpointFile, snapshotFile, index)
+
+    setContainingElement(snapshotFile, vpReference)
+    setContainingElement(viewpointFile, vpReference)
+
     return vpReference
 
 
@@ -381,6 +416,11 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
             cViewpointRefGuid = comment.viewpoint.id
             viewpointRef = markup.getViewpointRefByGuid(cViewpointRefGuid)
             comment.viewpoint = viewpointRef
+
+    listSetContainingElement(comments, markup)
+    listSetContainingElement(viewpoints, markup)
+    setContainingElement(header, markup)
+    setContainingElement(topic, markup)
 
     return markup
 
@@ -420,6 +460,7 @@ def buildComponentColour(ccDict: Dict):
         colourComponentList = [ buildComponent(cp)
                                 for cp in ccDict["Component"] ]
         cc = ComponentColour(colour, colourComponentList)
+        listSetContainingElement(colourComponentList, cc)
 
     return cc
 
@@ -441,17 +482,27 @@ def buildComponents(componentsDict: Dict):
     defaultVisibility = getOptionalFromDict(visibilityDict,
             "@DefaultVisibility", True)
 
-    exceptionDict = getOptionalFromDict(visibilityDict, "Exceptions", list())
-    exceptionList = exceptionDict["Component"] # at least one element has to be present
-    exceptions = [ buildComponent(cp) for cp in exceptionList ]
+    exceptionDict = getOptionalFromDict(visibilityDict, "Exceptions", None)
+    exceptions = list()
+    if exceptionDict:
+        exceptionList = exceptionDict["Component"] # at least one element has to be present
+        exceptions = [ buildComponent(cp) for cp in exceptionList ]
 
-    colourComponentDict = getOptionalFromDict(componentsDict, "Coloring", list())
-    colourComponentList = colourComponentDict["Color"] # at least one color is required
-    componentColours = [ buildComponentColour(ccDict)
-                            for ccDict in colourComponentList ]
+    colourComponentDict = getOptionalFromDict(componentsDict, "Coloring", None)
+    componentColours = list()
+    if colourComponentDict:
+        colourComponentList = colourComponentDict["Color"] # at least one color is required
+        componentColours = [ buildComponentColour(ccDict)
+                                for ccDict in colourComponentList ]
 
     components = Components(defaultVisibility, exceptions, sel,
             vsh, componentColours)
+
+    listSetContainingElement(sel, components)
+    listSetContainingElement(exceptions, components)
+    listSetContainingElement(componentColours, components)
+    setContainingElement(vsh, components)
+
     return components
 
 
@@ -473,6 +524,11 @@ def buildOrthogonalCamera(oCamDict: Dict):
     vWorldScale = oCamDict["ViewToWorldScale"]
 
     cam = OrthogonalCamera(camViewpoint, camDirection, camUpVector, vWorldScale)
+
+    setContainingElement(camViewpoint, cam)
+    setContainingElement(camDirection, cam)
+    setContainingElement(camUpVector, cam)
+
     return cam
 
 
@@ -485,6 +541,11 @@ def buildPerspectiveCamera(pCamDict: Dict):
 
     cam = PerspectiveCamera(camViewpoint, camDirection, camUpVector,
             fieldOfView)
+
+    setContainingElement(camViewpoint, cam)
+    setContainingElement(camDirection, cam)
+    setContainingElement(camUpVector, cam)
+
     return cam
 
 
@@ -494,6 +555,10 @@ def buildLine(lineDict: Dict):
     end = buildPoint(lineDict["EndPoint"])
 
     line = Line(start, end)
+
+    setContainingElement(start, line)
+    setContainingElement(end, line)
+
     return line
 
 
@@ -503,6 +568,10 @@ def buildClippingPlane(clipDict: Dict):
     direction = buildDirection(clipDict["Direction"])
 
     cPlane = ClippingPlane(location, direction)
+
+    setContainingElement(location, cPlane)
+    setContainingElement(direction, cPlane)
+
     return cPlane
 
 
@@ -518,6 +587,11 @@ def buildBitmap(bmDict: Dict):
     height = bmDict["Height"]
 
     bitmap = Bitmap(bmFormat, reference, location, normal, up, height)
+
+    setContainingElement(location, bitmap)
+    setContainingElement(normal, bitmap)
+    setContainingElement(up, bitmap)
+
     return bitmap
 
 
@@ -566,6 +640,14 @@ def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
 
     viewpoint = Viewpoint(id, components, oCam,
             pCam, lines, clippingPlanes, bitmaps)
+
+    setContainingElement(components, viewpoint)
+    setContainingElement(oCam, viewpoint)
+    setContainingElement(pCam, viewpoint)
+    listSetContainingElement(lines, viewpoint)
+    listSetContainingElement(clippingPlanes, viewpoint)
+    listSetContainingElement(bitmaps, viewpoint)
+
     return viewpoint
 
 
@@ -654,13 +736,16 @@ def readBcfFile(bcfFile: str):
             return None
         markup = buildMarkup(markupFilePath, markupSchemaPath)
 
-        viewpointFiles = markup.getViewpointFileList()
-        viewpoints = list()
+        # generate a viewpoint object for all viewpoints listed in the markup
+        # object and add them to the ViewpointReference object (`viewpoint`)
+        # inside markup
         for vpRef in markup.viewpoints:
             vpPath = os.path.join(topicDir, vpRef.file.uri)
             vp = buildViewpoint(vpPath, visinfoSchemaPath)
             vpRef.viewpoint = vp
+            setContainingElement(vp, vpRef)
 
+        setContainingElement(markup, proj)
         # add the finished markup object to the project
         proj.topicList.append(markup)
 
@@ -668,6 +753,8 @@ def readBcfFile(bcfFile: str):
 
 
 if __name__ == "__main__":
-    #extractedProjectPath = extractFileToTmp(sys.argv[1])
-    project = readBcfFile(sys.argv[1])
+    argFile = "test_data/Issues_BIMcollab_Example.bcf"
+    if len(sys.argv) >= 2:
+        argFile = sys.argv[1]
+    project = readBcfFile(argFile)
     print(project)
