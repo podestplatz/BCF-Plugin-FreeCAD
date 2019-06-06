@@ -220,6 +220,7 @@ def buildProject(projectFilePath: str, projectSchema: str):
 
 def buildComment(commentDict: Dict):
 
+    id = commentDict["@Guid"]
     commentDate = dateutil.parser.parse(commentDict["Date"]) # parse ISO 8601 datetime
     commentAuthor = commentDict["Author"]
     creationData = Modification(commentAuthor, commentDate)
@@ -239,7 +240,7 @@ def buildComment(commentDict: Dict):
     if viewpointRef:
         viewpointRef = ViewpointReference(id=UUID(viewpointRef["@Guid"]))
 
-    comment = Comment(creationData, commentString, viewpointRef, modifiedData)
+    comment = Comment(id, creationData, commentString, viewpointRef, modifiedData)
 
     setContainingElement(creationData, comment)
     setContainingElement(modifiedData, comment)

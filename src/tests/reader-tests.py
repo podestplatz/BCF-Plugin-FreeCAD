@@ -327,6 +327,7 @@ class buildCommentTest(unittest.TestCase):
         expectedCreation = modification.Modification(author="bgreen@bim.col",
                 date=dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
         expectedComment = markup.Comment(
+                "2b1e79c8-9d2d-419d-887a-fcff8fec7595",
                 creation = expectedCreation,
                 comment = "Do you mean this one?",
                 viewpoint = None,
@@ -359,6 +360,7 @@ class buildCommentTest(unittest.TestCase):
                 snapshot=uri.Uri("snapshot.png"),
                 index=2)
         expectedComment = markup.Comment(
+                "2b1e79c8-9d2d-419d-887a-fcff8fec7595",
                 creation = expectedCreation,
                 comment = "Do you mean this one?",
                 viewpoint = expectedViewpoint,
@@ -390,6 +392,7 @@ class buildCommentTest(unittest.TestCase):
                 snapshot=uri.Uri("snapshot.png"),
                 index=0)
         expectedComment = markup.Comment(
+                "2b1e79c8-9d2d-419d-887a-fcff8fec7595",
                 creation = expectedCreation,
                 comment = "Do you mean this one?",
                 viewpoint = expectedViewpoint,

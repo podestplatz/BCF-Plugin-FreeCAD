@@ -63,7 +63,7 @@ def retrieveWebFile(schema: Schema, storePath: str):
             with open(storePath, "wb+") as file:
                 file.write(schemaContent)
     except URLError as e:
-        print("Could not retrieve {}".format(fileURL))
+        print("Could not retrieve {}".format(fileUrl))
         print("Here is the stack trace {}".format(str(e)))
         return None
     except Exception as e:

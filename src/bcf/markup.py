@@ -120,6 +120,7 @@ class Comment(Hierarchy, Identifiable, State):
     """ Class holding all data about a comment """
 
     def __init__(self,
+            guid: str ,
             creation: Modification,
             comment: str,
             viewpoint: ViewpointReference = None,
@@ -130,7 +131,7 @@ class Comment(Hierarchy, Identifiable, State):
         """ Initialisation function of Comment """
 
         Hierarchy.__init__(self, containingElement)
-        Identifiable.__init__(self, id(self))
+        Identifiable.__init__(self, guid)
         State.__init__(self, state)
         self.creation = creation
         self.comment = comment
@@ -157,7 +158,8 @@ class Comment(Hierarchy, Identifiable, State):
             if self.lastModification != other.lastModification:
                 print("LastModification is different")
 
-        return (self.creation == other.creation and
+        return (self.id == other.id and
+                self.creation == other.creation and
                 self.comment == other.comment and
                 self.viewpoint == other.viewpoint and
                 self.lastModification == other.lastModification)

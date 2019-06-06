@@ -60,8 +60,7 @@ listElements = ["Comment", "DocumentReference", "RelatedTopic", "Labels"]
 
 def getUniqueIdOfListElementInHierarchy(element):
 
-    #TODO: handle labels correctly
-    elementHierarchy = hierarchy.Hierarchy.checkAndGetHierarchy(element)
+    elementHierarchy = Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy:
         return None
 
@@ -70,6 +69,6 @@ def getUniqueIdOfListElementInHierarchy(element):
         if item.__class__.__name__ in listElements:
             listElement = item
 
-    if isinstanceof(item, identifiable.Identifiable):
+    if isinstanceof(listElement, Identifiable):
         return item.id
     return None
