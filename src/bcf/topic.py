@@ -221,6 +221,12 @@ class BimSnippet(Hierarchy, State):
                 self.schema == other.schema)
 
 
+class Labels(list, Hierarchy):
+    def __init__(self, data=[], containingElement = None):
+        list.__init__(self, data)
+        Hierarchy.__init__(self, containingElement)
+
+
 class Topic(Hierarchy, Identifiable, State):
 
     """ Topic contains all metadata about one ... topic """
@@ -257,7 +263,7 @@ class Topic(Hierarchy, Identifiable, State):
         self.refs = refs
         self.priority = priority
         self.index = index
-        self.labels = labels
+        self.labels = Labels(labels, self)
         self.lastModification = lastModification
         self.dueDate = dueDate
         self.assignee = assignee
