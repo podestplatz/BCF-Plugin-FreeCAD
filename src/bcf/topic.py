@@ -54,7 +54,7 @@ class DocumentReference(Hierarchy, Identifiable, State, XMLName):
 
 class BimSnippet(Hierarchy, State, XMLName):
     def __init__(self,
-            type: SnippetType = None,
+            type: str = "",
             external: bool = False,
             reference: Uri = None,
             schema: Uri = None,

@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 import bcf.reader as reader
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
-from bcf.markup import (Markup, ViewpointReference)
+from bcf.markup import (Markup, ViewpointReference, Comment)
 
 """
 `elementHierarchy` contains for each element, the writer supports writing, the
@@ -69,12 +69,22 @@ listElements = ["Comment", "DocumentReference", "RelatedTopic", "Labels"]
 
 def getUniqueIdOfListElementInHierarchy(element):
 
+    """
+    Looks through the hierarchy of an object up to the project. If somewhere on
+    the way up an element is identified as list element (may occur more than
+    once inside the same XML element) then the id of that element is returned.
+    It is assumed that max. one such list element is found. If `element` itself
+    is a list element `None` is returned. If no list element is found `None` is
+    returned.
+    """
+
     elementHierarchy = Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy:
         return None
 
     listElement = None
-    for item in elementHierarchy:
+    # climb up the hierarchy starting with the direct parent
+    for item in elementHierarchy[1:]:
         if item.__class__.__name__ in listElements:
             listElement = item
 
@@ -110,6 +120,11 @@ def getFileOfElement(element):
 
 def getTopicOfElement(element):
 
+    """
+    Returns the topic of an element. This is used to generate the right path to
+    the file that shall be edited.
+    """
+
     elementHierarchy = Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy: # just check for sanity
         return None
@@ -120,6 +135,10 @@ def getTopicOfElement(element):
 
     # ViewpointReference is a child element of Markup.
     if isinstance(element, ViewpointReference):
+        return element.containingObject.topic
+
+    # All comments are assigned to just one topic.
+    if isinstance(element, Comment):
         return element.containingObject.topic
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
@@ -166,8 +185,7 @@ def getParentElement(element, etRoot):
             etParent = etRoot
         if reader.DEBUG:
             print(etParent)
-
-    if listElemId:
+    else:
         idAttrName = getIdAttrName(listElementId)
         etParent = etRoot.find(".//*[@{}='{}']".format(idAttrName,
             str(listElemId)))
@@ -226,10 +244,11 @@ def addElement(element):
 
     newEtElement = element.getEtElement(ET.Element(element.xmlName))
     if reader.DEBUG:
-        print("Type of elem: {}".format(newEtElement.__class__.__name__))
-        print("Type of parent: {}".format(etParent.__class__.__name__))
+        print("Element that gets inserted: ")
+        print(ET.tostring(newEtElement, encoding='utf8', method='xml'))
+
     etParent.insert(insertionIndex, newEtElement)
-    xmlTree.write(filePath)
+    xmlTree.write(filePath, encoding="utf8")
 
 
 if __name__ == "__main__":
@@ -238,3 +257,4 @@ if __name__ == "__main__":
         argFile = sys.argv[1]
     project = reader.readBcfFile(argFile)
     addElement(project.topicList[0].viewpoints[0])
+    addElement(project.topicList[0].comments[0])

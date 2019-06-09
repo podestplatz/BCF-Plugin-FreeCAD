@@ -4,7 +4,7 @@ from datetime import datetime, date
 from typing import List # used for custom type annotations
 from bcf.uri import Uri
 from bcf.modification import Modification
-from bcf.topic import Topic, SnippetType
+from bcf.topic import Topic
 from interfaces.state import State
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
@@ -122,19 +122,23 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
 
     def getEtElement(self, elem):
 
-        import copy
         elem.attrib["Guid"] = str(self.id)
+        elem.tail = "\n\t"
+
         if self.file is not None:
             fileElem = ET.SubElement(elem, "Viewpoint")
             fileElem.text = str(self.file)
+            fileElem.tail = "\n\t\t"
 
         if self.snapshot is not None:
             snapElem = ET.SubElement(elem, "Snapshot")
             snapElem.text = str(self.snapshot)
+            snapElem.tail = "\n\t\t"
 
         if self.index != -1:
             indexElem = ET.SubElement(elem, "Index")
             indexElem.text = str(self.index)
+            indexElem.tail = "\n\t\t"
 
         return elem
 
@@ -198,6 +202,41 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
                 "\n\tlastModification='{}')").format(self.creation, self.comment,
                 str(self.viewpoint), self.lastModification)
         return ret_str
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+        elem.attrib["Guid"] = str(self.id)
+        elem.tail = "\n\t"
+
+        dateElem = ET.SubElement(elem, "Date")
+        dateElem.text = self.creation.date.isoformat("T", "seconds")
+        dateElem.tail = "\n\t\t"
+
+        authorElem = ET.SubElement(elem, "Author")
+        authorElem.text = self.creation.author
+        authorElem.tail = "\n\t\t"
+
+        commentElem = ET.SubElement(elem, "Comment")
+        commentElem.text = self.comment
+        commentElem.tail = "\n\t\t"
+
+        if self.viewpoint is not None:
+            vpElem = ET.SubElement(elem, "Viewpoint")
+            vpElem.attrib["Guid"] = str(self.viewpoint.id)
+            vpElem.tail = "\n\t\t"
+
+        if self.lastModification is not None:
+            modDateElem = ET.SubElement(elem, "ModifiedDate")
+            modDateElem.text = self.lastModification.date.isoformat("T", "seconds")
+            modDateElem.tail = "\n\t\t"
+
+            modAuthorElem = ET.SubElement(elem, "ModifiedAuthor")
+            modAuthorElem.text = self.lastModification.author
+            modAuthorElem.tail = "\n\t\t"
+
+        return elem
 
 
 class Markup(Hierarchy, State, XMLName):
