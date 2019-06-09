@@ -17,6 +17,6 @@ class Hierarchy:
 
     @staticmethod
     def checkAndGetHierarchy(element):
-        if not isinstanceof(element, Hierarchy):
+        if not isinstance(element, Hierarchy):
             return None
         return element.getHierarchyList()

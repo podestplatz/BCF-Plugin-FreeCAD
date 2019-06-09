@@ -41,9 +41,11 @@ def getSystemTmp():
 
     global tempDir
     if tempDir is None:
-        tempDir = tempfile.TemporaryDirectory()
+        #tempDir = tempfile.TemporaryDirectory()
+        tempDir = tempfile.mkdtemp()
 
-    return tempDir.name
+    #return tempDir.name
+    return tempDir
 
 
 def retrieveWebFile(schema: Schema, storePath: str):

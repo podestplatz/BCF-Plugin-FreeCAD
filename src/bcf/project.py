@@ -1,6 +1,5 @@
 from uuid import UUID
 from bcf.uri import Uri
-from bcf.markup import Markup
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
 

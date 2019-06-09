@@ -1,4 +1,4 @@
-import bcf.reader as reader
+import xml.etree.ElementTree as ET
 from uuid import UUID
 from datetime import datetime, date
 from typing import List # used for custom type annotations
@@ -8,6 +8,9 @@ from bcf.topic import Topic, SnippetType
 from interfaces.state import State
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
+from interfaces.xmlname import XMLName
+
+DEBUG = True
 
 class Header(Hierarchy, State):
     def __init__(self,
@@ -47,7 +50,7 @@ class Header(Hierarchy, State):
                 self.reference == other.reference)
 
 
-class ViewpointReference(Hierarchy, State, Identifiable):
+class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
 
     """ Base class for Viewpoint. """
 
@@ -55,7 +58,7 @@ class ViewpointReference(Hierarchy, State, Identifiable):
             id: UUID,
             file: Uri = None,
             snapshot: Uri = None,
-            index: int = 0,
+            index: int = -1,
             containingElement = None,
             state: State.States = State.States.ORIGINAL):
 
@@ -64,6 +67,7 @@ class ViewpointReference(Hierarchy, State, Identifiable):
         Hierarchy.__init__(self, containingElement)
         Identifiable.__init__(self, id)
         State.__init__(self, state)
+        XMLName.__init__(self, "Viewpoints")
         self.file = file
         self.snapshot = snapshot
         self.index = index
@@ -88,7 +92,7 @@ class ViewpointReference(Hierarchy, State, Identifiable):
         if other is None:
             return False
 
-        if reader.DEBUG:
+        if DEBUG:
             if self.id != other.id:
                 print("Viewpoint: id is different {} {}".format(self.id, other.id))
             if self.file != other.file:
@@ -113,6 +117,27 @@ class ViewpointReference(Hierarchy, State, Identifiable):
                         " index='{}')").format(self.id, self.file, self.snapshot,
                         self.index)
         return ret_str
+
+
+    def getEtElement(self, elem):
+
+        import copy
+        elem.attrib["Guid"] = str(self.id)
+        if self.file is not None:
+            fileElem = ET.SubElement(elem, "Viewpoint")
+            fileElem.text = str(self.file)
+
+        if self.snapshot is not None:
+            snapElem = ET.SubElement(elem, "Snapshot")
+            snapElem.text = str(self.snapshot)
+
+        if self.index != -1:
+            indexElem = ET.SubElement(elem, "Index")
+            indexElem.text = str(self.index)
+
+        return elem
+
+
 
 
 class Comment(Hierarchy, Identifiable, State):
@@ -148,7 +173,7 @@ class Comment(Hierarchy, Identifiable, State):
         if other is None:
             return False
 
-        if reader.DEBUG:
+        if DEBUG:
             if self.creation != other.creation:
                 print("Creation is different")
             if self.comment != other.comment:
@@ -179,8 +204,8 @@ class Markup(Hierarchy, State):
     starting point for the ui to get the data """
 
     def __init__(self,
+            topic: Topic,
             header: Header = None,
-            topic: List[Topic] = list(),
             comments: List[Comment] = list(),
             viewpoints: List[ViewpointReference] = list(),
             containingElement = None,

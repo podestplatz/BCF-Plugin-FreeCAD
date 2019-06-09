@@ -25,5 +25,5 @@ class Uri(Hierarchy, State):
         return self.uri == other.uri
 
     def __str__(self):
-        ret_str = "Uri({})".format(self.uri)
+        ret_str = "{}".format(self.uri)
         return ret_str

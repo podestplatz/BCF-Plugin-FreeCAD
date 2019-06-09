@@ -5,9 +5,10 @@ from zipfile import ZipFile
 from xmlschema import XMLSchema
 from uuid import UUID
 from typing import List, Dict
-from bcf import project
 from bcf import viewpoint
 from bcf import util
+from bcf import project
+from bcf.project import Project
 from bcf.uri import Uri as Uri
 from bcf.modification import Modification
 from bcf.markup import (Comment, Header, ViewpointReference, Markup)
@@ -19,6 +20,10 @@ from bcf.threedvector import (Point, Line, Direction, ClippingPlane)
 
 DEBUG = True
 SUPPORTED_VERSIONS = ["2.1"]
+
+# path to the extracted BCF file
+# gets set by readBcfFile()
+bcfDir = ""
 
 if DEBUG:
     import pprint
@@ -409,7 +414,7 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
     viewpoints = [ buildViewpointReference(vpDict)
                     for vpDict in viewpointList ]
 
-    markup = Markup(header, topic, comments, viewpoints)
+    markup = Markup(topic, header, comments, viewpoints)
 
     # Add the right viewpoint references to each comment
     for comment in comments:
@@ -685,6 +690,8 @@ def readBcfFile(bcfFile: str):
     is returned.
     """
 
+    global bcfDir
+
     tmpDir = util.getSystemTmp()
     (projectSchemaPath, extensionsSchemaPath,\
         markupSchemaPath, versionSchemaPath,\
@@ -750,6 +757,9 @@ def readBcfFile(bcfFile: str):
         # add the finished markup object to the project
         proj.topicList.append(markup)
 
+    bcfDir = bcfExtractedPath
+    if DEBUG:
+        print("BCF file is open at {}".format(bcfDir))
     return proj
 
 

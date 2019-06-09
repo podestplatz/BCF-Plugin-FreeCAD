@@ -1,5 +1,14 @@
+import os
+import sys
+
+if __name__ == "__main__":
+    sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
+    print(sys.path)
+import xml.etree.ElementTree as ET
+import bcf.reader as reader
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
+from bcf.markup import (Markup, ViewpointReference)
 
 """
 `elementHierarchy` contains for each element, the writer supports writing, the
@@ -69,6 +78,163 @@ def getUniqueIdOfListElementInHierarchy(element):
         if item.__class__.__name__ in listElements:
             listElement = item
 
-    if isinstanceof(listElement, Identifiable):
+    if isinstance(listElement, Identifiable):
         return item.id
     return None
+
+
+def getFileOfElement(element):
+
+    elementHierarchy = Hierarchy.checkAndGetHierarchy(element)
+    if not elementHierarchy: # element is not addable
+        return None
+
+    strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
+    if "Viewpoint" in strHierarchy:
+        try:
+            vpRefIndex = strHierarchy.index("ViewpointReference")
+        except Exception as e:
+            print("ViewpointReference is not in Hierarchy of Viewpoint",
+                    file=sys.stderr)
+            raise e
+        else:
+            viewpointFile = elementHierarchy[vpRefIndex].file
+            return viewpointFile
+    elif "Markup" in strHierarchy:
+        return "markup.bcf"
+    elif "Project" in strHierarchy: # it should not come to this point actually
+        return "project.bcfp"
+    else: # This can only happen if someone wants to change the version file, which is not editable in the plugin
+        return None
+
+
+def getTopicOfElement(element):
+
+    elementHierarchy = Hierarchy.checkAndGetHierarchy(element)
+    if not elementHierarchy: # just check for sanity
+        return None
+
+    # Markups have a one to one mapping to topics
+    if isinstance(element, Markup):
+        return element.topic
+
+    # ViewpointReference is a child element of Markup.
+    if isinstance(element, ViewpointReference):
+        return element.containingObject.topic
+
+    strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
+    if not "Topic" in strHierarchy:
+        return None
+
+    topicIndex = strHierarchy.index("Topic")
+    return elementHierarchy[topicIndex]
+
+
+def getIdAttrName(elementId):
+
+    idAttrName = ""
+    if isinstance(listElemId, UUID):
+        idAttrName = "Guid"
+    elif isinstance(listElemId, str):
+        idAttrName = "IfcGuid"
+
+    return idAttrName
+
+
+def getParentElement(element, etRoot):
+
+    elementHierarchy = element.getHierarchyList()
+    strHierarchy = [ elem.__class__.__name__ for elem in elementHierarchy ]
+
+    if len(strHierarchy) < 2:
+        raise NotImplementedError("Element itself is a root element."\
+                "Creating of new files is not supported yet")
+
+    # the topmost element will always be Project
+    if strHierarchy[-2] != etRoot.tag:
+        print("Root element of hierarchy and root tag of file do not match."\
+            " {} != {}".format(strHierarchy[-1], etRoot.tag), file=sys.stderr)
+
+    if reader.DEBUG:
+        print("Element hierarchy: {}".format(strHierarchy))
+
+    etParent = None
+    listElemId = getUniqueIdOfListElementInHierarchy(element)
+    if not listElemId: # parent can be found easily by tag
+        etParent = etRoot.find(strHierarchy[1])
+        if not etParent and etRoot.tag == strHierarchy[1]:
+            etParent = etRoot
+        if reader.DEBUG:
+            print(etParent)
+
+    if listElemId:
+        idAttrName = getIdAttrName(listElementId)
+        etParent = etRoot.find(".//*[@{}='{}']".format(idAttrName,
+            str(listElemId)))
+
+    return etParent
+
+
+def getInsertionIndex(element, etParent):
+
+    parentSequence = elementOrder[etParent.tag]
+    elemSeqIndex = parentSequence.index(element.xmlName)
+    etChildren = [ elem.tag for elem in list(etParent) ]
+    revEtChildren = list(reversed(etChildren))
+    highestIndex = 0
+    for seqElem in parentSequence:
+        if seqElem == element.xmlName:
+            break
+
+        seqElemIndex = len(etChildren) - 1 - revEtChildren.index(seqElem)
+        if seqElemIndex:
+            highestIndex = seqElemIndex
+
+    return highestIndex + 1 # ET index starts at 1
+
+
+def addElement(element):
+    fileName = getFileOfElement(element)
+    if not fileName:
+        raise ValueError("{} is not applicable to be added to anyone"\
+            "file".format(element.__class__.__name__))
+
+    if not (".bcfv" in fileName or ".bcf" in fileName):
+        raise NotImplementedError("Writing of project.bcfp or bcf.version"\
+                " is not yet supported")
+
+    topic = getTopicOfElement(element)
+    if not topic:
+        raise ValueError("Element of type {} is not contained in a topic."\
+            "Cannot be written to file".format(element.__class__.__name__))
+
+    topicDir = topic.id
+    bcfDir = reader.bcfDir
+    filePath = os.path.join(bcfDir, str(topicDir), fileName)
+    if reader.DEBUG:
+        print("File that will get added to {}".format(filePath))
+
+    xmlTree = ET.parse(filePath)
+    etParent = getParentElement(element, xmlTree.getroot())
+    if reader.DEBUG:
+        print("Parent name that was found: {}".format(etParent.tag))
+
+    insertionIndex = getInsertionIndex(element, etParent)
+    if reader.DEBUG:
+        print("Index where {} gets inserted {}".format(str(element),
+            insertionIndex))
+
+    newEtElement = element.getEtElement(ET.Element(element.xmlName))
+    if reader.DEBUG:
+        print("Type of elem: {}".format(newEtElement.__class__.__name__))
+        print("Type of parent: {}".format(etParent.__class__.__name__))
+    etParent.insert(insertionIndex, newEtElement)
+    xmlTree.write(filePath)
+
+
+if __name__ == "__main__":
+    argFile = "test_data/Issues_BIMcollab_Example.bcf"
+    if len(sys.argv) >= 2:
+        argFile = sys.argv[1]
+    project = reader.readBcfFile(argFile)
+    addElement(project.topicList[0].viewpoints[0])

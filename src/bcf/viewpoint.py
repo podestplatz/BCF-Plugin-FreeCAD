@@ -2,7 +2,6 @@ import bcf.reader as reader
 from enum import Enum
 from typing import List, Dict
 from uuid import UUID
-from bcf.markup import ViewpointReference
 from bcf.threedvector import *
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
