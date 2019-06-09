@@ -9,6 +9,7 @@ from bcf.uri import Uri
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
 from interfaces.state import State
+from interfaces.xmlname import XMLName
 
 
 """ Is not used anymore """
@@ -151,7 +152,7 @@ class SnippetType(SchemaConstraint):
         super(SnippetType, self).__init__(values[0], values)
 
 
-class DocumentReference(Hierarchy, Identifiable, State):
+class DocumentReference(Hierarchy, Identifiable, State, XMLName):
     def __init__(self,
                 id: UUID = None,
                 external: bool = False,
@@ -165,6 +166,7 @@ class DocumentReference(Hierarchy, Identifiable, State):
         Hierarchy.__init__(self, containingElement)
         Identifiable.__init__(self, id)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.external = external
         self.reference = reference
         self.description = description
@@ -190,7 +192,7 @@ class DocumentReference(Hierarchy, Identifiable, State):
         return str_ret
 
 
-class BimSnippet(Hierarchy, State):
+class BimSnippet(Hierarchy, State, XMLName):
     def __init__(self,
             type: SnippetType = None,
             external: bool = False,
@@ -203,6 +205,7 @@ class BimSnippet(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.type = type
         self.external = external
         self.reference = reference
@@ -221,13 +224,16 @@ class BimSnippet(Hierarchy, State):
                 self.schema == other.schema)
 
 
-class Labels(list, Hierarchy):
+class Labels(list, Hierarchy, XMLName):
+
     def __init__(self, data=[], containingElement = None):
+
         list.__init__(self, data)
         Hierarchy.__init__(self, containingElement)
+        XMLName.__init__(self)
 
 
-class Topic(Hierarchy, Identifiable, State):
+class Topic(Hierarchy, Identifiable, State, XMLName):
 
     """ Topic contains all metadata about one ... topic """
 
@@ -256,6 +262,7 @@ class Topic(Hierarchy, Identifiable, State):
         Hierarchy.__init__(self, containingElement)
         Identifiable.__init__(self, id)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.title = title
         self.creation = creation
         self.type = type

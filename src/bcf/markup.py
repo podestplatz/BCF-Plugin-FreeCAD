@@ -12,7 +12,7 @@ from interfaces.xmlname import XMLName
 
 DEBUG = True
 
-class Header(Hierarchy, State):
+class Header(Hierarchy, State, XMLName):
     def __init__(self,
                 ifcProjectId: UUID = None,
                 ifcSpacialStructureElement: UUID = None,
@@ -27,6 +27,7 @@ class Header(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.ifcProjectId = ifcProjectId
         self.ifcSpacialStructureElement = ifcSpacialStructureElement
         self.external = external
@@ -140,7 +141,7 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
 
 
 
-class Comment(Hierarchy, Identifiable, State):
+class Comment(Hierarchy, Identifiable, State, XMLName):
 
     """ Class holding all data about a comment """
 
@@ -158,6 +159,7 @@ class Comment(Hierarchy, Identifiable, State):
         Hierarchy.__init__(self, containingElement)
         Identifiable.__init__(self, guid)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.creation = creation
         self.comment = comment
         self.viewpoint = viewpoint
@@ -198,7 +200,7 @@ class Comment(Hierarchy, Identifiable, State):
         return ret_str
 
 
-class Markup(Hierarchy, State):
+class Markup(Hierarchy, State, XMLName):
 
     """ Every topic folder has exactly one markup.bcf file. This forms the
     starting point for the ui to get the data """
@@ -215,6 +217,7 @@ class Markup(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.header = header
         self.topic = topic
         self.comments = comments

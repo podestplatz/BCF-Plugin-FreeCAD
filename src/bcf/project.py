@@ -2,8 +2,9 @@ from uuid import UUID
 from bcf.uri import Uri
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
+from interfaces.xmlname import XMLName
 
-class Project(Hierarchy, State):
+class Project(Hierarchy, State, XMLName):
     def __init__(self,
             uuid: UUID,
             name: str = "",
@@ -14,6 +15,7 @@ class Project(Hierarchy, State):
 
         Hierarchy.__init__(self, None) # Project is the topmost element
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.id = uuid
         self.name = name
         self.extSchemaSrc = extSchemaSrc

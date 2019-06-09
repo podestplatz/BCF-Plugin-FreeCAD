@@ -5,6 +5,7 @@ from uuid import UUID
 from bcf.threedvector import *
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
+from interfaces.xmlname import XMLName
 
 
 class BitmapFormat(Enum):
@@ -12,7 +13,7 @@ class BitmapFormat(Enum):
     PNG = 2
 
 
-class Bitmap(Hierarchy, State):
+class Bitmap(Hierarchy, State, XMLName):
 
     """
     Represents a bitmap, to which the according file is stored inside the
@@ -33,6 +34,7 @@ class Bitmap(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.format = format
         self.reference = reference
         self.location = location
@@ -86,7 +88,7 @@ class Camera(Hierarchy, State):
                 self.upVector == other.upVector)
 
 
-class PerspectiveCamera(Camera):
+class PerspectiveCamera(Camera, XMLName):
 
     """ """
 
@@ -97,11 +99,13 @@ class PerspectiveCamera(Camera):
             fieldOfView: int,
             containingElement = None,
             state: State.States = State.States.ORIGINAL):
-        super().__init__(viewPoint,
+        Camera.__init__(self,
+                viewPoint,
                 direction,
                 upVector,
                 containingElement,
                 state)
+        XMLName.__init__(self)
         self.fieldOfView = fieldOfView
 
 
@@ -116,7 +120,7 @@ class PerspectiveCamera(Camera):
         return False
 
 
-class OrthogonalCamera(Camera):
+class OrthogonalCamera(Camera, XMLName):
 
     """ """
 
@@ -130,11 +134,13 @@ class OrthogonalCamera(Camera):
 
         """ Initialisation function of OrthogonalCamera """
 
-        super(OrthogonalCamera, self).__init__(viewPoint,
+        Camera.__init__(self,
+                viewPoint,
                 direction,
                 upVector,
                 containingElement,
                 state)
+        XMLName.__init__(self)
         self.viewWorldScale = viewWorldScale
 
 
@@ -150,7 +156,7 @@ class OrthogonalCamera(Camera):
         return False
 
 
-class Component(Hierarchy, State):
+class Component(Hierarchy, State, XMLName):
 
     def __init__(self,
             ifcId: UUID,
@@ -161,6 +167,7 @@ class Component(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.ifcId = ifcId
         self.originatingSystem = originatingSystem
         self.authoringtoolId = authoringtoolId
@@ -186,7 +193,7 @@ class Component(Hierarchy, State):
 
 
 
-class ComponentColour(Hierarchy, State):
+class ComponentColour(Hierarchy, State, XMLName):
 
     def __init__(self,
             colour: str,
@@ -196,6 +203,7 @@ class ComponentColour(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self, "Coloring")
         if len(components) == 0:
             raise ValueError("`components` has to have at least one element")
         self.colour = colour
@@ -220,7 +228,7 @@ class ComponentColour(Hierarchy, State):
 
 
 
-class ViewSetupHints(Hierarchy, State):
+class ViewSetupHints(Hierarchy, State, XMLName):
 
     def __init__(self, openingsVisible: bool = False,
             spacesVisible: bool = False,
@@ -230,6 +238,7 @@ class ViewSetupHints(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.openingsVisible = openingsVisible
         self.spaceBoundariesVisible = spaceBoundariesVisible
         self.spacesVisible = spacesVisible
@@ -247,7 +256,7 @@ class ViewSetupHints(Hierarchy, State):
 
 
 
-class Components(Hierarchy, State):
+class Components(Hierarchy, State, XMLName):
 
     def __init__(self,
             visibilityDefault: bool,
@@ -260,6 +269,7 @@ class Components(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.viewSetuphints = viewSetuphints
         self.selection = selection
         self.visibilityDefault = visibilityDefault
@@ -294,7 +304,7 @@ class Components(Hierarchy, State):
         return ret_str
 
 
-class Viewpoint(Hierarchy, State):
+class Viewpoint(Hierarchy, State, XMLName):
 
     """ """
 
@@ -311,6 +321,7 @@ class Viewpoint(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.id = id
         self.components = components
         self.oCamera = oCamera

@@ -1,5 +1,7 @@
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
+from interfaces.xmlname import XMLName
+
 
 class ThreeDVector(Hierarchy, State):
 
@@ -31,7 +33,7 @@ class ThreeDVector(Hierarchy, State):
         return self.x == other.x and self.y == other.y and self.z == other.z
 
 
-class Point(ThreeDVector):
+class Point(ThreeDVector, XMLName):
 
     """ Represents a point in the three dimensional space """
 
@@ -43,9 +45,10 @@ class Point(ThreeDVector):
             state: State.States = State.States.ORIGINAL):
 
         ThreeDVector.__init__(self, x, y, z, containingElement, state)
+        XMLName.__init__(self)
 
 
-class Direction(ThreeDVector):
+class Direction(ThreeDVector, XMLName):
 
     """ Represents a vector in the three dimensional space """
 
@@ -57,9 +60,10 @@ class Direction(ThreeDVector):
             state: State.States = State.States.ORIGINAL):
 
         ThreeDVector.__init__(self, x, y, z, containingElement, state)
+        XMLName.__init__(self)
 
 
-class Line(Hierarchy, State):
+class Line(Hierarchy, State, XMLName):
 
     """ Represents a line that goes throught the three dimensional space """
 
@@ -71,6 +75,7 @@ class Line(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.start = start
         self.end = end
 
@@ -84,7 +89,7 @@ class Line(Hierarchy, State):
         return self.start == other.start and self.end == other.end
 
 
-class ClippingPlane(Hierarchy, State):
+class ClippingPlane(Hierarchy, State, XMLName):
 
     def __init__(self,
             location: Point,
@@ -94,6 +99,7 @@ class ClippingPlane(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self)
         self.location = location
         self.direction = direction
 
