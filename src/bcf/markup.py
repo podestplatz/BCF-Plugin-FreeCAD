@@ -13,34 +13,36 @@ from interfaces.xmlname import XMLName
 
 DEBUG = True
 
-class Header(Hierarchy, State, XMLName, Identifiable):
-
-    """
-    Identifiable.id == ifcProjectId
-    """
+class HeaderFile(Hierarchy, State, XMLName):
 
     def __init__(self,
-                ifcProjectId: str = None,
-                ifcSpatialStructureElement: UUID = None,
-                external: bool = True,
-                filename: str = "",
-                time: datetime = None,
-                reference: Uri = None,
-                containingElement = None,
-                state: State.States = State.States.ORIGINAL):
-
-        """ Initialization function for Header """
+            ifcProjectId: str = "",
+            ifcSpatialStructureElement: str = "",
+            isExternal: bool = True,
+            filename: str = "",
+            time: datetime = None,
+            reference: str = "",
+            state: State.States = State.States.ORIGINAL,
+            containingElement = None):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
-        XMLName.__init__(self)
-        Identifiable.__init__(self, ifcProjectId)
+        XMLName.__init__(self, "File")
+        self._ifcProjectId = Attribute(ifcProjectId, "IfcProject", self)
         self._ifcSpatialStructureElement = Attribute(
                 ifcSpatialStructureElement, "IfcSpatialStructureElement", self)
-        self._external = Attribute(external, "isExternal", self)
+        self._external = Attribute(isExternal, "isExternal", self)
         self._filename = SimpleElement(filename, "Filename", self)
         self._time = SimpleElement(time, "Date", self)
         self._reference = SimpleElement(reference, "Reference", self)
+
+    @property
+    def ifcProjectId(self):
+        return self._ifcProjectId.value
+
+    @ifcProjectId.setter
+    def ifcProjectId(self, newVal):
+        self._ifcProjectId.value = newVal
 
     @property
     def reference(self):
@@ -70,7 +72,7 @@ class Header(Hierarchy, State, XMLName, Identifiable):
     def filename(self):
         return self._filename.value
 
-    @external.setter
+    @filename.setter
     def filename(self, newVal):
         self._filename.value = newVal
 
@@ -88,13 +90,74 @@ class Header(Hierarchy, State, XMLName, Identifiable):
         Returns true if every variable member of both classes are the same
         """
 
-        return (self.id == other.id and
-                self.ifcSpacialStructureElement ==
-                other.ifcSpacialStructureElement and
+        return (self.ifcProjectId == other.ifcProjectId and
+                self.ifcSpatialStructureElement ==
+                other.ifcSpatialStructureElement and
                 self.external == other.external and
                 self.filename == other.filename and
                 self.time == other.time and
                 self.reference == other.reference)
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = "File"
+        elem.tail = "\n\t"
+
+        elem.attrib["isExternal"] = str(self.external)
+        if self.ifcSpatialStructureElement != "":
+            elem.attrib["IfcSpatialStructureElement"] = self.ifcSpatialStructureElement
+        if self.ifcProjectId != "":
+            elem.attrib["IfcProject"] = self.ifcProjectId
+
+        if self.filename != "":
+            filenameElem = ET.SubElement(elem, "Filename")
+            filenameElem.text = self.filename
+        if self.time is not None:
+            timeElem = ET.SubElement(elem, "Date")
+            timeElem.text = self.time.isoformat("T", "seconds")
+        if self.reference != "":
+            refElem = ET.SubElement(elem, "Reference")
+            refElem.text = str(self.reference)
+
+        print("Hello this is me {}".format(ET.dump(elem)))
+        return elem
+
+
+    def __str__(self):
+        ret_str = ("ContainingElement(\n"\
+                "isExternal: {}\n"\
+                "ifcSpatialStructureElement: {}\n"\
+                "ifcProject: {}\n"\
+                "filename: {}\n"\
+                "time: {}\n"\
+                "reference: {})").format(self.external,
+                        self.ifcSpatialStructureElement,
+                        self.ifcProjectId,
+                        self.filename,
+                        self.time,
+                        self.reference)
+        return ret_str
+
+
+class Header(Hierarchy, State, XMLName):
+
+    """
+    """
+
+    def __init__(self,
+                files: List[HeaderFile] = list(),
+                containingElement = None,
+                state: State = State.States.ORIGINAL):
+
+        """ Initialization function for Header """
+
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
+        XMLName.__init__(self)
+        self.files = files
+        for f in files:
+            f.containingObject = self
 
 
 class ViewpointReference(Hierarchy, State, Identifiable, XMLName):

@@ -5,13 +5,15 @@ from zipfile import ZipFile
 from xmlschema import XMLSchema
 from uuid import UUID
 from typing import List, Dict
-from bcf import viewpoint
-from bcf import util
-from bcf import project
+
+if __name__ == "__main__":
+    sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
+    print(sys.path)
+import bcf.util as util
 from bcf.project import Project
 from bcf.uri import Uri as Uri
 from bcf.modification import Modification
-from bcf.markup import (Comment, Header, ViewpointReference, Markup)
+from bcf.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
 from bcf.topic import (Topic, BimSnippet, DocumentReference)
 from bcf.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         ComponentColour, PerspectiveCamera, OrthogonalCamera, BitmapFormat,
@@ -219,7 +221,7 @@ def buildProject(projectFilePath: str, projectSchema: str):
     if "ExtensionSchema" in projectDict:
         pExtensionSchema = projectDict["ExtensionSchema"]
 
-    p = project.Project(pId, pName, pExtensionSchema)
+    p = Project(pId, pName, pExtensionSchema)
     return p
 
 
@@ -340,34 +342,44 @@ def buildTopic(topicDict: Dict):
 
     return topic
 
+def buildFile(fileDict):
 
-def buildHeader(headerDict):
-
-    fileDict = headerDict["File"]
-    filename = getOptionalFromDict(fileDict, "Filename", None)
+    filename = getOptionalFromDict(fileDict, "Filename", "")
     filedate = getOptionalFromDict(fileDict, "Date", None)
     if filedate:
         filedate = dateutil.parser.parse(filedate)
 
-    reference = getOptionalFromDict(fileDict, "Reference", None)
+    reference = getOptionalFromDict(fileDict, "Reference", "")
     if reference:
         reference = Uri(reference)
 
-    ifcProjectId = getOptionalFromDict(fileDict, "@IfcProject", None)
+    ifcProjectId = getOptionalFromDict(fileDict, "@IfcProject", "")
     if ifcProjectId:
         ifcProjectId = UUID(ifcProjectId)
 
     ifcSpatialStructureElement = getOptionalFromDict(fileDict,
-            "@IfcSpatialStructureElement", None)
+            "@IfcSpatialStructureElement", "")
     if ifcSpatialStructureElement:
         ifcSpatialStructureElement = UUID(ifcSpatialStructureElement)
 
     isExternal = getOptionalFromDict(fileDict, "@isExternal", True)
 
-    header = Header(ifcProjectId, ifcSpatialStructureElement,
-            isExternal, filename, filedate, reference)
+    headerfile = HeaderFile(ifcProjectId,
+            ifcSpatialStructureElement,
+            isExternal,
+            filename,
+            filedate,
+            reference)
 
-    setContainingElement(reference, header)
+    return headerfile
+
+
+def buildHeader(headerDict):
+
+    filelist = getOptionalFromDict(headerDict, "File", list())
+    files = [ buildFile(f) for f in filelist if f is not None ]
+
+    header = Header(files)
 
     return header
 
@@ -720,7 +732,7 @@ def readBcfFile(bcfFile: str):
 
     ### Validate project and build ###
     # project.bcfp is optional, but it is necessary for the data model
-    proj = project.Project(UUID(int=0))
+    proj = Project(UUID(int=0))
     projectFilePath = os.path.join(bcfExtractedPath, "project.bcfp")
     if os.path.exists(projectFilePath):
         error = validateFile(projectFilePath, projectSchemaPath, bcfFile)

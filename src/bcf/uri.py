@@ -22,6 +22,9 @@ class Uri(Hierarchy, State):
         Returns true if every variable member of both classes are the same
         """
 
+        if type(self) != type(other):
+            return False
+
         return self.uri == other.uri
 
     def __str__(self):

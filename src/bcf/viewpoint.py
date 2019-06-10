@@ -1,4 +1,3 @@
-import bcf.reader as reader
 from enum import Enum
 from typing import List, Dict
 from uuid import UUID
@@ -336,35 +335,6 @@ class Viewpoint(Hierarchy, State, XMLName):
         """
         Returns true if every variable member of both classes are the same
         """
-
-        if reader.DEBUG:
-            if self.id != other.id:
-                print("Viewpoint: id is different {}\n{}".format(self.id,
-                    other.id))
-
-            if self.components != other.components:
-                print("Viewpoint: components is different\n{}\n{}".format(
-                    self.components, other.components))
-
-            if self.oCamera != other.oCamera:
-                print("Viewpoint: oCamera is different {}\n{}".format(
-                    self.oCamera, other.oCamera))
-
-            if self.pCamera != other.pCamera:
-                print("Viewpoint: pCamera is different {}\n{}".format(
-                    self.pCamera, other.pCamera))
-
-            if self.lines != other.lines:
-                print("Viewpoint: lines are different {}\n{}".format(
-                    self.lines, other.lines))
-
-            if self.clippingPlanes != other.clippingPlanes:
-                print("Viewpoint: clippingPlanes are different {}\n{}".format(
-                    self.clippingPlanes, other.clippingPlanes))
-
-            if self.bitmaps != other.bitmaps:
-                print("Viewpoint: bitmaps are different {}\n{}".format(
-                    self.bitmaps, other.bitmaps))
 
         return (self.id == other.id and
                 self.components == other.components and

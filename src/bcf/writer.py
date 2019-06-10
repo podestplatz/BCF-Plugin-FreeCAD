@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 import bcf.reader as reader
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
-from bcf.markup import (Markup, ViewpointReference, Comment)
+from bcf.markup import (Markup, ViewpointReference, Comment, Attribute)
 
 """
 `elementHierarchy` contains for each element, the writer supports writing, the
@@ -129,24 +129,16 @@ def getTopicOfElement(element):
     if not elementHierarchy: # just check for sanity
         return None
 
-    # Markups have a one to one mapping to topics
-    if isinstance(element, Markup):
-        return element.topic
-
-    # ViewpointReference is a child element of Markup.
-    if isinstance(element, ViewpointReference):
-        return element.containingObject.topic
-
-    # All comments are assigned to just one topic.
-    if isinstance(element, Comment):
-        return element.containingObject.topic
-
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
-    if not "Topic" in strHierarchy:
-        return None
+    if "Markup" in strHierarchy:
+        markupElem = None
+        for item in elementHierarchy:
+            if isinstance(item, Markup):
+                markupElem = item
+                break
+        return markupElem.topic
 
-    topicIndex = strHierarchy.index("Topic")
-    return elementHierarchy[topicIndex]
+    return None
 
 
 def getIdAttrName(elementId):
@@ -174,17 +166,12 @@ def getParentElement(element, etRoot):
         print("Root element of hierarchy and root tag of file do not match."\
             " {} != {}".format(strHierarchy[-1], etRoot.tag), file=sys.stderr)
 
-    if reader.DEBUG:
-        print("Element hierarchy: {}".format(strHierarchy))
-
     etParent = None
     listElemId = getUniqueIdOfListElementInHierarchy(element)
     if not listElemId: # parent can be found easily by tag
         etParent = etRoot.find(strHierarchy[1])
         if not etParent and etRoot.tag == strHierarchy[1]:
             etParent = etRoot
-        if reader.DEBUG:
-            print(etParent)
     else:
         idAttrName = getIdAttrName(listElementId)
         etParent = etRoot.find(".//*[@{}='{}']".format(idAttrName,
@@ -211,6 +198,37 @@ def getInsertionIndex(element, etParent):
     return highestIndex + 1 # ET index starts at 1
 
 
+def getContainingETElementForAttribute(rootElem, containingElement):
+
+    # candidates are the set of elements that have the same tag as
+    # containingElement
+    candidates = rootElem.findall(".//{}".format(containingElement.xmlName))
+    parentEt = containingElement.getEtElement(
+           ET.Element(containingElement.xmlName, {}))
+    parentEtChildren = list(parentEt)
+    match = None
+    # find the right candidate
+    for candidate in candidates:
+        # check for subelement in the parent whether the equally named
+        # subelement in the candidate has the same text, and therefore is equal
+        matches = True
+        for parentEtChild in parentEtChildren:
+            candidateEtChild = candidate.find(
+                    ".//{}".format(parentEtChild.tag))
+            if candidateEtChild is not None:
+                if candidateEtChild.text != parentEtChild.text:
+                    matches = False
+                    break
+            else:
+                matches = False
+        if matches:
+            match = candidate
+            break
+
+    return match
+
+
+
 def addElement(element):
     fileName = getFileOfElement(element)
     if not fileName:
@@ -229,25 +247,20 @@ def addElement(element):
     topicDir = topic.id
     bcfDir = reader.bcfDir
     filePath = os.path.join(bcfDir, str(topicDir), fileName)
-    if reader.DEBUG:
-        print("File that will get added to {}".format(filePath))
 
     xmlTree = ET.parse(filePath)
-    etParent = getParentElement(element, xmlTree.getroot())
-    if reader.DEBUG:
-        print("Parent name that was found: {}".format(etParent.tag))
+    if isinstance(element, Attribute):
+        parent = element.containingObject
+        containingEtElem = getContainingETElementForAttribute(xmlTree.getroot(),
+                parent)
+        containingEtElem.attrib[element.xmlName] = element.value
+    else:
+        etParent = getParentElement(element, xmlTree.getroot())
+        insertionIndex = getInsertionIndex(element, etParent)
+        newEtElement = element.getEtElement(ET.Element(element.xmlName))
+        etParent.insert(insertionIndex, newEtElement)
 
-    insertionIndex = getInsertionIndex(element, etParent)
-    if reader.DEBUG:
-        print("Index where {} gets inserted {}".format(str(element),
-            insertionIndex))
-
-    newEtElement = element.getEtElement(ET.Element(element.xmlName))
-    if reader.DEBUG:
-        print("Element that gets inserted: ")
-        print(ET.tostring(newEtElement, encoding='utf8', method='xml'))
-
-    etParent.insert(insertionIndex, newEtElement)
+    print("\n\n\nWriting this tree:\n{}".format(ET.dump(xmlTree.getroot())))
     xmlTree.write(filePath, encoding="utf8")
 
 
@@ -256,5 +269,11 @@ if __name__ == "__main__":
     if len(sys.argv) >= 2:
         argFile = sys.argv[1]
     project = reader.readBcfFile(argFile)
+    hFiles = project.topicList[0].header.files
     addElement(project.topicList[0].viewpoints[0])
     addElement(project.topicList[0].comments[0])
+    hFiles[1].ifcProjectId = "abcdefg"
+    hFiles[1].ifcSpatialStructureElement = "abcdefg"
+    addElement(hFiles[1]._ifcProjectId)
+    addElement(hFiles[1]._ifcSpatialStructureElement)
+
