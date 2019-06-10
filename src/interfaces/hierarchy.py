@@ -2,6 +2,17 @@ class Hierarchy:
     def __init__(self, containingObject=None):
         self.containingObject = containingObject
 
+
+    def __eq__(self, other):
+        if other is None:
+            return False
+
+        if type(self) != type(other):
+            return False
+
+        return self.containingObject == other.containingObject
+
+
     def getHierarchyList(self):
         currentObject = self
         hierarchy = [ currentObject ]

@@ -5,6 +5,16 @@ class XMLName:
         else:
             self._name = name
 
+    def __eq__(self, other):
+        if other is None:
+            return False
+
+        if type(self) != type(other):
+            return False
+
+        return self._name == other.xmlName
+
+
     @property
     def xmlName(self):
         return self._name

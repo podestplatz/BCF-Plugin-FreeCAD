@@ -6,6 +6,7 @@ from datetime import date
 from xmlschema import XMLSchema
 from bcf.modification import Modification
 from bcf.uri import Uri
+from bcf.project import (Attribute, SimpleElement, SimpleList)
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
 from interfaces.state import State
@@ -27,10 +28,33 @@ class DocumentReference(Hierarchy, Identifiable, State, XMLName):
         Identifiable.__init__(self, id)
         State.__init__(self, state)
         XMLName.__init__(self)
-        self.external = external
-        self.reference = reference
-        self.description = description
+        self._external = Attribute(external, "isExternal", self)
+        self._reference = SimpleElement(reference, "ReferencedDocument", self)
+        self._description = SimpleElement(description, "Description", self)
 
+    @property
+    def external(self):
+        return self._external.value
+
+    @external.setter
+    def external(self, newVal):
+        self._external.value = newVal
+
+    @property
+    def reference(self):
+        return self._reference.value
+
+    @reference.setter
+    def reference(self, newVal):
+        self._reference.value = newVal
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, newVal):
+        self._description.value = newVal
 
     def __eq__(self, other):
 
@@ -66,11 +90,42 @@ class BimSnippet(Hierarchy, State, XMLName):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         XMLName.__init__(self)
-        self.type = type
-        self.external = external
-        self.reference = reference
-        self.schema = schema
+        self._type = Attribute(type, "SnippetType", self)
+        self._external = Attribute(external, "isExternal", self)
+        self._reference = SimpleElement(reference, "Reference", self)
+        self._schema = SimpleElement(schema, "ReferenceSchema", self)
 
+    @property
+    def type(self):
+        return self._type.value
+
+    @type.setter
+    def type(self, newVal):
+        self._type.value = newVal
+
+    @property
+    def external(self):
+        return self._external.value
+
+    @external.setter
+    def external(self, newVal):
+        self._external.value = newVal
+
+    @property
+    def reference(self):
+        return self._reference.value
+
+    @reference.setter
+    def reference(self, newVal):
+        self._reference.value = newVal
+
+    @property
+    def schema(self):
+        return self._schema.value
+
+    @schema.setter
+    def schema(self, newVal):
+        self._schema.value = newVal
 
     def __eq__(self, other):
 
@@ -82,15 +137,6 @@ class BimSnippet(Hierarchy, State, XMLName):
                 self.external == other.external and
                 self.reference == other.reference and
                 self.schema == other.schema)
-
-
-class Labels(list, Hierarchy, XMLName):
-
-    def __init__(self, data=[], containingElement = None):
-
-        list.__init__(self, data)
-        Hierarchy.__init__(self, containingElement)
-        XMLName.__init__(self)
 
 
 class Topic(Hierarchy, Identifiable, State, XMLName):
@@ -123,22 +169,93 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         Identifiable.__init__(self, id)
         State.__init__(self, state)
         XMLName.__init__(self)
-        self.title = title
+        self._title = SimpleElement(title, "Title", self)
         self.creation = creation
-        self.type = type
-        self.status = status
-        self.refs = refs
-        self.priority = priority
-        self.index = index
-        self.labels = Labels(labels, self)
+        self._type = Attribute(type, "TopicType", self)
+        self._status = Attribute(status, "TopicStatus", self)
+        self.refs = SimpleList(refs, "ReferenceLink", self)
+        self._priority = SimpleElement(priority, "Priority", self)
+        self._index = SimpleElement(index, "Index", self)
+        self.labels = SimpleList(labels, "Labels", self)
         self.lastModification = lastModification
-        self.dueDate = dueDate
-        self.assignee = assignee
-        self.description = description
-        self.stage = stage
-        self.relatedTopics = relatedTopics
+        self._dueDate = SimpleElement(dueDate, "DueDate", self)
+        self._assignee = SimpleElement(assignee, "AssignedTo", self)
+        self._description = SimpleElement(description, "Description", self)
+        self._stage = SimpleElement(stage, "Stage", self)
+        self.relatedTopics = SimpleList(relatedTopics, "RelatedTopic", self)
         self.bimSnippet = bimSnippet
 
+    @property
+    def stage(self):
+        return self._stage.value
+
+    @stage.setter
+    def stage(self, newVal):
+        self._stage.value = newVal
+
+    @property
+    def description(self):
+        return self._description.value
+
+    @description.setter
+    def description(self, newVal):
+        self._description.value = newVal
+
+    @property
+    def assignee(self):
+        return self._assignee.value
+
+    @assignee.setter
+    def assigneee(self, newVal):
+        self._assignee.value = newVal
+
+    @property
+    def dueDate(self):
+        return self._dueDate.value
+
+    @dueDate.setter
+    def dueDate(self, newVal):
+        self._dueDate.value = newVal
+
+    @property
+    def index(self):
+        return self._index.value
+
+    @index.setter
+    def index(self, newVal):
+        self._index.value = newVal
+
+    @property
+    def priority(self):
+        return self._priority.value
+
+    @priority.setter
+    def priority(self, newVal):
+        self._priority.value = newVal
+
+    @property
+    def status(self):
+        return self._status.value
+
+    @status.setter
+    def status(self, newVal):
+        self._status.value = newVal
+
+    @property
+    def type(self):
+        return self._type.value
+
+    @type.setter
+    def type(self, newVal):
+        self._type.value = newVal
+
+    @property
+    def title(self):
+        return self._title.value
+
+    @title.setter
+    def title(self, newVal):
+        self._title.value = newVal
 
     def __checkNone(self, this, that):
 

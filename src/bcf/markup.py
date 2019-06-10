@@ -5,6 +5,7 @@ from typing import List # used for custom type annotations
 from bcf.uri import Uri
 from bcf.modification import Modification
 from bcf.topic import Topic
+from bcf.project import (SimpleElement, Attribute)
 from interfaces.state import State
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
@@ -12,10 +13,15 @@ from interfaces.xmlname import XMLName
 
 DEBUG = True
 
-class Header(Hierarchy, State, XMLName):
+class Header(Hierarchy, State, XMLName, Identifiable):
+
+    """
+    Identifiable.id == ifcProjectId
+    """
+
     def __init__(self,
-                ifcProjectId: UUID = None,
-                ifcSpacialStructureElement: UUID = None,
+                ifcProjectId: str = None,
+                ifcSpatialStructureElement: UUID = None,
                 external: bool = True,
                 filename: str = "",
                 time: datetime = None,
@@ -28,13 +34,53 @@ class Header(Hierarchy, State, XMLName):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         XMLName.__init__(self)
-        self.ifcProjectId = ifcProjectId
-        self.ifcSpacialStructureElement = ifcSpacialStructureElement
-        self.external = external
-        self.filename = filename
-        self.time = time
-        self.reference = reference
+        Identifiable.__init__(self, ifcProjectId)
+        self._ifcSpatialStructureElement = Attribute(
+                ifcSpatialStructureElement, "IfcSpatialStructureElement", self)
+        self._external = Attribute(external, "isExternal", self)
+        self._filename = SimpleElement(filename, "Filename", self)
+        self._time = SimpleElement(time, "Date", self)
+        self._reference = SimpleElement(reference, "Reference", self)
 
+    @property
+    def reference(self):
+        return self._reference.value
+
+    @reference.setter
+    def reference(self, newVal):
+        self._reference.value = newVal
+
+    @property
+    def ifcSpatialStructureElement(self):
+        return self._ifcSpatialStructureElement.value
+
+    @ifcSpatialStructureElement.setter
+    def ifcSpatialStructureElement(self, newVal):
+        self._ifcSpatialStructureElement.value = newVal
+
+    @property
+    def external(self):
+        return self._external.value
+
+    @external.setter
+    def external(self, newVal):
+        self._external.value = newVal
+
+    @property
+    def filename(self):
+        return self._filename.value
+
+    @external.setter
+    def filename(self, newVal):
+        self._filename.value = newVal
+
+    @property
+    def time(self):
+        return self._time.value
+
+    @time.setter
+    def time(self, newVal):
+        self._time.value = newVal
 
     def __eq__(self, other):
 
@@ -42,7 +88,7 @@ class Header(Hierarchy, State, XMLName):
         Returns true if every variable member of both classes are the same
         """
 
-        return (self.ifcProjectId == other.ifcProjectId and
+        return (self.id == other.id and
                 self.ifcSpacialStructureElement ==
                 other.ifcSpacialStructureElement and
                 self.external == other.external and
@@ -69,10 +115,34 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
         Identifiable.__init__(self, id)
         State.__init__(self, state)
         XMLName.__init__(self, "Viewpoints")
-        self.file = file
-        self.snapshot = snapshot
-        self.index = index
+        self._file = SimpleElement(file, "Viewpoint", self)
+        self._snapshot = SimpleElement(snapshot, "Snapshot", self)
+        self._index = SimpleElement(index, "Index", self)
         self._viewpoint = None
+
+    @property
+    def file(self):
+        return self._file.value
+
+    @file.setter
+    def file(self, newVal):
+        self._file.value = newVal
+
+    @property
+    def snapshot(self):
+        return self._snapshot
+
+    @snapshot.setter
+    def snapshot(self, newVal):
+        self._snapshot.value = newVal
+
+    @property
+    def index(self):
+        return self._index.value
+
+    @index.setter
+    def index(self, newVal):
+        self._index.value = newVal
 
     @property
     def viewpoint(self):
@@ -150,7 +220,7 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
     """ Class holding all data about a comment """
 
     def __init__(self,
-            guid: str ,
+            guid: UUID,
             creation: Modification,
             comment: str,
             viewpoint: ViewpointReference = None,
@@ -165,10 +235,25 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
         State.__init__(self, state)
         XMLName.__init__(self)
         self.creation = creation
-        self.comment = comment
-        self.viewpoint = viewpoint
+        self._comment = SimpleElement(comment, "Comment", self)
+        self._viewpoint = SimpleElement(viewpoint, "Viewpoint", self)
         self.lastModification = lastModification
 
+    @property
+    def comment(self):
+        return self._comment.value
+
+    @comment.setter
+    def comment(self, newVal):
+        self._comment.value = newVal
+
+    @property
+    def viewpoint(self):
+        return self._viewpoint.value
+
+    @viewpoint.setter
+    def viewpoint(self, newVal):
+        self._viewpoint.value = newVal
 
     def __eq__(self, other):
 
