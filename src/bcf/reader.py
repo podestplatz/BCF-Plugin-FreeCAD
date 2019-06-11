@@ -328,12 +328,14 @@ def buildTopic(topicDict: Dict):
     relatedList = getOptionalFromDict(topicDict, "RelatedTopic", [])
     relatedTopics = [ UUID(relTopic["@Guid"]) for relTopic in relatedList ]
 
+    referenceLinks = getOptionalFromDict(topicDict, "ReferenceLink", [])
+
     topic = Topic(id, title, creationData,
-            topicType, topicStatus, docRefs,
-            topicPriority, index, labelList,
-            modifiedData, dueDate, assignee,
-            description, stage, relatedTopics,
-            bimSnippet)
+            topicType, topicStatus, referenceLinks,
+            docRefs, topicPriority, index,
+            labelList, modifiedData, dueDate,
+            assignee, description, stage,
+            relatedTopics, bimSnippet)
 
     listSetContainingElement(docRefs, topic)
     setContainingElement(creationData, topic)

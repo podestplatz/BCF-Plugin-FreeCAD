@@ -104,7 +104,7 @@ class HeaderFile(Hierarchy, State, XMLName):
         elem.tag = "File"
         elem.tail = "\n\t"
 
-        elem.attrib["isExternal"] = str(self.external)
+        elem.attrib["isExternal"] = str(self.external).lower() # xml bool is lowercase
         if self.ifcSpatialStructureElement != "":
             elem.attrib["IfcSpatialStructureElement"] = self.ifcSpatialStructureElement
         if self.ifcProjectId != "":

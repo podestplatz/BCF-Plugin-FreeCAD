@@ -1,3 +1,4 @@
+import xml.etree.ElementTree as ET
 import bcf.util
 from typing import List
 from enum import Enum
@@ -13,9 +14,9 @@ from interfaces.state import State
 from interfaces.xmlname import XMLName
 
 
-class DocumentReference(Hierarchy, Identifiable, State, XMLName):
+class DocumentReference(Hierarchy, State, XMLName):
     def __init__(self,
-                id: UUID = None,
+                guid: UUID = None,
                 external: bool = False,
                 reference: Uri = None,
                 description: str = "",
@@ -25,12 +26,23 @@ class DocumentReference(Hierarchy, Identifiable, State, XMLName):
         """ Initialization function for DocumentReference """
 
         Hierarchy.__init__(self, containingElement)
-        Identifiable.__init__(self, id)
         State.__init__(self, state)
         XMLName.__init__(self)
+        self._guid = Attribute(guid, "Guid", self)
         self._external = Attribute(external, "isExternal", self)
         self._reference = SimpleElement(reference, "ReferencedDocument", self)
         self._description = SimpleElement(description, "Description", self)
+
+    @property
+    def guid(self):
+        return self._guid.value
+
+    @guid.setter
+    def guid(self, newVal):
+        if isinstance(newVal, str):
+            self._guid.value = UUID(newVal)
+        elif isinstance(newVal, UUID):
+            self._guid.value = newVal
 
     @property
     def external(self):
@@ -50,7 +62,7 @@ class DocumentReference(Hierarchy, Identifiable, State, XMLName):
 
     @property
     def description(self):
-        return self._description
+        return self._description.value
 
     @description.setter
     def description(self, newVal):
@@ -62,18 +74,39 @@ class DocumentReference(Hierarchy, Identifiable, State, XMLName):
         Returns true if every variable member of both classes are the same
         """
 
-        return (self.id == other.id and
+        return (self.guid == other.guid and
                 self.external == other.external and
                 self.reference == other.reference and
                 self.description == other.description)
 
 
     def __str__(self):
-        str_ret = ("DocumentReference(id={}, external={}, reference={},"\
-            " description={})").format(self.id, self.external, self.reference,
+        str_ret = ("DocumentReference(guid={}, external={}, reference={},"\
+            " description={})").format(self.guid, self.external, self.reference,
                 self.description)
 
         return str_ret
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        # guid is optional in DocumentReference
+        if self.guid is not None:
+            elem.attrib["Guid"] = str(self.guid)
+        if self.external: # false is default. Not written if false
+            elem.attrib["isExternal"] = str(self.external).lower()
+
+        if str(self.reference) != "":
+            refElem = ET.SubElement(elem, "ReferencedDocument")
+            refElem.text = str(self.reference)
+
+        if self.description != "":
+            descElem = ET.SubElement(elem, "Description")
+            descElem.text = self.description
+
+        return elem
 
 
 class BimSnippet(Hierarchy, State, XMLName):
@@ -138,6 +171,34 @@ class BimSnippet(Hierarchy, State, XMLName):
                 self.reference == other.reference and
                 self.schema == other.schema)
 
+    def __str__(self):
+
+        ret_str = ("BimSnippet(type='{}', isExternal='{}, reference='{}',"\
+                " referenceSchema='{}'").format(self.type, self.external,
+                        self.reference, self.schema)
+        return ret_str
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = "BimSnippet"
+        elem.attrib["SnippetType"] = str(self.type)
+        elem.attrib["isExternal"] = str(self.external).lower()
+        elem.tail = "\n\t"
+
+        if self.reference != "":
+            refElem = ET.SubElement(elem, "Reference")
+            refElem.text = str(self.reference)
+            refElem.tail = "\n\t\t\t"
+
+        if self.schema is not None:
+            schemaElem = ET.SubElement(elem, "ReferenceSchema")
+            schemaElem.text = str(self.schema)
+            schemaElem.tail = "\n\t\t"
+
+        print("Constructed: {}".format(ET.dump(elem)))
+        return elem
+
 
 class Topic(Hierarchy, Identifiable, State, XMLName):
 
@@ -149,6 +210,7 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
             creation: Modification,
             type: str = "",
             status: str = "",
+            referenceLinks: List[str] = list(),
             refs: List[DocumentReference] = list(),
             priority: str = "",
             index: int = 0,
@@ -173,7 +235,8 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         self.creation = creation
         self._type = Attribute(type, "TopicType", self)
         self._status = Attribute(status, "TopicStatus", self)
-        self.refs = SimpleList(refs, "ReferenceLink", self)
+        self.referenceLinks = SimpleList(referenceLinks, "ReferenceLink", self)
+        self.refs = refs
         self._priority = SimpleElement(priority, "Priority", self)
         self._index = SimpleElement(index, "Index", self)
         self.labels = SimpleList(labels, "Labels", self)
@@ -184,6 +247,10 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         self._stage = SimpleElement(stage, "Stage", self)
         self.relatedTopics = SimpleList(relatedTopics, "RelatedTopic", self)
         self.bimSnippet = bimSnippet
+
+        # set containingObjecf for all document references
+        for docRef in self.refs:
+            docRef.containingObject = self
 
     @property
     def stage(self):

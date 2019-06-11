@@ -9,6 +9,7 @@ import bcf.reader as reader
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
 from bcf.markup import (Markup, ViewpointReference, Comment, Attribute)
+from bcf.topic import (BimSnippet)
 
 """
 `elementHierarchy` contains for each element, the writer supports writing, the
@@ -183,13 +184,18 @@ def getParentElement(element, etRoot):
 def getInsertionIndex(element, etParent):
 
     parentSequence = elementOrder[etParent.tag]
-    elemSeqIndex = parentSequence.index(element.xmlName)
     etChildren = [ elem.tag for elem in list(etParent) ]
     revEtChildren = list(reversed(etChildren))
     highestIndex = 0
+    if reader.DEBUG:
+        print("writer.getInsertionIndex()\ndefined sequence: {}\nactual"\
+                " sequence: {}".format(parentSequence, etChildren))
     for seqElem in parentSequence:
         if seqElem == element.xmlName:
             break
+
+        if seqElem not in etChildren:
+            continue
 
         seqElemIndex = len(etChildren) - 1 - revEtChildren.index(seqElem)
         if seqElemIndex:
@@ -230,6 +236,25 @@ def getContainingETElementForAttribute(rootElem, containingElement):
 
 
 def addElement(element):
+
+    """
+    In this context an element can be a simple or complex xml element as well as
+    just an attribute of an element that was added to the datamodel and shall
+    now be added to the file as well.
+    Both additions have the following approach in common:
+        - the current file is read into an xml.etree.ElementTree structure.
+        - this structure is updated with the new values
+        - the old file is overwritten with the updated xml.etree.ElementTree
+          structure
+    For the addition of attributes it is assumed that the containing element
+    already exists in the file. This element is searched for and expanded by the
+    new attribute.
+    For the addition of elements the parent element is searched for, and in the
+    predefined sequence of the parent the right insertion index is looked up,
+    since the element cant just be appended, otherwise it would not be schema
+    conform anymore.
+    """
+
     fileName = getFileOfElement(element)
     if not fileName:
         raise ValueError("{} is not applicable to be added to anyone"\
@@ -249,13 +274,30 @@ def addElement(element):
     filePath = os.path.join(bcfDir, str(topicDir), fileName)
 
     xmlTree = ET.parse(filePath)
+    # different handling for attributes and elements
     if isinstance(element, Attribute):
-        parent = element.containingObject
-        containingEtElem = getContainingETElementForAttribute(xmlTree.getroot(),
-                parent)
-        containingEtElem.attrib[element.xmlName] = element.value
+        newParent = element.containingObject
+
+        # parent element of the attribute how it should be
+        newParentEt = newParent.getEtElement(ET.Element(newParent.xmlName, {}))
+
+        # parent element of the attribute as is in the file
+        oldParentEt = getContainingETElementForAttribute(xmlTree.getroot(),
+                newParent)
+
+        if oldParentEt is None:
+            raise RuntimeWarning("The element {}, parent of the attribute {},"\
+                " was not present in the file. Not adding the attribute"\
+                " then!".format(newParentEt.tag, element.xmlName))
+
+        # add the value of the new attribute
+        oldParentEt.attrib[element.xmlName] = newParentEt.attrib[element.xmlName]
+
     else:
+        # parent element read from file
         etParent = getParentElement(element, xmlTree.getroot())
+
+        # index of the direct predecessor element in the xml file
         insertionIndex = getInsertionIndex(element, etParent)
         newEtElement = element.getEtElement(ET.Element(element.xmlName))
         etParent.insert(insertionIndex, newEtElement)
@@ -269,6 +311,8 @@ if __name__ == "__main__":
     if len(sys.argv) >= 2:
         argFile = sys.argv[1]
     project = reader.readBcfFile(argFile)
+    topic = project.topicList[0].topic
+    """
     hFiles = project.topicList[0].header.files
     addElement(project.topicList[0].viewpoints[0])
     addElement(project.topicList[0].comments[0])
@@ -276,4 +320,18 @@ if __name__ == "__main__":
     hFiles[1].ifcSpatialStructureElement = "abcdefg"
     addElement(hFiles[1]._ifcProjectId)
     addElement(hFiles[1]._ifcSpatialStructureElement)
+    bimSnippet = topic.bimSnippet
+    print(topic.bimSnippet)
+    addElement(bimSnippet._external)
+    """
+
+    docRef = topic.refs[0]
+    docRef.external = True
+    docRef.guid = "98b5802c-4ca0-4032-9128-b9c606955c4f"
+    print(docRef)
+    addElement(docRef._external)
+    addElement(docRef._guid)
+
+
+
 
