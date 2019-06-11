@@ -56,7 +56,32 @@ class Bitmap(Hierarchy, State, XMLName):
                 self.height == other.height)
 
 
-class Camera(Hierarchy, State):
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        formatElem = ET.SubElement(elem, "Format")
+        formatElem.text = self.format.name
+
+        referenceElem = ET.SubElement(elem, "Reference")
+        referenceElem.text = self.reference
+
+        locationElem = ET.SubElement(elem, "Location")
+        locationElem = self.location.getEtElement(locationElem)
+
+        normalElem = ET.SubElement(elem, "Normal")
+        normalElem = self.normal.getEtElement(normalElem)
+
+        upElem = ET.SubElement(elem, "Up")
+        upElem = self.upVector.getEtElement(upElem)
+
+        heightElem = ET.SubElement(elem, "Height")
+        heightElem.text = str(self.height)
+
+        return elem
+
+
+class Camera(Hierarchy, State, XMLName):
 
     """ Base class of PerspectiveCamera and OrthogonalCamera """
 
@@ -65,12 +90,14 @@ class Camera(Hierarchy, State):
             direction: Direction,
             upVector: Direction,
             containingElement = None,
-            state: State.States = State.States.ORIGINAL):
+            state: State.States = State.States.ORIGINAL,
+            xmlName: str = ""):
 
         """ Initialisation function of Camera """
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self, xmlName)
         self.viewPoint = viewPoint
         self.direction = direction
         self.upVector = upVector
@@ -85,6 +112,22 @@ class Camera(Hierarchy, State):
         return (self.viewPoint == other.viewPoint and
                 self.direction == other.direction and
                 self.upVector == other.upVector)
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        cViewpointElem = ET.SubElement(elem, "CameraViewPoint")
+        cViewpointElem = self.viewPoint.getEtElement(cViewpointElem)
+
+        cDirectionElem = ET.SubElement(elem, "CameraDirection")
+        cDirectionElem = self.direction.getEtElement(cDirectionElem)
+
+        cUpVector = ET.SubElement(elem, "CameraUpVector")
+        cUpVector = self.upVector.getEtElement(cUpVector)
+
+        return elem
 
 
 class PerspectiveCamera(Camera, XMLName):
@@ -103,8 +146,8 @@ class PerspectiveCamera(Camera, XMLName):
                 direction,
                 upVector,
                 containingElement,
-                state)
-        XMLName.__init__(self)
+                state,
+                self.__class__.__name__)
         self.fieldOfView = fieldOfView
 
 
@@ -117,6 +160,16 @@ class PerspectiveCamera(Camera, XMLName):
         if (superEqual and type(self) == type(other)):
             return self.fieldOfView == other.fieldOfView
         return False
+
+
+    def getEtElement(self, elem):
+
+        elem = Camera.getEtElement(self, elem)
+
+        fieldOfViewElem = ET.SubElement(elem, "FieldOfView")
+        fieldOfViewElem.text = str(self.fieldOfView)
+
+        return elem
 
 
 class OrthogonalCamera(Camera, XMLName):
@@ -155,10 +208,20 @@ class OrthogonalCamera(Camera, XMLName):
         return False
 
 
+    def getEtElement(self, elem):
+
+        elem = Camera.getEtElement(self, elem)
+
+        viewWorldScaleElem = ET.SubElement(elem, "ViewToWorldScale")
+        viewWorldScaleElem.text = str(self.viewWorldScale)
+
+        return elem
+
+
 class Component(Hierarchy, State, XMLName):
 
     def __init__(self,
-            ifcId: UUID,
+            ifcId: UUID = None,
             originatingSystem: str = "",
             authoringtoolId: str = "",
             containingElement = None,
@@ -190,6 +253,23 @@ class Component(Hierarchy, State, XMLName):
                         self.originatingSystem, self.authoringtoolId)
         return ret_str
 
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        if self.ifcId is not None:
+            elem.attrib["IfcGuid"] = str(self.ifcId)
+
+        if self.originatingSystem != "":
+            origSysElem = ET.SubElement(elem, "OriginatingSystem")
+            origSysElem.text = self.originatingSystem
+
+        if self.authoringtoolId != "":
+            authToolIdElem = ET.SubElement(elem, "AuthoringToolId")
+            authToolIdElem.text = self.authoringtoolId
+
+        return elem
 
 
 class ComponentColour(Hierarchy, State, XMLName):
@@ -254,6 +334,16 @@ class ViewSetupHints(Hierarchy, State, XMLName):
                 self.spacesVisible == other.spacesVisible)
 
 
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        elem.attrib["SpacesVisible"] = str(self.spacesVisible).lower()
+        elem.attrib["SpaceBoundariesVisible"] = str(self.spaceBoundariesVisible).lower()
+        elem.attrib["OpeningsVisible"] = str(self.openingsVisible).lower()
+
+        return elem
+
 
 class Components(Hierarchy, State, XMLName):
 
@@ -303,6 +393,45 @@ class Components(Hierarchy, State, XMLName):
         return ret_str
 
 
+    def _generateComponentList(self, parent, compList):
+
+        for component in compList:
+            newComponent = ET.SubElement(parent, "Component")
+            newComponent = component.getEtElement(newComponent)
+
+        return parent
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        if self.viewSetuphints is not None:
+            viewSHElem = ET.SubElement(elem, "ViewSetupHints")
+            viewSHElem = self.viewSetuphints.getEtElement(viewSHElem)
+
+        if len(self.selection) > 0:
+            selElem = ET.SubElement(elem, "Selection")
+            selElem = self._generateComponentList(selElem, self.selection)
+
+        visibilityElem = ET.SubElement(elem, "Visibility")
+        exceptionsElem = ET.SubElement(visibilityElem, "Exceptions")
+        exceptionsElem = self._generateComponentList(exceptionsElem,
+                self.visibilityExceptions)
+
+        if len(self.colouring) > 0:
+            colouringElem = ET.SubElement(elem, "Coloring")
+            for col in self.colouring:
+                colourElem = ET.SubElement(elem, "Color")
+                if col.colour != "":
+                    colourElem.attrib["Color"] = col.colour
+
+                colourElem = self._generateComponentList(colourElem,
+                        col.components)
+
+        return elem
+
+
 class Viewpoint(Hierarchy, State, XMLName):
 
     """ """
@@ -320,7 +449,7 @@ class Viewpoint(Hierarchy, State, XMLName):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
-        XMLName.__init__(self)
+        XMLName.__init__(self, "VisualizationInfo")
         self.id = id
         self.components = components
         self.oCamera = oCamera
@@ -357,3 +486,44 @@ class Viewpoint(Hierarchy, State, XMLName):
                 str(self.pCamera), str(self.lines), str(self.clippingPlanes),
                 str(self.bitmaps))
         return ret_str
+
+
+    def _generateListElements(self, parent, l):
+
+        for item in l:
+            newElem = ET.SubElement(parent, item.xmlName)
+            newElem = item.getEtElement(newElem)
+
+        return parent
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+        elem.attrib["Guid"] = str(self.id)
+
+        if self.components is not None:
+            componentsElem = ET.SubElement(elem, "Components")
+            componentsElem = self.components.getEtElement(componentsElem)
+
+        if self.oCamera is not None:
+            oCameraElem = ET.SubElement(elem, "OrthogonalCamera")
+            oCameraElem = self.oCamera.getEtElement(oCameraElem)
+
+        if self.pCamera is not None:
+            pCameraElem = ET.SubElement(elem, "PerspectiveCamera")
+            pCameraElem = self.pCamera.getEtElement(pCameraElem)
+
+        if len(self.lines) > 0:
+            linesElem = ET.SubElement(elem, "Lines")
+            linesElem = self._generateListElements(linesElem, self.lines)
+
+        if len(self.clippingPlanes) > 0:
+            clippingPlanesElem = ET.SubElement(elem, "ClippingPlanes")
+            clippingPlanesElem = self._generateListElements(clippingPlanesElem,
+                    self.clippingPlanes)
+
+        if len(self.bitmaps) > 0:
+            self._generateListElements(elem, self.bitmaps)
+
+        return elem

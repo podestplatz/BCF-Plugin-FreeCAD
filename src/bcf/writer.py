@@ -1,15 +1,20 @@
 import os
+import io # used for writing files in utf8
 import sys
 
 if __name__ == "__main__":
     sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
     print(sys.path)
+    import copy as c
 import xml.etree.ElementTree as ET
+import xml.dom.minidom as MD
 import bcf.reader as reader
-from interfaces.hierarchy import Hierarchy
-from interfaces.identifiable import Identifiable
-from bcf.markup import (Markup, ViewpointReference, Comment, Attribute)
-from bcf.topic import (BimSnippet)
+import interfaces.hierarchy as iH
+import interfaces.state as iS
+import interfaces.identifiable as iI
+import bcf.markup as m
+import bcf.project as p
+import bcf.uri as u
 
 """
 `elementHierarchy` contains for each element, the writer supports writing, the
@@ -79,7 +84,7 @@ def getUniqueIdOfListElementInHierarchy(element):
     returned.
     """
 
-    elementHierarchy = Hierarchy.checkAndGetHierarchy(element)
+    elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy:
         return None
 
@@ -89,14 +94,14 @@ def getUniqueIdOfListElementInHierarchy(element):
         if item.__class__.__name__ in listElements:
             listElement = item
 
-    if isinstance(listElement, Identifiable):
+    if isinstance(listElement, iI.Identifiable):
         return item.id
     return None
 
 
 def getFileOfElement(element):
 
-    elementHierarchy = Hierarchy.checkAndGetHierarchy(element)
+    elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy: # element is not addable
         return None
 
@@ -126,15 +131,17 @@ def getTopicOfElement(element):
     the file that shall be edited.
     """
 
-    elementHierarchy = Hierarchy.checkAndGetHierarchy(element)
+    elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy: # just check for sanity
         return None
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
+    print("writer.getTopicOfElement(): hierarchy of {}:\n{}\n".format(
+        element.__class__.__name__, elementHierarchy))
     if "Markup" in strHierarchy:
         markupElem = None
         for item in elementHierarchy:
-            if isinstance(item, Markup):
+            if isinstance(item, m.Markup):
                 markupElem = item
                 break
         return markupElem.topic
@@ -234,6 +241,44 @@ def getContainingETElementForAttribute(rootElem, containingElement):
     return match
 
 
+def generateViewpointFileName(markup: m.Markup):
+
+    """
+    Generates a new viewpoint file name. It will have the name:
+        `viewpointX.bcfv`
+    where `X` is an arbitrary number. Initially X is set to one and incremented
+    until an X is reached that does not yield an existing filename (in
+    combination with `base_name`. The first hit is returned.
+    """
+
+    filenames = [ vpRef.file for vpRef in markup.viewpoints ]
+    base_name = "viewpoint{}.bcfv"
+
+    idx = 1
+    name_candidate = base_name.format(idx)
+    while name_candidate in filenames:
+        idx += 1
+        name_candidate = base_name.format(idx)
+
+    return name_candidate
+
+
+def xmlPrettify(element: ET.Element):
+
+    """
+    uses xml.dom.minidom to parse the string output of element and then again
+    convert it to a string, but now nicely formatted.
+    The formatted string is returned.
+    """
+
+    unformatted = ET.tostring(element, encoding="utf8")
+    domParsed = MD.parseString(unformatted)
+    formatted = domParsed.toprettyxml(indent="\t")
+    # remove possible blank lines
+    prettyXML = "\n".join([ line for line in formatted.split("\n")
+                            if line.strip() ])
+    return prettyXML.encode("UTF-8") # just to be sure to use utf8
+
 
 def addElement(element):
 
@@ -275,7 +320,7 @@ def addElement(element):
 
     xmlTree = ET.parse(filePath)
     # different handling for attributes and elements
-    if isinstance(element, Attribute):
+    if isinstance(element, p.Attribute):
         newParent = element.containingObject
 
         # parent element of the attribute how it should be
@@ -302,8 +347,33 @@ def addElement(element):
         newEtElement = element.getEtElement(ET.Element(element.xmlName))
         etParent.insert(insertionIndex, newEtElement)
 
-    print("\n\n\nWriting this tree:\n{}".format(ET.dump(xmlTree.getroot())))
-    xmlTree.write(filePath, encoding="utf8")
+    # generate viewpoint.bcfv file for added viewpoint
+    if (isinstance(element, m.ViewpointReference) and
+            element.viewpoint is not None and
+            element.viewpoint.state == iS.State.States.ADDED):
+
+        if element.file is None:
+            raise RuntimeWarning("The new viewpoint does not have a filename."\
+                    "Generating a new one!")
+            # element.containingObject == Markup
+            element.file = generateViewpointFileName(element.containingObject)
+
+        vp = element.viewpoint
+        visinfoRootEtElem = ET.Element("", {})
+        vp.getEtElement(visinfoRootEtElem)
+
+        if reader.DEBUG:
+            print("writer.addElement(): Writing new viewpoint to"\
+                    " {}".format(element.file))
+
+        vpFilePath = os.path.join(bcfDir, str(topicDir), str(element.file))
+        vpXmlPrettyText = xmlPrettify(visinfoRootEtElem)
+        with open(vpFilePath, "wb") as f:
+            f.write(vpXmlPrettyText)
+
+    xmlPrettyText = xmlPrettify(xmlTree.getroot())
+    with open(filePath, "wb") as f:
+        f.write(xmlPrettyText)
 
 
 if __name__ == "__main__":
@@ -311,6 +381,7 @@ if __name__ == "__main__":
     if len(sys.argv) >= 2:
         argFile = sys.argv[1]
     project = reader.readBcfFile(argFile)
+    markup = project.topicList[0]
     topic = project.topicList[0].topic
     """
     hFiles = project.topicList[0].header.files
@@ -323,7 +394,6 @@ if __name__ == "__main__":
     bimSnippet = topic.bimSnippet
     print(topic.bimSnippet)
     addElement(bimSnippet._external)
-    """
 
     docRef = topic.refs[0]
     docRef.external = True
@@ -331,7 +401,12 @@ if __name__ == "__main__":
     print(docRef)
     addElement(docRef._external)
     addElement(docRef._guid)
+    """
 
-
-
-
+    print(markup.viewpoints)
+    newVp = c.deepcopy(markup.viewpoints[0])
+    newVp.file = u.Uri("viewpoint2.bcfv")
+    newVp.index = 2
+    newVp.state = iS.State.States.ADDED
+    newVp.viewpoint.state = iS.State.States.ADDED
+    addElement(newVp)

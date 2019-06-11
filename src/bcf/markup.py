@@ -102,7 +102,6 @@ class HeaderFile(Hierarchy, State, XMLName):
     def getEtElement(self, elem):
 
         elem.tag = "File"
-        elem.tail = "\n\t"
 
         elem.attrib["isExternal"] = str(self.external).lower() # xml bool is lowercase
         if self.ifcSpatialStructureElement != "":
@@ -189,7 +188,13 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
 
     @file.setter
     def file(self, newVal):
-        self._file.value = newVal
+        if isinstance(newVal, Uri):
+            self._file.value = newVal
+        elif isinstance(newVal, str):
+            self._file.value = Uri(newVal)
+        else:
+            raise ValueError("File only supports the types 'str' and 'Uri'."\
+                    " Erroneous type is: {}".format(type(newVal)))
 
     @property
     def snapshot(self):
@@ -256,22 +261,18 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
     def getEtElement(self, elem):
 
         elem.attrib["Guid"] = str(self.id)
-        elem.tail = "\n\t"
 
         if self.file is not None:
             fileElem = ET.SubElement(elem, "Viewpoint")
             fileElem.text = str(self.file)
-            fileElem.tail = "\n\t\t"
 
         if self.snapshot is not None:
             snapElem = ET.SubElement(elem, "Snapshot")
             snapElem.text = str(self.snapshot)
-            snapElem.tail = "\n\t\t"
 
         if self.index != -1:
             indexElem = ET.SubElement(elem, "Index")
             indexElem.text = str(self.index)
-            indexElem.tail = "\n\t\t"
 
         return elem
 
@@ -356,33 +357,26 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
 
         elem.tag = self.xmlName
         elem.attrib["Guid"] = str(self.id)
-        elem.tail = "\n\t"
 
         dateElem = ET.SubElement(elem, "Date")
         dateElem.text = self.creation.date.isoformat("T", "seconds")
-        dateElem.tail = "\n\t\t"
 
         authorElem = ET.SubElement(elem, "Author")
         authorElem.text = self.creation.author
-        authorElem.tail = "\n\t\t"
 
         commentElem = ET.SubElement(elem, "Comment")
         commentElem.text = self.comment
-        commentElem.tail = "\n\t\t"
 
         if self.viewpoint is not None:
             vpElem = ET.SubElement(elem, "Viewpoint")
             vpElem.attrib["Guid"] = str(self.viewpoint.id)
-            vpElem.tail = "\n\t\t"
 
         if self.lastModification is not None:
             modDateElem = ET.SubElement(elem, "ModifiedDate")
             modDateElem.text = self.lastModification.date.isoformat("T", "seconds")
-            modDateElem.tail = "\n\t\t"
 
             modAuthorElem = ET.SubElement(elem, "ModifiedAuthor")
             modAuthorElem.text = self.lastModification.author
-            modAuthorElem.tail = "\n\t\t"
 
         return elem
 

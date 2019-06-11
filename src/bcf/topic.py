@@ -184,17 +184,14 @@ class BimSnippet(Hierarchy, State, XMLName):
         elem.tag = "BimSnippet"
         elem.attrib["SnippetType"] = str(self.type)
         elem.attrib["isExternal"] = str(self.external).lower()
-        elem.tail = "\n\t"
 
         if self.reference != "":
             refElem = ET.SubElement(elem, "Reference")
             refElem.text = str(self.reference)
-            refElem.tail = "\n\t\t\t"
 
         if self.schema is not None:
             schemaElem = ET.SubElement(elem, "ReferenceSchema")
             schemaElem.text = str(self.schema)
-            schemaElem.tail = "\n\t\t"
 
         print("Constructed: {}".format(ET.dump(elem)))
         return elem

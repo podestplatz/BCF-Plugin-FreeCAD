@@ -1,9 +1,10 @@
+import xml.etree.ElementTree as ET
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
 from interfaces.xmlname import XMLName
 
 
-class ThreeDVector(Hierarchy, State):
+class ThreeDVector(Hierarchy, State, XMLName):
 
     """
     General representation of a three dimensional vector which can be
@@ -15,10 +16,12 @@ class ThreeDVector(Hierarchy, State):
             y: float,
             z: float,
             containingElement = None,
-            state: State.States = State.States.ORIGINAL):
+            state: State.States = State.States.ORIGINAL,
+            xmlName: str = ""):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        XMLName.__init__(self, xmlName)
         self.x = x
         self.y = y
         self.z = z
@@ -33,7 +36,23 @@ class ThreeDVector(Hierarchy, State):
         return self.x == other.x and self.y == other.y and self.z == other.z
 
 
-class Point(ThreeDVector, XMLName):
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        xElem = ET.SubElement(elem, "X")
+        xElem.text = str(self.x)
+
+        yElem = ET.SubElement(elem, "Y")
+        yElem.text = str(self.y)
+
+        zElem = ET.SubElement(elem, "Z")
+        zElem.text = str(self.z)
+
+        return elem
+
+
+class Point(ThreeDVector):
 
     """ Represents a point in the three dimensional space """
 
@@ -44,8 +63,13 @@ class Point(ThreeDVector, XMLName):
             containingElement = None,
             state: State.States = State.States.ORIGINAL):
 
-        ThreeDVector.__init__(self, x, y, z, containingElement, state)
-        XMLName.__init__(self)
+        ThreeDVector.__init__(self, x, y, z, containingElement,
+                state, self.__class__.__name__)
+
+
+    def getEtElement(self, elem):
+
+        return ThreeDVector.getEtElement(self, elem)
 
 
 class Direction(ThreeDVector, XMLName):
@@ -61,6 +85,11 @@ class Direction(ThreeDVector, XMLName):
 
         ThreeDVector.__init__(self, x, y, z, containingElement, state)
         XMLName.__init__(self)
+
+
+    def getEtElement(self, elem):
+
+        return ThreeDVector.getEtElement(self, elem)
 
 
 class Line(Hierarchy, State, XMLName):
@@ -89,6 +118,19 @@ class Line(Hierarchy, State, XMLName):
         return self.start == other.start and self.end == other.end
 
 
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        startElem = ET.SubElement(elem, "StartPoint")
+        startElem = self.start.getEtElement(startElem)
+
+        stopElem = ET.SubElement(elem, "StopPoint")
+        stopElem = self.stop.getEtElement(stopElem)
+
+        return elem
+
+
 class ClippingPlane(Hierarchy, State, XMLName):
 
     def __init__(self,
@@ -112,4 +154,15 @@ class ClippingPlane(Hierarchy, State, XMLName):
 
         return (self.location == other.location and
                 self.direction == other.direction)
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        locElem = ET.SubElement(elem, "Location")
+        locElem = self.location.getEtElement(locElem)
+
+        dirElem = ET.SubElement(elem, "Direction")
+        dirElem = self.direction.getEtElement(dirElem)
 
