@@ -1,27 +1,70 @@
+from enum import Enum
 from datetime import datetime
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
+
+import bcf.project as p
+
+
+class ModificationType(Enum):
+    CREATION = 1
+    MODIFICATION = 2
 
 class Modification(Hierarchy, State):
 
     """
     This class is used by Topic and Comment to for one denote the author
     and date of the last change and the creator and the creation date of an
-    object of one of the respective classes
+    object of one of the respective classes.
+    If it shall be written by the writer module then just supply it with
+    self._author or self._date, not the object of Modification itself
     """
 
     def __init__(self,
             author: str,
             date: datetime,
             containingElement = None,
-            state: State.States = State.States.ORIGINAL):
+            state: State.States = State.States.ORIGINAL,
+            modType: ModificationType = ModificationType.CREATION):
 
         """ Initialisation function for Modification """
 
         State.__init__(self, state)
         Hierarchy.__init__(self, containingElement)
-        self.author = author
-        self.date = date
+        if modType == ModificationType.CREATION:
+            self._author = p.SimpleElement(author, "Author", self)
+            self._date = p.SimpleElement(date, "Date", self)
+        else:
+            self._author = p.SimpleElement(author, "ModifiedAuthor", self)
+            self._date = p.SimpleElement(date, "ModifiedDate", self)
+
+        # hacky way of pretending that author and date inherit XMLName
+        # completely.
+        self._author.getEtElement = self.getEtElementAuthor
+        self._date.getEtElement = self.getEtElementDate
+
+
+    @property
+    def author(self):
+        return self._author.value
+
+    @author.setter
+    def author(self, newVal):
+        if not isinstance(newVal, str):
+            raise ValueError("The value of author must be a string!")
+        else:
+            self._author.value = newVal
+
+    @property
+    def date(self):
+        return self._date.value
+
+    @date.setter
+    def date(self, newValue):
+        if not isinstance(newValue, datetime):
+            raise ValueError("The value of date has to be datetime!")
+        else:
+            self._date.value = newVal
 
 
     def __eq__(self, other):
@@ -38,3 +81,19 @@ class Modification(Hierarchy, State):
         ret_str = "Modification(author='{}', datetime='{}')".format(self.author,
                 self.date)
         return ret_str
+
+
+    def getEtElementDate(self, elem):
+
+        elem.tag = self._date.xmlName
+        elem.text = self.date.isoformat("T", "seconds")
+
+        return elem
+
+
+    def getEtElementAuthor(self, elem):
+
+        elem.tag = self._author.xmlName
+        elem.text = self.author
+
+        return elem

@@ -225,10 +225,9 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
             raise ValueError("File only supports the types 'str' and 'Uri'."\
                     " Erroneous type is: {}".format(type(newVal)))
 
-
     @property
     def snapshot(self):
-        return self._snapshot
+        return self._snapshot.value
 
     @snapshot.setter
     def snapshot(self, newVal):
@@ -250,6 +249,8 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
     def viewpoint(self, newVal):
         if isinstance(newVal, Viewpoint):
             self._viewpoint = newVal
+        elif newVal is None:
+            self._viewpoint = None
         else:
             raise ValueError("The new value has to be of type `Viewpoint`."\
                 " Erroneous type: {}".format(type(newVal)))
@@ -352,7 +353,7 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
         self.creation = creation
         self._comment = SimpleElement(comment, "Comment", self)
         self.viewpoint = viewpoint
-        self.lastModification = lastModification
+        self._lastModification = lastModification
 
 
     @property
@@ -362,6 +363,15 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
     @comment.setter
     def comment(self, newVal):
         self._comment.value = newVal
+
+    @property
+    def lastModification(self):
+        return self._lastModification
+
+    @lastModification.setter
+    def lastModification(self, newVal):
+        self._lastModification = newVal
+        self._lastModification.containingObject = self
 
 
     def __eq__(self, other):

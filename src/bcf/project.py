@@ -6,6 +6,10 @@ from interfaces.xmlname import XMLName
 from interfaces.identifiable import Identifiable
 
 DEBUG = True
+def debug(msg):
+    if DEBUG:
+        print(msg)
+
 
 class SimpleElement(XMLName, Hierarchy, State):
 

@@ -1,6 +1,7 @@
 import os
 import io # used for writing files in utf8
 import sys
+from uuid import UUID
 
 if __name__ == "__main__":
     sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
@@ -114,8 +115,15 @@ def getUniqueIdOfListElementInHierarchy(element):
     for item in elementHierarchy[1:]:
         if item.__class__.__name__ in listElements:
             listElement = item
+            p.debug("writer.{}(): {} is a list element!".format(
+                    getUniqueIdOfListElementInHierarchy.__name__,
+                        item))
+            break
 
     if isinstance(listElement, iI.Identifiable):
+        p.debug("writer.{}(): its id = {} element!".format(
+                getUniqueIdOfListElementInHierarchy.__name__,
+                    item.id))
         return item.id
     return None
 
@@ -173,9 +181,9 @@ def getTopicOfElement(element):
 def getIdAttrName(elementId):
 
     idAttrName = ""
-    if isinstance(listElemId, UUID):
+    if isinstance(elementId, UUID):
         idAttrName = "Guid"
-    elif isinstance(listElemId, str):
+    elif isinstance(elementId, str):
         idAttrName = "IfcGuid"
 
     return idAttrName
@@ -197,12 +205,16 @@ def getParentElement(element, etRoot):
 
     etParent = None
     listElemId = getUniqueIdOfListElementInHierarchy(element)
+    p.debug("writer.{}(): got id {} for {}".format(getParentElement.__name__,
+        listElemId, element.__class__.__name__))
     if not listElemId: # parent can be found easily by tag
         etParent = etRoot.find(strHierarchy[1])
         if not etParent and etRoot.tag == strHierarchy[1]:
             etParent = etRoot
     else:
-        idAttrName = getIdAttrName(listElementId)
+        idAttrName = getIdAttrName(listElemId)
+        p.debug("writer.{}(): searching elementtree for .//*[@{}='{}']".format(
+                getParentElement.__name__, idAttrName, listElemId))
         etParent = etRoot.find(".//*[@{}='{}']".format(idAttrName,
             str(listElemId)))
 
@@ -215,9 +227,11 @@ def getInsertionIndex(element, etParent):
     etChildren = [ elem.tag for elem in list(etParent) ]
     revEtChildren = list(reversed(etChildren))
     highestIndex = 0
-    if reader.DEBUG:
-        print("writer.getInsertionIndex()\ndefined sequence: {}\nactual"\
-                " sequence: {}".format(parentSequence, etChildren))
+    p.debug("writer.{}()\n\tdefined sequence: {}\n\tactual"\
+                " sequence: {}".format(getInsertionIndex.__name__,
+                    parentSequence, etChildren))
+    p.debug("writer.{}(): element is of type {}".format(
+            getInsertionIndex.__name__, type(element)))
     for seqElem in parentSequence:
         if seqElem == element.xmlName:
             break
@@ -294,7 +308,7 @@ def xmlPrettify(element: ET.Element):
 
     unformatted = ET.tostring(element, encoding="utf8")
     domParsed = MD.parseString(unformatted)
-    formatted = domParsed.toprettyxml(indent="\t")
+    formatted = domParsed.toprettyxml(encoding="UTF-8", indent="\t").decode("utf-8")
     # remove possible blank lines
     prettyXML = "\n".join([ line for line in formatted.split("\n")
                             if line.strip() ])
@@ -383,9 +397,8 @@ def addElement(element):
         visinfoRootEtElem = ET.Element("", {})
         vp.getEtElement(visinfoRootEtElem)
 
-        if reader.DEBUG:
-            print("writer.addElement(): Writing new viewpoint to"\
-                    " {}".format(element.file))
+        p.debug("writer.{}(): Writing new viewpoint to"\
+                    " {}".format(addElement.__name__, element.file))
 
         vpFilePath = os.path.join(bcfDir, str(topicDir), str(element.file))
         vpXmlPrettyText = xmlPrettify(visinfoRootEtElem)

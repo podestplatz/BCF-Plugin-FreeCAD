@@ -227,7 +227,7 @@ def buildProject(projectFilePath: str, projectSchema: str):
 
 def buildComment(commentDict: Dict):
 
-    id = commentDict["@Guid"]
+    id = UUID(commentDict["@Guid"])
     commentDate = dateutil.parser.parse(commentDict["Date"]) # parse ISO 8601 datetime
     commentAuthor = commentDict["Author"]
     creationData = Modification(commentAuthor, commentDate)
@@ -397,7 +397,8 @@ def buildViewpointReference(viewpointDict):
     if snapshotFile:
         snapshotFile = Uri(snapshotFile)
 
-    index = getOptionalFromDict(viewpointDict, "Index", 0)
+    # -1 denotes a missing index value
+    index = getOptionalFromDict(viewpointDict, "Index", -1)
 
     vpReference = ViewpointReference(id, viewpointFile, snapshotFile, index)
 

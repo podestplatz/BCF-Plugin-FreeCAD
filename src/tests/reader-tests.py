@@ -153,7 +153,7 @@ class buildTopicTest(unittest.TestCase):
                 dateutil.parser.parse("2017-10-10T14:24:31+00:00"))
         expectedReferences = [
                 topic.DocumentReference(
-                    id=UUID("0a36e3d6-97e9-47d6-ab4f-227990429f52"),
+                    guid=UUID("0a36e3d6-97e9-47d6-ab4f-227990429f52"),
                     external=True,
                     reference=uri.Uri("/url/to/document"),
                     description="This is a description of the document") ]
