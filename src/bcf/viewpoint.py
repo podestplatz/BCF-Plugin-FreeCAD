@@ -434,7 +434,13 @@ class Components(Hierarchy, State, XMLName):
 
 class Viewpoint(Hierarchy, State, XMLName):
 
-    """ """
+    """
+    Viewpoint uses the default implementation of getStateList(). Objects of type
+    Viewpoint are considered non-mutable, therefore the state
+    State.States.MODIFIED is invalid for Viewpoint objects. Also resulting from
+    the immutability is the fact that all members of Viewpoint are added and
+    deleted with the viewpoint object.
+    """
 
     def __init__(self,
             id: UUID,

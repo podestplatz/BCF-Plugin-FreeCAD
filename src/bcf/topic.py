@@ -8,6 +8,7 @@ from xmlschema import XMLSchema
 from bcf.modification import Modification
 from bcf.uri import Uri
 from bcf.project import (Attribute, SimpleElement, SimpleList)
+from bcf.project import DEBUG
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
 from interfaces.state import State
@@ -32,6 +33,7 @@ class DocumentReference(Hierarchy, State, XMLName):
         self._external = Attribute(external, "isExternal", self)
         self._reference = SimpleElement(reference, "ReferencedDocument", self)
         self._description = SimpleElement(description, "Description", self)
+
 
     @property
     def guid(self):
@@ -109,6 +111,20 @@ class DocumentReference(Hierarchy, State, XMLName):
         return elem
 
 
+    def getStateList(self):
+
+        stateList = list()
+        if not self.isOriginal():
+            stateList.append((self.state, self))
+
+        stateList += self._guid.getStateList()
+        stateList += self._external.getStateList()
+        stateList += self._reference.getStateList()
+        stateList += self._description.getStateList()
+
+        return stateList
+
+
 class BimSnippet(Hierarchy, State, XMLName):
     def __init__(self,
             type: str = "",
@@ -127,6 +143,7 @@ class BimSnippet(Hierarchy, State, XMLName):
         self._external = Attribute(external, "isExternal", self)
         self._reference = SimpleElement(reference, "Reference", self)
         self._schema = SimpleElement(schema, "ReferenceSchema", self)
+
 
     @property
     def type(self):
@@ -195,6 +212,20 @@ class BimSnippet(Hierarchy, State, XMLName):
 
         print("Constructed: {}".format(ET.dump(elem)))
         return elem
+
+
+    def getStateList(self):
+
+        stateList = list()
+        if not self.isOriginal():
+            stateList.append((self.state, self))
+
+        stateList += self._type.getStateList()
+        stateList += self._external.getStateList()
+        stateList += self._reference.getStateList()
+        stateList += self._schema.getStateList()
+
+        return stateList
 
 
 class Topic(Hierarchy, Identifiable, State, XMLName):
@@ -412,3 +443,37 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
             self.assignee, self.description, self.stage, self.relatedTopics,
             self.labels, doc_ref_str)
         return str_ret
+
+
+    def getStateList(self):
+
+        stateList = list()
+        if not self.isOriginal():
+            stateList.append((self.state, self))
+
+        stateList += self._title.getStateList()
+        stateList += self.creation.getStateList()
+        stateList += self._type.getStateList()
+        stateList += self._status.getStateList()
+        stateList += self.referenceLinks.getStateList() #TODO: better solution with simple list. Objects in simple list are not inherited from State
+        for ref in self.refs:
+            stateList += ref.getStateList()
+
+        stateList += self._priority.getStateList()
+        stateList += self._index.getStateList()
+        stateList += self.labels.getStateList() #TODO: better solution with simple list. Objects in simple list are not inherited from State
+        if self.lastModification is not None:
+            stateList += self.lastModification.getStateList()
+
+        stateList += self._dueDate.getStateList()
+        stateList += self._assignee.getStateList()
+        stateList += self._description.getStateList()
+        stateList += self._stage.getStateList()
+        stateList += self.relatedTopics.getStateList() #TODO: better solution with simple list. Objects in simple list are not inherited from State
+        if self.bimSnippet is not None:
+            stateList += self.bimSnippet.getStateList()
+
+        if DEBUG:
+            print("Topic.getStateList(): returning {}".format(stateList))
+        return stateList
+

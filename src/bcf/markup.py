@@ -5,7 +5,8 @@ from typing import List # used for custom type annotations
 from bcf.uri import Uri
 from bcf.modification import Modification
 from bcf.topic import Topic
-from bcf.project import (SimpleElement, Attribute)
+from bcf.project import (SimpleElement, Attribute, DEBUG)
+from bcf.viewpoint import (Viewpoint)
 from interfaces.state import State
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
@@ -35,6 +36,7 @@ class HeaderFile(Hierarchy, State, XMLName):
         self._filename = SimpleElement(filename, "Filename", self)
         self._time = SimpleElement(time, "Date", self)
         self._reference = SimpleElement(reference, "Reference", self)
+
 
     @property
     def ifcProjectId(self):
@@ -123,6 +125,21 @@ class HeaderFile(Hierarchy, State, XMLName):
         return elem
 
 
+    def getStateList(self):
+
+        stateList = list()
+        if not self.isOriginal():
+            stateList.append((self.state, self))
+
+        stateList += self._ifcProjectId.getStateList()
+        stateList += self._ifcSpatialStructureElement.getStateList()
+        stateList += self._external.getStateList()
+        stateList += self._filename.getStateList()
+        stateList += self._reference.getStateList()
+
+        return stateList
+
+
     def __str__(self):
         ret_str = ("ContainingElement(\n"\
                 "isExternal: {}\n"\
@@ -157,6 +174,18 @@ class Header(Hierarchy, State, XMLName):
         self.files = files
         for f in files:
             f.containingObject = self
+
+
+    def getStateList(self):
+
+        stateList = list()
+        if not self.isOriginal():
+            stateList.append((self.state, self))
+
+        for f in self.files:
+            stateList += f.getStateList()
+
+        return stateList
 
 
 class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
@@ -196,6 +225,7 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
             raise ValueError("File only supports the types 'str' and 'Uri'."\
                     " Erroneous type is: {}".format(type(newVal)))
 
+
     @property
     def snapshot(self):
         return self._snapshot
@@ -216,10 +246,13 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
     def viewpoint(self):
         return self._viewpoint
 
-
     @viewpoint.setter
     def viewpoint(self, newVal):
-        self._viewpoint = newVal
+        if isinstance(newVal, Viewpoint):
+            self._viewpoint = newVal
+        else:
+            raise ValueError("The new value has to be of type `Viewpoint`."\
+                " Erroneous type: {}".format(type(newVal)))
 
 
     def __eq__(self, other):
@@ -277,6 +310,24 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
         return elem
 
 
+    def getStateList(self):
+
+        stateList = list()
+        if not self.isOriginal():
+            stateList.append((self.state, self))
+
+        stateList += self._file.getStateList()
+        stateList += self._snapshot.getStateList()
+        stateList += self._index.getStateList()
+
+        if self.viewpoint is not None:
+            stateList += self._viewpoint.getStateList()
+
+        if DEBUG:
+            print("{}.getStateList(): returning {}".format(
+                self.__class__.__name__, stateList))
+
+        return stateList
 
 
 class Comment(Hierarchy, Identifiable, State, XMLName):
@@ -300,8 +351,9 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
         XMLName.__init__(self)
         self.creation = creation
         self._comment = SimpleElement(comment, "Comment", self)
-        self._viewpoint = SimpleElement(viewpoint, "Viewpoint", self)
+        self.viewpoint = viewpoint
         self.lastModification = lastModification
+
 
     @property
     def comment(self):
@@ -311,13 +363,6 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
     def comment(self, newVal):
         self._comment.value = newVal
 
-    @property
-    def viewpoint(self):
-        return self._viewpoint.value
-
-    @viewpoint.setter
-    def viewpoint(self, newVal):
-        self._viewpoint.value = newVal
 
     def __eq__(self, other):
 
@@ -379,6 +424,24 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
             modAuthorElem.text = self.lastModification.author
 
         return elem
+
+
+    def getStateList(self):
+
+        stateList = list()
+        if not self.isOriginal():
+            stateList.append((self.state, self))
+
+        stateList += self.creation.getStateList()
+        stateList += self._comment.getStateList()
+        # viewpoint is already added to list by Markup
+        stateList += self.lastModification.getStateList()
+
+        if DEBUG:
+            print("{}.getStateList(): returning {}".format(
+                self.__class__.__name__, stateList))
+
+        return stateList
 
 
 class Markup(Hierarchy, State, XMLName):
@@ -460,3 +523,27 @@ class Markup(Hierarchy, State, XMLName):
         snapshotList = [ vp.snapshot for vp in self.viewpoints
                             if vp.snapshot ]
         return snapshotList
+
+
+    def getStateList(self):
+
+        stateList = list()
+        if not self.isOriginal():
+            stateList.append((self.state, self))
+
+        stateList += self.topic.getStateList()
+        if self.header is not None:
+            stateList += self.header.getStateList()
+
+        for comment in self.comments:
+            stateList += comment.getStateList()
+
+        for viewpoint in self.viewpoints:
+            stateList += viewpoint.getStateList()
+
+        if DEBUG:
+            print("{}.getStateList(): returning {}".format(
+                self.__class__.__name__, stateList))
+
+        return stateList
+

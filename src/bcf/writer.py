@@ -72,6 +72,27 @@ A list of elements that can occur multiple times in the corresponding XML file
 listElements = ["Comment", "DocumentReference", "RelatedTopic", "Labels"]
 
 
+"""
+Contains elements that have the state iS.State.States.ADDED. This list gets
+filled by writer.compileChanges() and the elements get consumed by
+writer.addElement()
+"""
+addedObjects = list()
+
+"""
+Contains elements that have the state iS.State.States.DELETED. This list gets
+filled by writer.compileChanges() and the elements get consumed by
+writer.deleteElement()
+"""
+deletedObjects = list()
+
+"""
+Contains elements that have the state iS.State.States.MODIFIED. This list gets
+filled by writer.compileChanges() and the elements get consumed by
+writer.modifyElement()
+"""
+modifiedObjects = list()
+
 
 def getUniqueIdOfListElementInHierarchy(element):
 
@@ -376,6 +397,33 @@ def addElement(element):
         f.write(xmlPrettyText)
 
 
+def compileChanges(project: p.Project):
+
+    """
+    This function crawls through the complete object structure below project and
+    looks for objects whose state is different from `iS.State.States.ORIGINAL`.
+    Elements that are flagged with `iS.State.States.ADDED` are put into the list
+    `addedObjects`.
+    Elements that are flagged with `iS.State.States.DELETED` are put into the
+    list `deletedObjects`.
+    Elements that are flagges with `iS.State.States.MODIFIED` are put into the
+    list `modifiedObjects`.
+    These lists are then, in a subsequent step, processed and written to file.
+    """
+
+    #TODO implement crawler function
+    stateList = project.getStateList()
+    for item in stateList:
+        if item[0] == iS.State.States.ADDED:
+            addedObjects.append(item[1])
+        elif item[0] == iS.State.States.MODIFIED:
+            modifiedObjects.append(item[1])
+        elif item[0] == iS.State.States.DELETED:
+            deletedObjects.append(item[1])
+        else: # Last option would be original state, which should not be contained in the list anyways
+            pass
+
+
 if __name__ == "__main__":
     argFile = "test_data/Issues_BIMcollab_Example.bcf"
     if len(sys.argv) >= 2:
@@ -409,4 +457,7 @@ if __name__ == "__main__":
     newVp.index = 2
     newVp.state = iS.State.States.ADDED
     newVp.viewpoint.state = iS.State.States.ADDED
+    markup.viewpoints.append(newVp)
     addElement(newVp)
+    stateList = project.getStateList()
+    print(stateList)

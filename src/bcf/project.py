@@ -5,17 +5,20 @@ from interfaces.state import State
 from interfaces.xmlname import XMLName
 from interfaces.identifiable import Identifiable
 
+DEBUG = True
 
-class SimpleElement(XMLName, Hierarchy):
+class SimpleElement(XMLName, Hierarchy, State):
 
     """
     Used for representing elements that are defined to be simple elements
     in the corresponding xsd file
     """
 
-    def __init__(self, value, xmlName, containingElement):
+    def __init__(self, value, xmlName, containingElement,
+            state = State.States.ORIGINAL):
         XMLName.__init__(self, xmlName)
         Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.value = value
 
 
@@ -35,7 +38,7 @@ class SimpleElement(XMLName, Hierarchy):
         return "{}: {}".format(self.xmlName, self.value)
 
 
-class SimpleList(list, Hierarchy, XMLName):
+class SimpleList(list, Hierarchy, XMLName, State):
 
     """
     Used for lists that contain just simple types. For example the `Labels`
@@ -43,11 +46,13 @@ class SimpleList(list, Hierarchy, XMLName):
     element just contains a string (and therefore is a simple type).
     """
 
-    def __init__(self, data=[], xmlName = "", containingElement = None):
+    def __init__(self, data=[], xmlName = "", containingElement = None,
+            state = State.States.ORIGINAL):
 
         list.__init__(self, data)
         Hierarchy.__init__(self, containingElement)
         XMLName.__init__(self, xmlName)
+        State.__init__(self, state)
 
     def __eq__(self, other):
 
@@ -55,15 +60,17 @@ class SimpleList(list, Hierarchy, XMLName):
                 XMLName.__eq__(self, other))
 
 
-class Attribute(XMLName, Hierarchy):
+class Attribute(XMLName, Hierarchy, State):
 
     """
     Analogously to `SimpleElement` this class is used to represent attributes.
     """
 
-    def __init__(self, value, xmlName, containingElement):
+    def __init__(self, value, xmlName, containingElement,
+            state = State.States.ORIGINAL):
         XMLName.__init__(self, xmlName)
         Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
         self.value = value
 
 
@@ -100,6 +107,7 @@ class Project(Hierarchy, State, XMLName, Identifiable):
     def extSchemaSrc(self, newVal):
         self._extSchemaSrc.value = newVal
 
+
     def __eq__(self, other):
 
         """
@@ -126,3 +134,18 @@ topicList='{}')""".format(str(self.id),
                 str(self.extSchemaSrc),
                 self.topicList)
         return ret_str
+
+
+    def getStateList(self):
+
+        stateList = list()
+        if not self.isOriginal():
+            stateList.append((self.state, self))
+
+        stateList += self._name.getStateList()
+        stateList += self._extSchemaSrc.getStateList()
+
+        for markup in self.topicList:
+            stateList += markup.getStateList()
+
+        return stateList
