@@ -37,15 +37,19 @@ class AddElementTests(unittest.TestCase):
                 self.testTopicDir)
         self.testFiles = ["markup_add_comment_test.bcf",
                 "markup_add_comment_modification_test.bcf",
-                "markup_add_lone_viewpoint_test.bcf"
-                "markup_add_full_viewpoint_check.bcf",
+                "markup_add_lone_viewpoint_test.bcf",
+                "markup_add_full_viewpoint_test.bcf",
                 "", # dummy element to keep both lists equal in length
+                "markup_add_file_test.bcf",
+                "markup_add_file_attribute_test.bcf"
                 ]
         self.checkFiles = ["markup_add_comment_check.bcf",
                 "markup_add_comment_modification_check.bcf",
                 "markup_add_lone_viewpoint_check.bcf",
                 "markup_add_full_viewpoint_check.bcf",
-                "viewpoint_add_full_viewpoint_check.bcfv"]
+                "viewpoint_add_full_viewpoint_check.bcfv",
+                "markup_add_file_check.bcf",
+                "markup_add_file_attribute_check.bcf"]
         self.testFileDestinations = [os.path.join(self.markupDestDir, "markup.bcf"),
                 os.path.join(self.markupDestDir, "viewpoint.bcfv"),
                 os.path.join(self.markupDestDir, "viewpoint2.bcfv")]
@@ -107,9 +111,12 @@ class AddElementTests(unittest.TestCase):
 
         (equal, diff) = self.compareFiles(self.checkFiles[0])
         if not equal:
-            copyfile(self.testFileDestinations[0],
-                    os.path.join(self.testFileDir, "error_files",
-                    "markup_add_comment.bcf"))
+            wrongFileDestination = os.path.join(self.testFileDir, "error_files",
+                    "markup_add_comment.bcf")
+            copyfile(self.testFileDestinations[0], wrongFileDestination)
+            print("writer_tests.{}(): copied erroneous file to"\
+                    " {}".format(self.test_add_file.__name__,
+                        wrongFileDestination))
             print("Following is the diff between the file that was generated"\
                     " and the prepared file:")
             pprint.pprint(diff)
@@ -139,9 +146,12 @@ class AddElementTests(unittest.TestCase):
 
         (equal, diff) = self.compareFiles(self.checkFiles[1])
         if not equal:
-            copyfile(self.testFileDestinations[0],
-                    os.path.join(self.testFileDir, "error_files",
-                    "markup_add_comment_modification.bcf"))
+            wrongFileDestination = os.path.join(self.testFileDir, "error_files",
+                    "markup_add_comment_modification.bcf")
+            copyfile(self.testFileDestinations[0], wrongFileDestination)
+            print("writer_tests.{}(): copied erroneous file to"\
+                    " {}".format(self.test_add_file.__name__,
+                        wrongFileDestination))
             print("Following is the diff between the file that was generated"\
                     " and the prepared file:")
             pprint.pprint(diff)
@@ -168,9 +178,12 @@ class AddElementTests(unittest.TestCase):
 
         (equal, diff) = self.compareFiles(self.checkFiles[2])
         if not equal:
-            copyfile(self.testFileDestinations[0],
-                    os.path.join(self.testFileDir, "error_files",
-                    "markup_add_lone_viewpoint.bcf"))
+            wrongFileDestination = os.path.join(self.testFileDir, "error_files",
+                    "markup_add_lone_viewpoint.bcf")
+            copyfile(self.testFileDestinations[0], wrongFileDestination)
+            print("writer_tests.{}(): copied erroneous file to"\
+                    " {}".format(self.test_add_file.__name__,
+                        wrongFileDestination))
             print("writer_tests.{}(): Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
                     self.test_add_viewpointreference.__name__))
@@ -199,35 +212,100 @@ class AddElementTests(unittest.TestCase):
         (vpRefEqual, vpRefDiff) = self.compareFiles(self.checkFiles[3])
         (vpEqual, vpDiff) = self.compareFiles(self.checkFiles[4])
         if not vpRefEqual:
-            copyfile(self.testFileDestinations[0],
-                    os.path.join(self.testFileDir, "error_files",
-                    "markup_add_full_viewpoint.bcf"))
+            wrongFileDestination = os.path.join(self.testFileDir, "error_files",
+                    "markup_add_full_viewpoint.bcf")
+            copyfile(self.testFileDestinations[0], wrongFileDestination)
+            print("writer_tests.{}(): copied erroneous file to"\
+                    " {}".format(self.test_add_file.__name__,
+                        wrongFileDestination))
             print("writer_tests.{}(): Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
                         self.test_add_viewpoint.__name__))
             pprint.pprint(vpRefDiff)
 
         if not vpEqual:
-            copyfile(self.testFileDestinations[2],
-                    os.path.join(self.testFileDir, "error_files",
-                    "viewpoint_add_full_viewpoint.bcfv"))
+            wrongFileDestination = os.path.join(self.testFileDir, "error_files",
+                    "viewpoint_add_full_viewpoint.bcfv")
+            copyfile(self.testFileDestinations[2], wrongFileDestination)
+            print("writer_tests.{}(): copied erroneous file to"\
+                    " {}".format(self.test_add_file.__name__,
+                        wrongFileDestination))
             print("writer_tests.{}(): Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
                         self.test_add_viewpoint.__name__))
             pprint.pprint(vpDiff)
         self.assertTrue(vpRefEqual and vpEqual)
 
+
     def test_add_file(self):
         """
         Tests the addition of a file element in the header node
         """
-        self.assertTrue(True)
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[5])
+        testFile = self.setupBCFFile(srcFilePath)
+        p = reader.readBcfFile(testFile)
+
+        m = p.topicList[0]
+        header = m.header
+        newFile = markup.HeaderFile(ifcProjectId = "abcdefghij",
+            ifcSpatialStructureElement = "klmnopqrs",
+            isExternal = False,
+            filename = "this is some file name",
+            time = dateutil.parser.parse("2014-10-16T13:10:56+00:00"),
+            reference = "/path/to/the/file",
+            containingElement = header)
+        header.files.append(newFile)
+        project.debug("writer_tests.{}(): type of newFile is"
+                " {}".format(self.test_add_file.__name__,
+                    type(newFile)))
+
+        writer.addElement(newFile)
+
+        (equal, diff) = self.compareFiles(self.checkFiles[5])
+        if not equal:
+            wrongFileDestination = os.path.join(self.testFileDir, "error_files",
+                    "markup_add_file.bcf")
+            copyfile(self.testFileDestinations[0], wrongFileDestination)
+            print("writer_tests.{}(): copied erroneous file to"\
+                    " {}".format(self.test_add_file.__name__,
+                        wrongFileDestination))
+            print("writer_tests.{}(): Following is the diff between the file that was generated"\
+                " and the prepared file:".format(
+                    self.test_add_viewpointreference.__name__,
+                    wrongFileDestination))
+            pprint.pprint(diff)
+        self.assertTrue(equal)
+
 
     def test_add_file_attributes(self):
         """
         Tests the addition of the optional attributes to one of the file nodes
         """
-        self.assertTrue(True)
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[5])
+        testFile = self.setupBCFFile(srcFilePath)
+        p = reader.readBcfFile(testFile)
+
+        m = p.topicList[0]
+        file = m.header.files[0]
+        file.ifcProjectId = "aaaabbbbcccc"
+        writer.addElement(file._ifcProjectId)
+
+        (equal, diff) = self.compareFiles(self.checkFiles[6])
+        if not equal:
+            wrongFileDestination = os.path.join(self.testFileDir, "error_files",
+                    "markup_add_file_attribute.bcf")
+            copyfile(self.testFileDestinations[0], wrongFileDestination)
+            print("writer_tests.{}(): copied erroneous file to"\
+                    " {}".format(self.test_add_file.__name__,
+                        wrongFileDestination))
+            print("writer_tests.{}(): Following is the diff between the file that was generated"\
+                " and the prepared file:".format(
+                    self.test_add_viewpointreference.__name__,
+                    wrongFileDestination))
+            pprint.pprint(diff)
+        self.assertTrue(equal)
+
 
     def test_add_documentReference_attributes(self):
         """
@@ -236,17 +314,19 @@ class AddElementTests(unittest.TestCase):
         """
         self.assertTrue(True)
 
+
     def test_add_bimSnippet_attribute(self):
         """
         Tests the addition of the optional attribute of BimSnippet
         """
         self.assertTrue(True)
 
+
     def test_add_label(self):
         """
         Tests the addition of a label
         """
-        self.assertTrue(True)
+
 
     def test_add_creation(self):
         """
@@ -254,11 +334,13 @@ class AddElementTests(unittest.TestCase):
         """
         self.assertTrue(True)
 
+
     def test_add_assignedTo(self):
         """
         Tests the addition of the AssignedTo node to a topic
         """
         self.assertTrue(True)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -35,7 +35,7 @@
 	<Comment Guid="98b5802c-4ca0-4032-9128-b9c606955c4f">
 		<Date>2014-10-16T13:10:56+00:00</Date>
 		<Author>fleopard@bim.col</Author>
-		<Comment>hello this is me mario!</Comment>
+		<Comment>Ducts and walls are clashing. Make sure there is a hole in the wall large enough to accomodate these ducts.</Comment>
 		<Viewpoint Guid="a7230ae3-d17d-46fa-8fbd-775d1a0e3efb"/>
 		<ModifiedDate>2014-10-16T13:10:56+00:00</ModifiedDate>
 		<ModifiedAuthor>fleopard@bim.col</ModifiedAuthor>
@@ -43,7 +43,7 @@
 	<Comment Guid="98b5802c-4ca0-4032-9128-b9c606955c4f">
 		<Date>2014-10-16T13:10:56+00:00</Date>
 		<Author>fleopard@bim.col</Author>
-		<Comment>Ducts and walls are clashing. Make sure there is a hole in the wall large enough to accomodate these ducts.</Comment>
+		<Comment>hello this is me mario!</Comment>
 		<Viewpoint Guid="a7230ae3-d17d-46fa-8fbd-775d1a0e3efb"/>
 		<ModifiedDate>2014-10-16T13:10:56+00:00</ModifiedDate>
 		<ModifiedAuthor>fleopard@bim.col</ModifiedAuthor>

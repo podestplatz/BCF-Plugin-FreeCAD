@@ -38,11 +38,11 @@
 		<Comment>hello this is me mario!</Comment>
 		<Viewpoint Guid="a7230ae3-d17d-46fa-8fbd-775d1a0e3efb"/>
 	</Comment>
-	<Viewpoints Guid="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee">
+	<Viewpoints Guid="a7230ae3-d17d-46fa-8fbd-775d1a0e3efb">
 		<Viewpoint>viewpoint.bcfv</Viewpoint>
 		<Snapshot>snapshot.png</Snapshot>
 	</Viewpoints>
-	<Viewpoints Guid="a7230ae3-d17d-46fa-8fbd-775d1a0e3efb">
+	<Viewpoints Guid="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee">
 		<Viewpoint>viewpoint.bcfv</Viewpoint>
 		<Snapshot>snapshot.png</Snapshot>
 	</Viewpoints>

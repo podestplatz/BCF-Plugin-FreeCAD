@@ -63,7 +63,9 @@ elementOrder = {"Markup": ["Header", "Topic", "Comment", "Viewpoints"],
             "DueDate", "AssignedTo", "Stage", "Description", "BimSnippet",
             "DocumentReference", "RelatedTopic"],
         "Comment": ["Date", "Author", "Comment", "Viewpoint", "ModifiedDate",
-            "ModifiedAuthor"]
+            "ModifiedAuthor"],
+        "Header": ["File"],
+        "File": ["Filename", "Date", "Reference"]
         }
 
 
@@ -208,7 +210,11 @@ def getParentElement(element, etRoot):
     p.debug("writer.{}(): got id {} for {}".format(getParentElement.__name__,
         listElemId, element.__class__.__name__))
     if not listElemId: # parent can be found easily by tag
+        p.debug("writer.{}(): searching elementtree for {}".format(
+            getParentElement.__name__, strHierarchy[1]))
         etParent = etRoot.find(strHierarchy[1])
+        p.debug("writer.{}(): got {}".format(
+            getParentElement.__name__, etParent))
         if not etParent and etRoot.tag == strHierarchy[1]:
             etParent = etRoot
     else:
@@ -223,27 +229,48 @@ def getParentElement(element, etRoot):
 
 def getInsertionIndex(element, etParent):
 
-    parentSequence = elementOrder[etParent.tag]
-    etChildren = [ elem.tag for elem in list(etParent) ]
-    revEtChildren = list(reversed(etChildren))
-    highestIndex = 0
+    """
+    Returns the index at which `element` shall be inserted into `etParent`.
+    This index is always the greatest possible one complying with the schema
+    file.
+    Therefore if already multiple elements with the same tag as `element` exist
+    then `element` will be inserted last.
+    """
+
+    definedSequence = elementOrder[etParent.tag]
+    # order of elements how they are found in the file in etParent
+    actualSequence = [ elem.tag for elem in list(etParent) ]
+    actualSequenceRev = list(reversed(actualSequence))
+
     p.debug("writer.{}()\n\tdefined sequence: {}\n\tactual"\
                 " sequence: {}".format(getInsertionIndex.__name__,
-                    parentSequence, etChildren))
+                    definedSequence, actualSequence))
     p.debug("writer.{}(): element is of type {}".format(
             getInsertionIndex.__name__, type(element)))
-    for seqElem in parentSequence:
-        if seqElem == element.xmlName:
-            break
 
-        if seqElem not in etChildren:
-            continue
+    insertionIndex = len(actualSequenceRev)-1
+    # element is already contained => insert it after the last one occuring
+    if element.xmlName in actualSequence:
+        insertionIndex = (len(actualSequenceRev) -
+                actualSequenceRev.index(element.xmlName))
 
-        seqElemIndex = len(etChildren) - 1 - revEtChildren.index(seqElem)
-        if seqElemIndex:
-            highestIndex = seqElemIndex
+    # find the first successor in actualSequence according to definedSequence
+    # and insert it infront
+    else:
+        elemIdxInDefinedSequence = definedSequence.index(element.xmlName)
+        # element is the last one in definedSequence => insert it as the last
+        # element in the actualSequence
+        if elemIdxInDefinedSequence == len(definedSequence) - 1:
+            insertionIndex = len(actualSequenceRev)
+        else:
+            for elem in definedSequence[elemIdxInDefinedSequence + 1]:
+                # first successor found. Insert it before it
+                if elem in actualSequence:
+                    insertionIndex = actualSequence.index(elem) - 1
 
-    return highestIndex + 1 # ET index starts at 1
+    p.debug("writer.{}(): index at which element is inserted {}".format(
+            getInsertionIndex.__name__, insertionIndex))
+    return insertionIndex
 
 
 def getContainingETElementForAttribute(rootElem, containingElement):
@@ -254,6 +281,9 @@ def getContainingETElementForAttribute(rootElem, containingElement):
     parentEt = containingElement.getEtElement(
            ET.Element(containingElement.xmlName, {}))
     parentEtChildren = list(parentEt)
+    p.debug("writer.{}(): looking for {} element".format(
+            getContainingETElementForAttribute.__name__,
+            ET.tostring(parentEt)))
     match = None
     # find the right candidate
     for candidate in candidates:
@@ -424,7 +454,6 @@ def compileChanges(project: p.Project):
     These lists are then, in a subsequent step, processed and written to file.
     """
 
-    #TODO implement crawler function
     stateList = project.getStateList()
     for item in stateList:
         if item[0] == iS.State.States.ADDED:

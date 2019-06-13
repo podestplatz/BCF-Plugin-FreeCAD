@@ -9,6 +9,11 @@
 			<Date>2019-05-31T09:41:48+02:00</Date>
 			<Reference>https://www.example.org/example.ifc</Reference>
 		</File>
+		<File IfcProject="abcdefghij" IfcSpatialStructureElement="klmnopqrs" isExternal="false">
+			<Filename>this is some file name</Filename>
+			<Date>2014-10-16T13:10:56+00:00</Date>
+			<Reference>/path/to/the/file</Reference>
+		</File>
 	</Header>
 	<Topic Guid="2e92784b-80fc-4e0e-ac02-b424dfd8e664" TopicStatus="Active" TopicType="Clash">
 		<Title>Intersection ventilation and wall</Title>
@@ -37,23 +42,9 @@
 		<Author>fleopard@bim.col</Author>
 		<Comment>hello this is me mario!</Comment>
 		<Viewpoint Guid="a7230ae3-d17d-46fa-8fbd-775d1a0e3efb"/>
-		<ModifiedDate>2014-10-16T13:10:56+00:00</ModifiedDate>
-		<ModifiedAuthor>fleopard@bim.col</ModifiedAuthor>
-	</Comment>
-	<Comment Guid="98b5802c-4ca0-4032-9128-b9c606955c4f">
-		<Date>2014-10-16T13:10:56+00:00</Date>
-		<Author>fleopard@bim.col</Author>
-		<Comment>Ducts and walls are clashing. Make sure there is a hole in the wall large enough to accomodate these ducts.</Comment>
-		<Viewpoint Guid="a7230ae3-d17d-46fa-8fbd-775d1a0e3efb"/>
-		<ModifiedDate>2014-10-16T13:10:56+00:00</ModifiedDate>
-		<ModifiedAuthor>fleopard@bim.col</ModifiedAuthor>
 	</Comment>
 	<Viewpoints Guid="a7230ae3-d17d-46fa-8fbd-775d1a0e3efb">
 		<Viewpoint>viewpoint.bcfv</Viewpoint>
-		<Snapshot>snapshot.png</Snapshot>
-	</Viewpoints>
-	<Viewpoints Guid="a7230ae3-d17d-46fa-8fbd-775d1a0e3efb">
-		<Viewpoint>viewpoint2.bcfv</Viewpoint>
 		<Snapshot>snapshot.png</Snapshot>
 	</Viewpoints>
 </Markup>
