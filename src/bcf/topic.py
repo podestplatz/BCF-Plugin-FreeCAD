@@ -279,6 +279,10 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         for docRef in self.refs:
             docRef.containingObject = self
 
+        if self.bimSnippet is not None:
+            self.bimSnippet.containingObject = self
+
+
     @property
     def stage(self):
         return self._stage.value

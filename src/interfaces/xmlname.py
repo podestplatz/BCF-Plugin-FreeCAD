@@ -1,4 +1,13 @@
 class XMLName:
+
+    """
+    Every inheriting class should correspond to either a node in one xml file or
+    an attribute of a node. The inherited property `xmlName` holds the name of
+    the node/attribute. Every class that corresponds to a node is also expected
+    to implement getEtElement() which serializes the contents of itself into a
+    object of type xml.etree.ElementTree.Element.
+    """
+
     def __init__(self, name = ""):
         if name == "":
             self._name = self.__class__.__name__

@@ -327,7 +327,7 @@ class buildCommentTest(unittest.TestCase):
         expectedCreation = modification.Modification(author="bgreen@bim.col",
                 date=dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
         expectedComment = markup.Comment(
-                "2b1e79c8-9d2d-419d-887a-fcff8fec7595",
+                UUID("2b1e79c8-9d2d-419d-887a-fcff8fec7595"),
                 creation = expectedCreation,
                 comment = "Do you mean this one?",
                 viewpoint = None,
@@ -336,9 +336,10 @@ class buildCommentTest(unittest.TestCase):
         expectedCommentList = [ expectedComment ]
 
         # compare expected and actual
-        self.assertEqual(expectedCommentList, actualMarkup.comments,
-            "\nExpected:\n{}\n\n\nActual:{}".format(expectedCommentList,
-                actualMarkup.comments))
+        for (a, b) in zip(expectedCommentList, actualMarkup.comments):
+            self.assertEqual(a, b,
+                    "\nExpected:\n{}\n\n\nActual:\n{}".format(a,
+                    b))
 
 
     def test_completeComment(self):
@@ -360,7 +361,7 @@ class buildCommentTest(unittest.TestCase):
                 snapshot=uri.Uri("snapshot.png"),
                 index=2)
         expectedComment = markup.Comment(
-                "2b1e79c8-9d2d-419d-887a-fcff8fec7595",
+                UUID("2b1e79c8-9d2d-419d-887a-fcff8fec7595"),
                 creation = expectedCreation,
                 comment = "Do you mean this one?",
                 viewpoint = expectedViewpoint,
@@ -390,9 +391,9 @@ class buildCommentTest(unittest.TestCase):
                 id=UUID("b496c251-2729-4dee-94a1-085168d36512"),
                 file=uri.Uri("viewpoint.bcfv"),
                 snapshot=uri.Uri("snapshot.png"),
-                index=0)
+                index=-1)
         expectedComment = markup.Comment(
-                "2b1e79c8-9d2d-419d-887a-fcff8fec7595",
+                UUID("2b1e79c8-9d2d-419d-887a-fcff8fec7595"),
                 creation = expectedCreation,
                 comment = "Do you mean this one?",
                 viewpoint = expectedViewpoint,
@@ -402,7 +403,7 @@ class buildCommentTest(unittest.TestCase):
 
         # compare expected and actual
         for (a, b) in zip(expectedCommentList, actualMarkup.comments):
-            self.assertTrue(a.__eq__(b),
+            self.assertEqual(a, b,
                     "\nExpected:\n{}\n\n\nActual:\n{}".format(a,
                     b))
 
@@ -628,7 +629,6 @@ class readBcfFileTest(unittest.TestCase):
         for markup in self.proj.topicList:
             for vpRef in markup.viewpoints:
                 self.assertTrue(vpRef.viewpoint is not None)
-                print(vpRef.viewpoint)
 
 
 if __name__ == "__main__":

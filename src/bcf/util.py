@@ -109,7 +109,6 @@ def getDirectories(topDir: str):
         subdirs = dirnames
         break
     return subdirs
-    #return list(filter(lambda item: item != topDir, subdirs))
 
 
 if __name__ == "__main__":

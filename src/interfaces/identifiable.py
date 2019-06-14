@@ -2,6 +2,11 @@ from uuid import UUID
 
 class Identifiable:
 
+    """
+    Provides a member id to the inheriting class. This id is intended to be of
+    two types: UUID and str.
+    """
+
     def __init__(self, uId = None):
         self._id = uId
         if not id:
@@ -22,3 +27,14 @@ class Identifiable:
                 self._id = newVal
         else:
             raise ValueError("Id has to be of type UUID or string!")
+
+
+    def idEquals(self, otherId):
+
+        if otherId is None:
+            return False
+
+        if type(self.id) != type(otherId):
+            return False
+
+        return self.id == otherId

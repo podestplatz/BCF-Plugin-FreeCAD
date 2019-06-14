@@ -2,6 +2,7 @@ from enum import Enum
 from typing import List, Dict
 from uuid import UUID
 from bcf.threedvector import *
+from bcf.project import listSetContainingElement
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
 from interfaces.xmlname import XMLName
@@ -40,6 +41,14 @@ class Bitmap(Hierarchy, State, XMLName):
         self.normal = normal
         self.upVector = upVector
         self.height = height
+
+        # set containingObject of complex members
+        if self.location is not None:
+            self.location.containingObject = self
+        if self.normal is not None:
+            self.normal.containingObject = self
+        if self.upVector is not None:
+            self.upVector.containingObject = self
 
 
     def __eq__(self, other):
@@ -101,6 +110,14 @@ class Camera(Hierarchy, State, XMLName):
         self.viewPoint = viewPoint
         self.direction = direction
         self.upVector = upVector
+
+        # set containingObject of complex members
+        if self.viewPoint is not None:
+            self.viewPoint.containingObject = self
+        if self.direction is not None:
+            self.direction.containingObject = self
+        if self.upVector is not None:
+            self.upVector.containingObject = self
 
 
     def __eq__(self, other):
@@ -288,6 +305,9 @@ class ComponentColour(Hierarchy, State, XMLName):
         self.colour = colour
         self.components = components
 
+        # set containingObject of complex members
+        listSetContainingElement(self.components, self)
+
 
     def __eq__(self, other):
 
@@ -365,6 +385,12 @@ class Components(Hierarchy, State, XMLName):
         self.visibilityExceptions = visibilityExceptions
         self.colouring = colouring
 
+        # set containingObject for complex members
+        if self.viewSetuphints is not None:
+            self.viewSetuphints.containingObject = self
+        listSetContainingElement(self.selection, self)
+        listSetContainingElement(self.colouring, self)
+        listSetContainingElement(self.visibilityExceptions, self)
 
     def __eq__(self, other):
 
@@ -463,6 +489,17 @@ class Viewpoint(Hierarchy, State, XMLName):
         self.lines = lines
         self.clippingPlanes = clippingPlanes
         self.bitmaps = bitmaps
+
+        # set containingObject for complex members
+        if self.components is not None:
+            self.components.containingObject = self
+        if self.oCamera is not None:
+            self.oCamera.containingObject = self
+        if self.pCamera is not None:
+            self.pCamera.containingObject = self
+        listSetContainingElement(self.lines, self)
+        listSetContainingElement(self.bitmaps, self)
+        listSetContainingElement(self.clippingPlanes, self)
 
 
     def __eq__(self, other):

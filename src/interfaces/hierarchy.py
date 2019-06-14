@@ -1,4 +1,10 @@
 class Hierarchy:
+
+    """
+    Every class implementing Hierarchy gets the member containingObject. This
+    shall reference the object that hierarchically preceeds the object itself.
+    """
+
     def __init__(self, containingObject=None):
         self.containingObject = containingObject
 

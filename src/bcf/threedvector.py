@@ -108,6 +108,12 @@ class Line(Hierarchy, State, XMLName):
         self.start = start
         self.end = end
 
+        # set containingObject of complex members
+        if self.start is not None:
+            self.start.containingObject = self
+        if self.end is not None:
+            self.end.containingObject = self
+
 
     def __eq__(self, other):
 
@@ -144,6 +150,12 @@ class ClippingPlane(Hierarchy, State, XMLName):
         XMLName.__init__(self)
         self.location = location
         self.direction = direction
+
+        # set containingObject of complex members
+        if self.location is not None:
+            self.location.containingObject = self
+        if self.direction is not None:
+            self.direction.containingObject = self
 
 
     def __eq__(self, other):

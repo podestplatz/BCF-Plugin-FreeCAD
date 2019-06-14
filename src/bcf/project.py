@@ -11,6 +11,21 @@ def debug(msg):
         print(msg)
 
 
+def listSetContainingElement(itemList, containingObject):
+    if len(itemList) == 0:
+        return None
+
+    for item in itemList:
+        if not issubclass(type(item), Hierarchy):
+            raise ValueError("{} is not a subclass of Hierarchy! Element of"\
+                    " the wrong type has index {}".format(type(item),
+                        itemList.index(item)))
+
+    for item in itemList:
+        item.containingObject = containingObject
+
+
+
 class SimpleElement(XMLName, Hierarchy, State):
 
     """

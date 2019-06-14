@@ -10,7 +10,7 @@ if __name__ == "__main__":
     sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
     print(sys.path)
 import bcf.util as util
-from bcf.project import (Project, debug)
+from bcf.project import (Project, debug, DEBUG)
 from bcf.uri import Uri as Uri
 from bcf.modification import Modification
 from bcf.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
@@ -20,7 +20,6 @@ from bcf.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         Bitmap)
 from bcf.threedvector import (Point, Line, Direction, ClippingPlane)
 
-DEBUG = True
 SUPPORTED_VERSIONS = ["2.1"]
 
 # path to the extracted BCF file
@@ -248,10 +247,6 @@ def buildComment(commentDict: Dict):
 
     comment = Comment(id, creationData, commentString, viewpointRef, modifiedData)
 
-    setContainingElement(creationData, comment)
-    setContainingElement(modifiedData, comment)
-    setContainingElement(viewpointRef, comment)
-
     return comment
 
 
@@ -263,9 +258,6 @@ def buildBimSnippet(snippetDict: Dict):
     isExternal = getOptionalFromDict(snippetDict, "@isExternal", False)
 
     bimSnippet = BimSnippet(snippetType, isExternal, reference, referenceSchema)
-
-    setContainingElement(reference, bimSnippet)
-    setContainingElement(referenceSchema, bimSnippet)
 
     return bimSnippet
 
@@ -336,11 +328,6 @@ def buildTopic(topicDict: Dict):
             assignee, description, stage,
             relatedTopics, bimSnippet)
 
-    listSetContainingElement(docRefs, topic)
-    setContainingElement(creationData, topic)
-    setContainingElement(modifiedData, topic)
-    setContainingElement(bimSnippet, topic)
-
     return topic
 
 def buildFile(fileDict):
@@ -401,9 +388,6 @@ def buildViewpointReference(viewpointDict):
 
     vpReference = ViewpointReference(id, viewpointFile, snapshotFile, index)
 
-    setContainingElement(snapshotFile, vpReference)
-    setContainingElement(viewpointFile, vpReference)
-
     return vpReference
 
 
@@ -436,11 +420,6 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
             cViewpointRefGuid = comment.viewpoint.id
             viewpointRef = markup.getViewpointRefByGuid(cViewpointRefGuid)
             comment.viewpoint = viewpointRef
-
-    listSetContainingElement(comments, markup)
-    listSetContainingElement(viewpoints, markup)
-    setContainingElement(header, markup)
-    setContainingElement(topic, markup)
 
     return markup
 
@@ -480,7 +459,6 @@ def buildComponentColour(ccDict: Dict):
         colourComponentList = [ buildComponent(cp)
                                 for cp in ccDict["Component"] ]
         cc = ComponentColour(colour, colourComponentList)
-        listSetContainingElement(colourComponentList, cc)
 
     return cc
 
@@ -518,11 +496,6 @@ def buildComponents(componentsDict: Dict):
     components = Components(defaultVisibility, exceptions, sel,
             vsh, componentColours)
 
-    listSetContainingElement(sel, components)
-    listSetContainingElement(exceptions, components)
-    listSetContainingElement(componentColours, components)
-    setContainingElement(vsh, components)
-
     return components
 
 
@@ -545,10 +518,6 @@ def buildOrthogonalCamera(oCamDict: Dict):
 
     cam = OrthogonalCamera(camViewpoint, camDirection, camUpVector, vWorldScale)
 
-    setContainingElement(camViewpoint, cam)
-    setContainingElement(camDirection, cam)
-    setContainingElement(camUpVector, cam)
-
     return cam
 
 
@@ -562,10 +531,6 @@ def buildPerspectiveCamera(pCamDict: Dict):
     cam = PerspectiveCamera(camViewpoint, camDirection, camUpVector,
             fieldOfView)
 
-    setContainingElement(camViewpoint, cam)
-    setContainingElement(camDirection, cam)
-    setContainingElement(camUpVector, cam)
-
     return cam
 
 
@@ -576,9 +541,6 @@ def buildLine(lineDict: Dict):
 
     line = Line(start, end)
 
-    setContainingElement(start, line)
-    setContainingElement(end, line)
-
     return line
 
 
@@ -588,9 +550,6 @@ def buildClippingPlane(clipDict: Dict):
     direction = buildDirection(clipDict["Direction"])
 
     cPlane = ClippingPlane(location, direction)
-
-    setContainingElement(location, cPlane)
-    setContainingElement(direction, cPlane)
 
     return cPlane
 
@@ -607,10 +566,6 @@ def buildBitmap(bmDict: Dict):
     height = bmDict["Height"]
 
     bitmap = Bitmap(bmFormat, reference, location, normal, up, height)
-
-    setContainingElement(location, bitmap)
-    setContainingElement(normal, bitmap)
-    setContainingElement(up, bitmap)
 
     return bitmap
 
@@ -660,13 +615,6 @@ def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
 
     viewpoint = Viewpoint(id, components, oCam,
             pCam, lines, clippingPlanes, bitmaps)
-
-    setContainingElement(components, viewpoint)
-    setContainingElement(oCam, viewpoint)
-    setContainingElement(pCam, viewpoint)
-    listSetContainingElement(lines, viewpoint)
-    listSetContainingElement(clippingPlanes, viewpoint)
-    listSetContainingElement(bitmaps, viewpoint)
 
     return viewpoint
 
@@ -745,7 +693,8 @@ def readBcfFile(bcfFile: str):
 
     ### Iterate over the topic directories ###
     topicDirectories = util.getDirectories(bcfExtractedPath)
-    pprint.pprint(topicDirectories)
+    if DEBUG:
+        pprint.pprint(topicDirectories)
     for topic in topicDirectories:
         ### Validate all viewpoint files in the directory, and build them ###
         topicDir = os.path.join(bcfExtractedPath, topic)
@@ -765,7 +714,6 @@ def readBcfFile(bcfFile: str):
             vpPath = os.path.join(topicDir, vpRef.file.uri)
             vp = buildViewpoint(vpPath, visinfoSchemaPath)
             vpRef.viewpoint = vp
-            setContainingElement(vp, vpRef)
 
         setContainingElement(markup, proj)
         # add the finished markup object to the project

@@ -3,14 +3,16 @@ from uuid import UUID
 from datetime import datetime, date
 from typing import List # used for custom type annotations
 from bcf.uri import Uri
-from bcf.modification import Modification
+from bcf.modification import (Modification, ModificationType)
 from bcf.topic import Topic
-from bcf.project import (SimpleElement, Attribute, DEBUG)
+from bcf.project import (SimpleElement, Attribute, DEBUG,
+        listSetContainingElement)
 from bcf.viewpoint import (Viewpoint)
 from interfaces.state import State
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
 from interfaces.xmlname import XMLName
+
 
 class HeaderFile(Hierarchy, State, XMLName):
 
@@ -156,6 +158,8 @@ class HeaderFile(Hierarchy, State, XMLName):
 class Header(Hierarchy, State, XMLName):
 
     """
+    Represents the Header Element. It is basically just a list of HeaderFiles as
+    no attributes are defined for it.
     """
 
     def __init__(self,
@@ -169,6 +173,9 @@ class Header(Hierarchy, State, XMLName):
         State.__init__(self, state)
         XMLName.__init__(self)
         self.files = files
+
+        # set containingObject to itself for every file to perserve correct
+        # Hierarchy
         for f in files:
             f.containingObject = self
 
@@ -246,6 +253,7 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
     def viewpoint(self, newVal):
         if isinstance(newVal, Viewpoint):
             self._viewpoint = newVal
+            self._viewpoint.containingObject = self
         elif newVal is None:
             self._viewpoint = None
         else:
@@ -348,6 +356,14 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
         self.viewpoint = viewpoint
         self._lastModification = lastModification
 
+        # set containingObject of complex members
+        if self.creation is not None:
+            self.creation.containingObject = self
+        if self.viewpoint is not None:
+            self.viewpoint.containingObject = self
+        if self._lastModification is not None:
+            self._lastModification.containingObject = self
+
 
     @property
     def comment(self):
@@ -363,8 +379,15 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
 
     @lastModification.setter
     def lastModification(self, newVal):
-        self._lastModification = newVal
-        self._lastModification.containingObject = self
+        if isinstance(newVal, Modification):
+            # create a new instance of Modification wit status added and type
+            # MODIFICATION
+            self._lastModification = Modification(newVal.author, newVal.date,
+                    self, State.States.ADDED, ModificationType.MODIFICATION)
+        elif newVal is None:
+            self._lastModification = None
+        else:
+            raise ValueError("New value has to be of type Modification")
 
 
     def __eq__(self, other):
@@ -376,7 +399,12 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
         if other is None:
             return False
 
+        if type(self) != type(other):
+            return False
+
         if DEBUG:
+            if not self.idEquals(other.id):
+                print("Id is different")
             if self.creation != other.creation:
                 print("Creation is different")
             if self.comment != other.comment:
@@ -386,17 +414,25 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
             if self.lastModification != other.lastModification:
                 print("LastModification is different")
 
-        return (self.id == other.id and
-                self.creation == other.creation and
-                self.comment == other.comment and
-                self.viewpoint == other.viewpoint and
-                self.lastModification == other.lastModification)
+        return (self.idEquals(other.id) and
+                (self.creation == other.creation or
+                    (self.creation is None and
+                    other.creation is None)) and
+                (self.comment == other.comment or
+                    (self.comment is None and
+                    other.comment is None)) and
+                (self.viewpoint == other.viewpoint or
+                    (self.viewpoint is None and
+                    other.viewpoint is None)) and
+                (self.lastModification == other.lastModification or
+                    (self.lastModification is None and
+                    other.lastModifiction is None)))
 
 
     def __str__(self):
 
-        ret_str = ("Comment(\n\tcreation='{}', \n\tcomment='{}', \n\tviewpoint='{}',"\
-                "\n\tlastModification='{}')").format(self.creation, self.comment,
+        ret_str = ("Comment(\n\tid='{}'\n\tcreation='{}', \n\tcomment='{}', \n\tviewpoint='{}',"\
+                "\n\tlastModification='{}')").format(self.id, self.creation, self.comment,
                 str(self.viewpoint), self.lastModification)
         return ret_str
 
@@ -465,6 +501,14 @@ class Markup(Hierarchy, State, XMLName):
         self.topic = topic
         self.comments = comments
         self.viewpoints = viewpoints
+
+        # set containing object of members.
+        listSetContainingElement(self.viewpoints, self)
+        listSetContainingElement(self.comments, self)
+        if self.topic is not None:
+            self.topic.containingObject = self
+        if self.header is not None:
+            self.header.containingObject = self
 
 
     def __eq__(self, other):
