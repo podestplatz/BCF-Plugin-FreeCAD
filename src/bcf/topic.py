@@ -210,7 +210,6 @@ class BimSnippet(Hierarchy, State, XMLName):
             schemaElem = ET.SubElement(elem, "ReferenceSchema")
             schemaElem.text = str(self.schema)
 
-        print("Constructed: {}".format(ET.dump(elem)))
         return elem
 
 
@@ -301,7 +300,7 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         return self._assignee.value
 
     @assignee.setter
-    def assigneee(self, newVal):
+    def assignee(self, newVal):
         self._assignee.value = newVal
 
     @property

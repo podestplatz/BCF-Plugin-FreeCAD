@@ -167,7 +167,7 @@ def getTopicOfElement(element):
         return None
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
-    print("writer.getTopicOfElement(): hierarchy of {}:\n{}\n".format(
+    p.debug("writer.getTopicOfElement(): hierarchy of {}:\n{}\n".format(
         element.__class__.__name__, elementHierarchy))
     if "Markup" in strHierarchy:
         markupElem = None
@@ -249,7 +249,7 @@ def getInsertionIndex(element, etParent):
             getInsertionIndex.__name__, type(element)))
 
     insertionIndex = len(actualSequenceRev)-1
-    # element is already contained => insert it after the last one occuring
+    # element is already contained => insert it after the last occurence
     if element.xmlName in actualSequence:
         insertionIndex = (len(actualSequenceRev) -
                 actualSequenceRev.index(element.xmlName))
@@ -263,10 +263,13 @@ def getInsertionIndex(element, etParent):
         if elemIdxInDefinedSequence == len(definedSequence) - 1:
             insertionIndex = len(actualSequenceRev)
         else:
-            for elem in definedSequence[elemIdxInDefinedSequence + 1]:
+            for elem in definedSequence[elemIdxInDefinedSequence + 1:]:
+                p.debug("writer.getInsertionIndex(): is {} in" \
+                        " actualSequence?".format(elem))
                 # first successor found. Insert it before it
                 if elem in actualSequence:
-                    insertionIndex = actualSequence.index(elem) - 1
+                    insertionIndex = actualSequence.index(elem)
+                    break
 
     p.debug("writer.{}(): index at which element is inserted {}".format(
             getInsertionIndex.__name__, insertionIndex))
@@ -274,6 +277,16 @@ def getInsertionIndex(element, etParent):
 
 
 def getContainingETElementForAttribute(rootElem, containingElement):
+
+    """
+    This function searches `rootElem` for all occurences for
+    containingElement.xmlName. This set of elements is then searched for the
+    best match. First the strategy of matching on the containing elements is
+    tried. If the element is empty then it is tried to match on the attributes.
+    For both strategies it holds that the first match is returned. If a match is
+    found it is returned as object of type xml.etree.ElementTree.Element. If no
+    match is found then `None` is returned.
+    """
 
     # candidates are the set of elements that have the same tag as
     # containingElement
@@ -287,21 +300,40 @@ def getContainingETElementForAttribute(rootElem, containingElement):
     match = None
     # find the right candidate
     for candidate in candidates:
-        # check for subelement in the parent whether the equally named
-        # subelement in the candidate has the same text, and therefore is equal
-        matches = True
-        for parentEtChild in parentEtChildren:
-            candidateEtChild = candidate.find(
-                    ".//{}".format(parentEtChild.tag))
-            if candidateEtChild is not None:
-                if candidateEtChild.text != parentEtChild.text:
+        if len(parentEtChildren) > 0:
+            # check for subelement in the parent whether the equally named
+            # subelement in the candidate has the same text, and therefore is equal
+            matches = True
+            for parentEtChild in parentEtChildren:
+                candidateEtChild = candidate.find(
+                        ".//{}".format(parentEtChild.tag))
+                if candidateEtChild is not None:
+                    if candidateEtChild.text != parentEtChild.text:
+                        matches = False
+                        break
+                else:
                     matches = False
-                    break
-            else:
-                matches = False
-        if matches:
-            match = candidate
-            break
+            if matches:
+                match = candidate
+                break
+
+        # if the element does not have any subelements, match onto the
+        # attributes.
+        elif len(parentEt.attrib.keys()) > 0:
+            matches = False
+            for key in candidate.attrib.keys():
+                if key in parentEt.attrib:
+                    if parentEt.attrib[key] != candidate.attrib[key]:
+                        continue
+
+                    matches = True
+
+            if matches:
+                match = candidate
+                break
+        else:
+            raise RuntimeError("Could not find any matching element that could"\
+                    "be modified")
 
     return match
 
@@ -390,6 +422,8 @@ def addElement(element):
 
         # parent element of the attribute how it should be
         newParentEt = newParent.getEtElement(ET.Element(newParent.xmlName, {}))
+        p.debug("=========\nwriter.{}(): new parent generated:\n{}\n=========".format(
+                addElement.__name__, ET.tostring(newParentEt)))
 
         # parent element of the attribute as is in the file
         oldParentEt = getContainingETElementForAttribute(xmlTree.getroot(),

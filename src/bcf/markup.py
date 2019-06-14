@@ -12,8 +12,6 @@ from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import Identifiable
 from interfaces.xmlname import XMLName
 
-DEBUG = True
-
 class HeaderFile(Hierarchy, State, XMLName):
 
     def __init__(self,
@@ -121,7 +119,6 @@ class HeaderFile(Hierarchy, State, XMLName):
             refElem = ET.SubElement(elem, "Reference")
             refElem.text = str(self.reference)
 
-        print("Hello this is me {}".format(ET.dump(elem)))
         return elem
 
 
@@ -324,10 +321,6 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
         if self.viewpoint is not None:
             stateList += self._viewpoint.getStateList()
 
-        if DEBUG:
-            print("{}.getStateList(): returning {}".format(
-                self.__class__.__name__, stateList))
-
         return stateList
 
 
@@ -447,10 +440,6 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
         # viewpoint is already added to list by Markup
         stateList += self.lastModification.getStateList()
 
-        if DEBUG:
-            print("{}.getStateList(): returning {}".format(
-                self.__class__.__name__, stateList))
-
         return stateList
 
 
@@ -551,9 +540,6 @@ class Markup(Hierarchy, State, XMLName):
         for viewpoint in self.viewpoints:
             stateList += viewpoint.getStateList()
 
-        if DEBUG:
-            print("{}.getStateList(): returning {}".format(
-                self.__class__.__name__, stateList))
 
         return stateList
 

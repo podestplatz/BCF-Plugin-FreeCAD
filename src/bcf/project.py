@@ -5,7 +5,7 @@ from interfaces.state import State
 from interfaces.xmlname import XMLName
 from interfaces.identifiable import Identifiable
 
-DEBUG = True
+DEBUG = False
 def debug(msg):
     if DEBUG:
         print(msg)
@@ -42,7 +42,15 @@ class SimpleElement(XMLName, Hierarchy, State):
         return "{}: {}".format(self.xmlName, self.value)
 
 
-class SimpleList(list, Hierarchy, XMLName, State):
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+        elem.text = self.value
+
+        return elem
+
+
+class SimpleList(list, XMLName, Hierarchy, State):
 
     """
     Used for lists that contain just simple types. For example the `Labels`
@@ -53,15 +61,42 @@ class SimpleList(list, Hierarchy, XMLName, State):
     def __init__(self, data=[], xmlName = "", containingElement = None,
             state = State.States.ORIGINAL):
 
-        list.__init__(self, data)
-        Hierarchy.__init__(self, containingElement)
+        simpleElementList = list()
+        for item in data:
+            newSimpleElement = SimpleElement(item, xmlName, containingElement,
+                    state)
+            simpleElementList.append(newSimpleElement)
+
+        list.__init__(self, simpleElementList)
         XMLName.__init__(self, xmlName)
         State.__init__(self, state)
+        Hierarchy.__init__(self, containingElement)
+
+
+    def append(self, item):
+
+        """
+        Envelope every type that is not of instance SimpleElement into an object
+        of simple element, with the default values of the class object itself
+        (xmlname, containintObject). The state is automatically set to
+        state.State.States.ADDED
+        """
+
+        newElem = item
+        if not isinstance(newElem, SimpleElement):
+            newElem = SimpleElement(item, self.xmlName, self.containingObject,
+                    self.States.ADDED)
+        else:
+            newElem.state = State.States.ADDED
+
+        list.append(self, newElem)
+
 
     def __eq__(self, other):
 
         return (list.__eq__(self, other) and
                 XMLName.__eq__(self, other))
+
 
 
 class Attribute(XMLName, Hierarchy, State):

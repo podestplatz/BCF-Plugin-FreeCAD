@@ -82,7 +82,6 @@ def downloadToDir(dirPath: str):
     directory `dirPath`
     """
 
-    print("Extracting to {}".format(dirPath))
     projectSchemaPath = retrieveWebFile(Schema.PROJECT,
             os.path.join(dirPath, "project.xsd"))
     extensionsSchemaPath = retrieveWebFile(Schema.EXTENSION,

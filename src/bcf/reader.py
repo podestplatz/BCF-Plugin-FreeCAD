@@ -10,7 +10,7 @@ if __name__ == "__main__":
     sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
     print(sys.path)
 import bcf.util as util
-from bcf.project import Project
+from bcf.project import (Project, debug)
 from bcf.uri import Uri as Uri
 from bcf.modification import Modification
 from bcf.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
@@ -66,7 +66,7 @@ def schemaValidate(schemaPath: str, xmlFile: str):
 
     schema = XMLSchema(schemaPath)
     valid = schema.is_valid(xmlFile)
-    print("validating {} against {}".format(xmlFile, schemaPath))
+    debug("reader.schemaValidate(): validating {} against {}".format(xmlFile, schemaPath))
     if valid:
         return (valid, "")
     else:
@@ -88,8 +88,7 @@ def extractFileToTmp(zipFilePath: str):
     tmpDir = util.getSystemTmp()
     extractionPath = os.path.join(tmpDir, os.path.basename(zipFilePath))
 
-    if DEBUG:
-        print("Extracting {} to {}".format(zipFile.filename, extractionPath))
+    debug("reader.extractFileToTmp(): Extracting {} to {}".format(zipFile.filename, extractionPath))
     zipFile.extractall(extractionPath)
     return extractionPath
 
@@ -357,7 +356,7 @@ def buildFile(fileDict):
 
     ifcProjectId = getOptionalFromDict(fileDict, "@IfcProject", "")
     if ifcProjectId:
-        ifcProjectId = UUID(ifcProjectId)
+        ifcProjectId = ifcProjectId
 
     ifcSpatialStructureElement = getOptionalFromDict(fileDict,
             "@IfcSpatialStructureElement", "")
@@ -752,7 +751,7 @@ def readBcfFile(bcfFile: str):
         topicDir = os.path.join(bcfExtractedPath, topic)
 
         markupFilePath = os.path.join(topicDir, "markup.bcf")
-        print("looking into topic {}".format(topicDir))
+        debug("reader.readBcfFile(): looking into topic {}".format(topicDir))
         error = validateFile(markupFilePath, markupSchemaPath, bcfFile)
         if error != "":
             print(error, file=sys.stderr)
@@ -773,8 +772,7 @@ def readBcfFile(bcfFile: str):
         proj.topicList.append(markup)
 
     bcfDir = bcfExtractedPath
-    if DEBUG:
-        print("BCF file is open at {}".format(bcfDir))
+    debug("reader.readBcfFile(): BCF file is open at {}".format(bcfDir))
     return proj
 
 
