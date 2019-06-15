@@ -5,10 +5,15 @@ from interfaces.state import State
 from interfaces.xmlname import XMLName
 from interfaces.identifiable import Identifiable
 
-DEBUG = False
+DEBUG = True
+
+if DEBUG:
+    import inspect
+
 def debug(msg):
     if DEBUG:
-        print(msg)
+        callerName = inspect.stack()[1].function
+        print("[DEBUG]{}(): {}".format(callerName, msg))
 
 
 def listSetContainingElement(itemList, containingObject):

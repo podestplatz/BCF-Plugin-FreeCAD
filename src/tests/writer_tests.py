@@ -593,6 +593,84 @@ class GetEtElementFromFileTests(unittest.TestCase):
         self.assertEqual(ET.tostring(finding), ET.tostring(expectedFile))
 
 
+def handleFileCheck(expectedFile, fileName, testFileDir, testTopicDir, testBCFName):
+
+    """
+    Compares the working file with `expectedFile`. If they are different then
+    the working file is copied to `testFileDir/error.bcf` for human
+    inspection. True is returned if both files are equal, false otherwise.
+    """
+
+    (equal, diff) = compareFiles(expectedFile, testFileDir, testTopicDir, testBCFName)
+    if not equal:
+        wrongFileDestination = os.path.join(testFileDir,
+                "error.bcf")
+        testFilePath = os.path.join(util.getSystemTmp(), testBCFName,
+                testTopicDir, fileName)
+        copyfile(testFilePath, wrongFileDestination)
+        print("writer_tests.{}(): copied erroneous file to"\
+                " {}".format(handleFileCheck.__name__,
+                    wrongFileDestination))
+        print("writer_tests.{}(): Following is the diff between the file that was generated"\
+            " and the prepared file:".format(
+                handleFileCheck.__name__,
+                wrongFileDestination))
+        pprint.pprint(diff)
+
+    return equal
+
+
+class DeleteElementTests(unittest.TestCase):
+
+    def setUp(self):
+        self.testFileDir = "./writer_tests"
+        self.testTopicDir = "2e92784b-80fc-4e0e-ac02-b424dfd8e664"
+        self.testBCFName = "Issues-Example.bcf"
+        self.markupDestDir = os.path.join(util.getSystemTmp(), self.testBCFName,
+                self.testTopicDir)
+        self.testFiles = ["markup_delete_comment_test.bcf",
+                "markup_delete_label_test.bcf",
+                "markup_delete_ifcproject_test.bcf"
+                ]
+        self.checkFiles = ["markup_delete_comment_check.bcf",
+                "markup_delete_label_check.bcf",
+                "markup_delete_ifcproject_check.bcf"
+                ]
+        self.testFileDestinations = [os.path.join(self.markupDestDir, "markup.bcf"),
+                os.path.join(self.markupDestDir, "viewpoint.bcfv"),
+                os.path.join(self.markupDestDir, "viewpoint2.bcfv")]
+
+
+    def test_deleteComment(self):
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        commentToDelete = p.topicList[0].comments[0]
+        writer.deleteElement(commentToDelete)
+
+        equal = handleFileCheck(self.checkFiles[0], "markup.bcf", self.testFileDir,
+                self.testTopicDir, self.testBCFName)
+
+        self.assertTrue(equal)
+
+
+    def test_deleteLabel(self):
+        pass
+
+    def test_deleteIfcProject(self):
+        pass
+
+    def test_deleteFile(self):
+        pass
+
+    def test_deleteViewpoint(self):
+        pass
+
+    def test_deleteViewpointReference(self):
+        pass
+
 
 if __name__ == "__main__":
     unittest.main()

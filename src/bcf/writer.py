@@ -191,10 +191,41 @@ def getIdAttrName(elementId):
     return idAttrName
 
 
+def getEtElementById(elemId, etRoot):
+
+    """
+    Searches for an element with the attribute `idAttrName` that has the value
+    of `listElemId`.
+    """
+
+    idAttrName = getIdAttrName(elemId)
+    p.debug("searching elementtree for .//*[@{}='{}']".format(
+            idAttrName, elemId))
+    etParent = etRoot.find(".//*[@{}='{}']".format(idAttrName, str(elemId)))
+    return etParent
+
+
+def searchEtByTag(etRoot, tag):
+
+    p.debug("searching elementtree for {}".format(
+            tag))
+    result = etRoot.find(tag)
+    p.debug("got {}".format(
+            result))
+    return result
+
+
 def getParentElement(element, etRoot):
 
+    """
+    Searches `etRoot` for the parent of `element` and returns it if found. If
+    the element turns out to be itself a root element of a file (e.g.:
+    VisualizationInfo in viewpoint.bcfv) then a NotImplementedError is raised.
+    """
+
     elementHierarchy = element.getHierarchyList()
-    strHierarchy = [ elem.__class__.__name__ for elem in elementHierarchy ]
+    strHierarchy = [ elem.xmlName for elem in elementHierarchy ]
+    parentName = strHierarchy[1]
 
     if len(strHierarchy) < 2:
         raise NotImplementedError("Element itself is a root element."\
@@ -209,20 +240,30 @@ def getParentElement(element, etRoot):
     listElemId = getUniqueIdOfListElementInHierarchy(element)
     p.debug("writer.{}(): got id {} for {}".format(getParentElement.__name__,
         listElemId, element.__class__.__name__))
-    if not listElemId: # parent can be found easily by tag
-        p.debug("writer.{}(): searching elementtree for {}".format(
-            getParentElement.__name__, strHierarchy[1]))
-        etParent = etRoot.find(strHierarchy[1])
-        p.debug("writer.{}(): got {}".format(
-            getParentElement.__name__, etParent))
-        if not etParent and etRoot.tag == strHierarchy[1]:
+
+    # parent can be found easily by tag
+    if not listElemId:
+        etParent = searchEtByTag(etRoot, parentName)
+        # check whether element is a first order child of root
+        if not etParent and etRoot.tag == parentName:
             etParent = etRoot
+
+    # the parent is identified by a unique id
     else:
-        idAttrName = getIdAttrName(listElemId)
-        p.debug("writer.{}(): searching elementtree for .//*[@{}='{}']".format(
-                getParentElement.__name__, idAttrName, listElemId))
-        etParent = etRoot.find(".//*[@{}='{}']".format(idAttrName,
-            str(listElemId)))
+        etListAncestor = getListParentById(listElemId, etRoot)
+        # check whether the list element `element` is contained in is also its
+        # parent
+        if etListAncestor.tag == element.containingObject.xmlName:
+            # we're done
+            etParent = etListAncestor
+        else:
+            # Assume that nested lists do not exist in the bcf file and search
+            # for `element.containingObject` by its name
+            etParent = searchEtByTag(etListAncestor, parentName)
+            if not etParent:
+                raise RuntimeError("An unknown error occured while searching"\
+                        "for element {} inside {}".format(element,
+                            etListAncestor))
 
     return etParent
 
@@ -400,6 +441,28 @@ def xmlPrettify(element: ET.Element):
     return prettyXML.encode("UTF-8") # just to be sure to use utf8
 
 
+def getTopicPath(element):
+
+    topic = getTopicOfElement(element)
+    if not topic:
+        return None
+
+    topicDir = str(topic.id)
+    bcfDir = reader.bcfDir
+    return os.path.join(bcfDir, topicDir)
+
+
+def writeXMLFile(xmlroot, filePath):
+
+    """
+    Formats `xmlroot` and then writes it to `filePath` (UTF8 encoded)
+    """
+
+    xmlPrettyText = xmlPrettify(xmlroot)
+    with open(filePath, "wb") as f:
+        f.write(xmlPrettyText)
+
+
 def addElement(element):
 
     """
@@ -420,6 +483,7 @@ def addElement(element):
     conform anymore.
     """
 
+    # filename in which `element` will be found
     fileName = getFileOfElement(element)
     if not fileName:
         raise ValueError("{} is not applicable to be added to anyone"\
@@ -429,16 +493,15 @@ def addElement(element):
         raise NotImplementedError("Writing of project.bcfp or bcf.version"\
                 " is not yet supported")
 
-    topic = getTopicOfElement(element)
-    if not topic:
-        raise ValueError("Element of type {} is not contained in a topic."\
-            "Cannot be written to file".format(element.__class__.__name__))
+    topicPath = getTopicPath(element)
+    if not topicPath:
+        raise RuntimeError("Element {} could not be associated to any topic."\
+            "This may be the case if properties in project.bcfp should be"\
+            "modified, which is currently not implemented!".format(str(element)))
 
-    topicDir = topic.id
-    bcfDir = reader.bcfDir
-    filePath = os.path.join(bcfDir, str(topicDir), fileName)
-
-    xmlTree = ET.parse(filePath)
+    filePath = os.path.join(topicPath, fileName)
+    xmltree = ET.parse(filePath)
+    xmlroot = xmltree.getroot()
     # different handling for attributes and elements
     if isinstance(element, p.Attribute):
         newParent = element.containingObject
@@ -450,7 +513,7 @@ def addElement(element):
 
         # parent element of the attribute as is in the file, and ignore the new
         # attribute if the element is searched by its attributes
-        oldParentEt = getEtElementFromFile(xmlTree.getroot(),
+        oldParentEt = getEtElementFromFile(xmlroot,
                 newParent, [element.xmlName])
 
         if oldParentEt is None:
@@ -463,7 +526,7 @@ def addElement(element):
 
     else:
         # parent element read from file
-        etParent = getParentElement(element, xmlTree.getroot())
+        etParent = getParentElement(element, xmlroot)
 
         # index of the direct predecessor element in the xml file
         insertionIndex = getInsertionIndex(element, etParent)
@@ -488,14 +551,60 @@ def addElement(element):
         p.debug("writer.{}(): Writing new viewpoint to"\
                     " {}".format(addElement.__name__, element.file))
 
-        vpFilePath = os.path.join(bcfDir, str(topicDir), str(element.file))
-        vpXmlPrettyText = xmlPrettify(visinfoRootEtElem)
-        with open(vpFilePath, "wb") as f:
-            f.write(vpXmlPrettyText)
+        vpFilePath = os.path.join(topicPath, str(element.file))
+        writeXMLFile(visinfoRootEtElem, vpFilePath)
 
-    xmlPrettyText = xmlPrettify(xmlTree.getroot())
-    with open(filePath, "wb") as f:
-        f.write(xmlPrettyText)
+    writeXMLFile(xmlroot, filePath)
+
+
+def deleteIdentifiableElement(element, xmlroot):
+
+    """
+    Deletes an element that can be identified by an id.
+    Returns the updated xmlroot
+    """
+
+    elemId = element.id
+    etElem = getEtElementById(elemId, xmlroot)
+    p.debug("{} corresponds to ETElement {}".format(element, etElem))
+
+    etParent = getParentElement(element, xmlroot)
+    p.debug("parent of {} is {}".format(etElem, etParent))
+
+    etParent.remove(etElem)
+    p.debug("removed {} from {}".format(etElem, etParent))
+
+    return xmlroot
+
+
+def deleteElement(element):
+
+    # filename in which `element` will be found
+    fileName = getFileOfElement(element)
+    if not fileName:
+        raise ValueError("{} is not applicable to be added to anyone"\
+            "file".format(element.__class__.__name__))
+
+    # path of the topic `element` is contained in
+    topicPath = getTopicPath(element)
+    # filepath of the file `element` is contained in
+    filePath = os.path.join(topicPath, fileName)
+    # parsed version of the file
+    xmlfile = ET.parse(filePath)
+    xmlroot = xmlfile.getroot()
+
+    # if identifiable then search for the guid using xmlpath.
+    if issubclass(type(element), iI.Identifiable):
+        p.debug("{} inherits from Identifiable -> deleting by"\
+                " Id".format(element))
+        deleteIdentifiableElement(element, xmlroot)
+
+    # otherwise employ getEtElementFromFile to get the right element
+    else:
+        p.debug("{} does not inherit from Identifiable".format(element))
+        pass
+
+    writeXMLFile(xmlroot, filePath)
 
 
 def deleteElement(element):
