@@ -3,7 +3,7 @@
 	<Header>
 		<File/>
 		<File/>
-		<File IfcProject="aaaaaaaaaaaaaaaaaaaaaa" isExternal="true"/>
+		<File IfcProject="aaaaaaaaaaaaaaaaaaaaaa" isExternal="false"/>
 		<File IfcProject="aaaaaaaaaaaaaaaaaaaaaa" isExternal="false">
 			<Filename>Yo wassup?</Filename>
 			<Date>2019-05-31T09:41:48+02:00</Date>

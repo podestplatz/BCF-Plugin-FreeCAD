@@ -276,7 +276,7 @@ def getInsertionIndex(element, etParent):
     return insertionIndex
 
 
-def getContainingETElementForAttribute(rootElem, containingElement):
+def getEtElementFromFile(rootElem, wantedElement, ignoreNames=[]):
 
     """
     This function searches `rootElem` for all occurences for
@@ -290,13 +290,16 @@ def getContainingETElementForAttribute(rootElem, containingElement):
 
     # candidates are the set of elements that have the same tag as
     # containingElement
-    candidates = rootElem.findall(".//{}".format(containingElement.xmlName))
-    parentEt = containingElement.getEtElement(
-           ET.Element(containingElement.xmlName, {}))
+    candidates = rootElem.findall(".//{}".format(wantedElement.xmlName))
+    parentEt = wantedElement.getEtElement(
+           ET.Element(wantedElement.xmlName, {}))
     parentEtChildren = list(parentEt)
-    p.debug("writer.{}(): looking for {} element".format(
-            getContainingETElementForAttribute.__name__,
-            ET.tostring(parentEt)))
+    p.debug("writer.{}(): looking for {} element in: \n\t{}\n\twith the"\
+            " exceptions of: {}".format(
+            getEtElementFromFile.__name__,
+            ET.tostring(parentEt),
+            [ ET.tostring(c) for c in candidates ],
+            ignoreNames))
     match = None
     # find the right candidate
     for candidate in candidates:
@@ -305,6 +308,10 @@ def getContainingETElementForAttribute(rootElem, containingElement):
             # subelement in the candidate has the same text, and therefore is equal
             matches = True
             for parentEtChild in parentEtChildren:
+                # ignore children that are contained in the ignore list
+                if parentEtChild.tag in ignoreNames:
+                    continue
+
                 candidateEtChild = candidate.find(
                         ".//{}".format(parentEtChild.tag))
                 if candidateEtChild is not None:
@@ -320,15 +327,31 @@ def getContainingETElementForAttribute(rootElem, containingElement):
         # if the element does not have any subelements, match onto the
         # attributes.
         elif len(parentEt.attrib.keys()) > 0:
-            matches = False
+            # Number of attributes in parentEt and candidate have to match
+            nrParentEtAttribs = len(parentEt.attrib.keys())
+            nrCandidateAttribs = len(candidate.attrib.keys())
+            nrIgnoreNames = len(ignoreNames)
+            # all to be ignored names have to be considered in the length check
+            if (nrParentEtAttribs - nrIgnoreNames) != nrCandidateAttribs:
+                continue
+
+            matches = True
             for key in candidate.attrib.keys():
                 if key in parentEt.attrib:
                     if parentEt.attrib[key] != candidate.attrib[key]:
-                        continue
-
-                    matches = True
+                        matches = False
+                        break
+                else:
+                    matches = False
+                    break
 
             if matches:
+                match = candidate
+                break
+
+        # try matching element on text
+        elif parentEt.text != "":
+            if parentEt.text == candidate.text:
                 match = candidate
                 break
         else:
@@ -425,9 +448,10 @@ def addElement(element):
         p.debug("=========\nwriter.{}(): new parent generated:\n{}\n=========".format(
                 addElement.__name__, ET.tostring(newParentEt)))
 
-        # parent element of the attribute as is in the file
-        oldParentEt = getContainingETElementForAttribute(xmlTree.getroot(),
-                newParent)
+        # parent element of the attribute as is in the file, and ignore the new
+        # attribute if the element is searched by its attributes
+        oldParentEt = getEtElementFromFile(xmlTree.getroot(),
+                newParent, [element.xmlName])
 
         if oldParentEt is None:
             raise RuntimeWarning("The element {}, parent of the attribute {},"\
@@ -472,6 +496,11 @@ def addElement(element):
     xmlPrettyText = xmlPrettify(xmlTree.getroot())
     with open(filePath, "wb") as f:
         f.write(xmlPrettyText)
+
+
+def deleteElement(element):
+    pass
+
 
 
 def compileChanges(project: p.Project):

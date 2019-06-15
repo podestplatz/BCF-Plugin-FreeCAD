@@ -348,7 +348,7 @@ def buildFile(fileDict):
     ifcSpatialStructureElement = getOptionalFromDict(fileDict,
             "@IfcSpatialStructureElement", "")
     if ifcSpatialStructureElement:
-        ifcSpatialStructureElement = UUID(ifcSpatialStructureElement)
+        ifcSpatialStructureElement = ifcSpatialStructureElement
 
     isExternal = getOptionalFromDict(fileDict, "@isExternal", True)
 
