@@ -5,7 +5,7 @@ from interfaces.state import State
 from interfaces.xmlname import XMLName
 from interfaces.identifiable import Identifiable
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     import inspect
@@ -64,8 +64,14 @@ class SimpleElement(XMLName, Hierarchy, State):
 
     def getEtElement(self, elem):
 
+        """
+        Default implementation for simple elements. Constructs an ET.Element
+        with the tag equal to `xmlName` and pastes `value` into the text section
+        of the node
+        """
+
         elem.tag = self.xmlName
-        elem.text = self.value
+        elem.text = str(self.value)
 
         return elem
 

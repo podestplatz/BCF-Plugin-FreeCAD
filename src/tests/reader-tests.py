@@ -147,10 +147,10 @@ class buildTopicTest(unittest.TestCase):
         """
 
         # create expected topic object
-        expectedCreation = modification.Modification("bgreen@bim.col",
-                dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
-        expectedLastModification = modification.Modification("fleopard@bim.col",
-                dateutil.parser.parse("2017-10-10T14:24:31+00:00"))
+        expectedCreationDate = dateutil.parser.parse("2014-10-16T14:35:29+00:00")
+        expectedCreationAuthor = "bgreen@bim.col"
+        expectedModDate = dateutil.parser.parse("2017-10-10T14:24:31+00:00")
+        expectedModAuthor = "fleopard@bim.col"
         expectedReferences = [
                 topic.DocumentReference(
                     guid=UUID("0a36e3d6-97e9-47d6-ab4f-227990429f52"),
@@ -170,14 +170,16 @@ class buildTopicTest(unittest.TestCase):
 
         expectedTopic = topic.Topic(UUID("0a36e3d6-97e9-47d6-ab4f-227990429f52"),
                 title="Ceiling above reception",
-                creation=expectedCreation,
+                date = expectedCreationDate,
+                author = expectedCreationAuthor,
                 type="Inquiry",
                 status="Active",
                 refs=expectedReferences,
                 priority="Normal",
                 index=21,
                 labels=expectedLabels,
-                lastModification=expectedLastModification,
+                modDate = expectedModDate,
+                modAuthor = expectedModAuthor,
                 dueDate=expectedDueDate,
                 assignee="irenfroe@bim.col",
                 description="This is just a sample description",
@@ -208,23 +210,25 @@ class buildTopicTest(unittest.TestCase):
         """
 
         # create expected topic object
-        expectedCreation = modification.Modification("bgreen@bim.col",
-                dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
-        expectedLastModification = modification.Modification("fleopard@bim.col",
-                dateutil.parser.parse("2017-10-10T14:24:31+00:00"))
+        expectedCreationDate = dateutil.parser.parse("2014-10-16T14:35:29+00:00")
+        expectedCreationAuthor = "bgreen@bim.col"
+        expectedModDate = dateutil.parser.parse("2017-10-10T14:24:31+00:00")
+        expectedModAuthor = "fleopard@bim.col"
         expectedLabels = [ "architecture" ]
         expectedDueDate = dateutil.parser.parse("2017-10-10T08:00:00+00:00")
 
         expectedTopic = topic.Topic(UUID("0a36e3d6-97e9-47d6-ab4f-227990429f52"),
                 title="Ceiling above reception",
-                creation=expectedCreation,
+                date = expectedCreationDate,
+                author = expectedCreationAuthor,
                 type="Inquiry",
                 status="Active",
                 refs=[],
                 priority="Normal",
                 index=21,
                 labels=expectedLabels,
-                lastModification=expectedLastModification,
+                modDate = expectedModDate,
+                modAuthor = expectedModAuthor,
                 dueDate=expectedDueDate,
                 assignee="irenfroe@bim.col",
                 description="",
@@ -255,19 +259,21 @@ class buildTopicTest(unittest.TestCase):
         """
 
         # create expected topic object
-        expectedCreation = modification.Modification("bgreen@bim.col",
-                dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
+        expectedCreationDate = dateutil.parser.parse("2014-10-16T14:35:29+00:00")
+        expectedCreationAuthor = "bgreen@bim.col"
 
         expectedTopic = topic.Topic(UUID("0a36e3d6-97e9-47d6-ab4f-227990429f52"),
                 title="Ceiling above reception",
-                creation=expectedCreation,
+                date = expectedCreationDate,
+                author = expectedCreationAuthor,
                 type="",
                 status="",
                 refs=[],
                 priority="",
                 index=0,
                 labels=[],
-                lastModification=None,
+                modDate = None,
+                modAuthor = "",
                 dueDate=None,
                 assignee="",
                 description="",
@@ -324,14 +330,16 @@ class buildCommentTest(unittest.TestCase):
         actualMarkup = reader.buildMarkup(srcFilePath, self.markupSchemaPath)
 
         # building the expected comment object
-        expectedCreation = modification.Modification(author="bgreen@bim.col",
-                date=dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
+        expectedCreationDate = dateutil.parser.parse("2014-10-16T14:35:29+00:00")
+        expectedCreationAuthor = "bgreen@bim.col"
         expectedComment = markup.Comment(
                 UUID("2b1e79c8-9d2d-419d-887a-fcff8fec7595"),
-                creation = expectedCreation,
+                date = expectedCreationDate,
+                author = expectedCreationAuthor,
                 comment = "Do you mean this one?",
                 viewpoint = None,
-                lastModification = None)
+                modDate = None,
+                modAuthor = "")
 
         expectedCommentList = [ expectedComment ]
 
@@ -351,10 +359,10 @@ class buildCommentTest(unittest.TestCase):
         actualMarkup = reader.buildMarkup(srcFilePath, self.markupSchemaPath)
 
         # building the expected comment object
-        expectedCreation = modification.Modification(author="bgreen@bim.col",
-                date=dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
-        expectedModification = modification.Modification(author="bgreen@bim.col",
-                date=dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
+        expectedCreationDate = dateutil.parser.parse("2014-10-16T14:35:29+00:00")
+        expectedCreationAuthor = "bgreen@bim.col"
+        expectedModDate = dateutil.parser.parse("2014-10-16T14:35:29+00:00")
+        expectedModAuthor = "bgreen@bim.col"
         expectedViewpoint = markup.ViewpointReference(
                 id=UUID("b496c251-2729-4dee-94a1-085168d36512"),
                 file=uri.Uri("viewpoint.bcfv"),
@@ -362,10 +370,12 @@ class buildCommentTest(unittest.TestCase):
                 index=2)
         expectedComment = markup.Comment(
                 UUID("2b1e79c8-9d2d-419d-887a-fcff8fec7595"),
-                creation = expectedCreation,
+                date = expectedCreationDate,
+                author = expectedCreationAuthor,
                 comment = "Do you mean this one?",
                 viewpoint = expectedViewpoint,
-                lastModification = expectedModification)
+                modDate = expectedModDate,
+                modAuthor = expectedModAuthor)
 
         expectedCommentList = [ expectedComment, expectedComment ]
 
@@ -385,8 +395,8 @@ class buildCommentTest(unittest.TestCase):
         actualMarkup = reader.buildMarkup(srcFilePath, self.markupSchemaPath)
 
         # building the expected comment object
-        expectedCreation = modification.Modification(author="bgreen@bim.col",
-                date=dateutil.parser.parse("2014-10-16T14:35:29+00:00"))
+        expectedCreationDate = dateutil.parser.parse("2014-10-16T14:35:29+00:00")
+        expectedCreationAuthor = "bgreen@bim.col"
         expectedViewpoint = markup.ViewpointReference(
                 id=UUID("b496c251-2729-4dee-94a1-085168d36512"),
                 file=uri.Uri("viewpoint.bcfv"),
@@ -394,10 +404,12 @@ class buildCommentTest(unittest.TestCase):
                 index=-1)
         expectedComment = markup.Comment(
                 UUID("2b1e79c8-9d2d-419d-887a-fcff8fec7595"),
-                creation = expectedCreation,
+                date = expectedCreationDate,
+                author = expectedCreationAuthor,
                 comment = "Do you mean this one?",
                 viewpoint = expectedViewpoint,
-                lastModification = None)
+                modDate = None,
+                modAuthor = "")
 
         expectedCommentList = [ expectedComment ]
 

@@ -117,13 +117,13 @@ def getUniqueIdOfListElementInHierarchy(element):
     for item in elementHierarchy[1:]:
         if item.__class__.__name__ in listElements:
             listElement = item
-            p.debug("writer.{}(): {} is a list element!".format(
+            p.debug("{} is a list element!".format(
                     getUniqueIdOfListElementInHierarchy.__name__,
                         item))
             break
 
     if isinstance(listElement, iI.Identifiable):
-        p.debug("writer.{}(): its id = {} element!".format(
+        p.debug("its id = {} element!".format(
                 getUniqueIdOfListElementInHierarchy.__name__,
                     item.id))
         return item.id
@@ -132,6 +132,11 @@ def getUniqueIdOfListElementInHierarchy(element):
 
 def getFileOfElement(element):
 
+    """
+    Returns the name of the file `element` was read from.
+    """
+
+    p.debug("retrieving hierarchy of {}".format(element))
     elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy: # element is not addable
         return None
@@ -147,6 +152,7 @@ def getFileOfElement(element):
         else:
             viewpointFile = elementHierarchy[vpRefIndex].file
             return viewpointFile
+
     elif "Markup" in strHierarchy:
         return "markup.bcf"
     elif "Project" in strHierarchy: # it should not come to this point actually
@@ -167,7 +173,7 @@ def getTopicOfElement(element):
         return None
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
-    p.debug("writer.getTopicOfElement(): hierarchy of {}:\n{}\n".format(
+    p.debug("hierarchy of {}:\n{}\n".format(
         element.__class__.__name__, elementHierarchy))
     if "Markup" in strHierarchy:
         markupElem = None
@@ -191,7 +197,7 @@ def getIdAttrName(elementId):
     return idAttrName
 
 
-def getEtElementById(elemId, etRoot):
+def getEtElementById(elemId, elemName, etRoot):
 
     """
     Searches for an element with the attribute `idAttrName` that has the value
@@ -199,17 +205,18 @@ def getEtElementById(elemId, etRoot):
     """
 
     idAttrName = getIdAttrName(elemId)
-    p.debug("searching elementtree for .//*[@{}='{}']".format(
-            idAttrName, elemId))
-    etParent = etRoot.find(".//*[@{}='{}']".format(idAttrName, str(elemId)))
+    p.debug("searching elementtree for .//{}[@{}='{}']".format(
+            elemName, idAttrName, elemId))
+    etParent = etRoot.find(".//{}[@{}='{}']".format(elemName,
+            idAttrName, str(elemId)))
     return etParent
 
 
 def searchEtByTag(etRoot, tag):
 
-    p.debug("searching elementtree for {}".format(
-            tag))
-    result = etRoot.find(tag)
+    p.debug("searching elementtree for .//{} starting at {}".format(
+            tag, etRoot.tag))
+    result = etRoot.find(".//{}".format(tag))
     p.debug("got {}".format(
             result))
     return result
@@ -238,8 +245,8 @@ def getParentElement(element, etRoot):
 
     etParent = None
     listElemId = getUniqueIdOfListElementInHierarchy(element)
-    p.debug("writer.{}(): got id {} for {}".format(getParentElement.__name__,
-        listElemId, element.__class__.__name__))
+    p.debug("got list id {} for {}".format(listElemId,
+        element.__class__.__name__))
 
     # parent can be found easily by tag
     if not listElemId:
@@ -250,7 +257,7 @@ def getParentElement(element, etRoot):
 
     # the parent is identified by a unique id
     else:
-        etListAncestor = getListParentById(listElemId, etRoot)
+        etListAncestor = getEtElementById(listElemId, parentName, etRoot)
         # check whether the list element `element` is contained in is also its
         # parent
         if etListAncestor.tag == element.containingObject.xmlName:
@@ -265,6 +272,7 @@ def getParentElement(element, etRoot):
                         "for element {} inside {}".format(element,
                             etListAncestor))
 
+    p.debug("found {} as parent of {}".format(etParent, element.xmlName))
     return etParent
 
 
@@ -317,7 +325,7 @@ def getInsertionIndex(element, etParent):
     return insertionIndex
 
 
-def getEtElementFromFile(rootElem, wantedElement, ignoreNames=[]):
+def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
 
     """
     This function searches `rootElem` for all occurences for
@@ -335,9 +343,8 @@ def getEtElementFromFile(rootElem, wantedElement, ignoreNames=[]):
     parentEt = wantedElement.getEtElement(
            ET.Element(wantedElement.xmlName, {}))
     parentEtChildren = list(parentEt)
-    p.debug("writer.{}(): looking for {} element in: \n\t{}\n\twith the"\
+    p.debug("looking for {} element in: \n\t{}\n\twith the"\
             " exceptions of: {}".format(
-            getEtElementFromFile.__name__,
             ET.tostring(parentEt),
             [ ET.tostring(c) for c in candidates ],
             ignoreNames))
@@ -487,7 +494,7 @@ def addElement(element):
     fileName = getFileOfElement(element)
     if not fileName:
         raise ValueError("{} is not applicable to be added to anyone"\
-            "file".format(element.__class__.__name__))
+            "file".format(element.xmlName))
 
     if not (".bcfv" in fileName or ".bcf" in fileName):
         raise NotImplementedError("Writing of project.bcfp or bcf.version"\
@@ -565,7 +572,7 @@ def deleteIdentifiableElement(element, xmlroot):
     """
 
     elemId = element.id
-    etElem = getEtElementById(elemId, xmlroot)
+    etElem = getEtElementById(elemId, element.xmlName, xmlroot)
     p.debug("{} corresponds to ETElement {}".format(element, etElem))
 
     etParent = getParentElement(element, xmlroot)
@@ -578,6 +585,11 @@ def deleteIdentifiableElement(element, xmlroot):
 
 
 def deleteElement(element):
+
+    """
+    Viewpoint files are only deleted if they are flagged with the state DELETED
+    and their accompanying viewpoint references are also deleted.
+    """
 
     p.debug("Deleting element {}".format(element))
     # filename in which `element` will be found
@@ -600,10 +612,43 @@ def deleteElement(element):
                 " Id".format(element))
         deleteIdentifiableElement(element, xmlroot)
 
+        if isinstance(element, m.ViewpointReference):
+            if element.viewpoint.state == iS.State.States.DELETED:
+                vpElem = element.viewpoint
+                p.debug("with viewpoint reference also the viewpoint {}"\
+                        " gets deleted".format(vpElem))
+
+                vpFile = getFileOfElement(vpElem)
+                if not vpFile:
+                    raise ValueError("No file could be found for element {}"\
+                        "\nSo the element won't be deleted.".format(vpElem))
+
+                vpFilePath = os.path.join(topicPath, str(vpFile))
+                os.remove(vpFilePath)
+                p.debug("Removed file {}".format(vpFilePath))
+
+    # attributes have to be deleted from the attrib dictionary
+    elif isinstance(element, p.Attribute):
+        parentElem = element.containingObject
+        parentEtElem = getEtElementFromFile(xmlroot, parentElem, [])
+
+        p.debug("Deleting {} from {}".format(element, parentEtElem))
+        p.debug("Available attributes in {} are: {}".format(parentEtElem,
+            list(parentEtElem.keys())))
+        del parentEtElem.attrib[element.xmlName]
+
     # otherwise employ getEtElementFromFile to get the right element
     else:
         p.debug("{} does not inherit from Identifiable".format(element))
-        pass
+
+        fileEtElement = getEtElementFromFile(xmlroot, element, [])
+        parentEtElement = getParentElement(element, xmlroot)
+        #parentEtElement = getEtElementFromFile(xmlroot,
+                #element.containingObject, [])
+
+        p.debug("Element {}\ncorresponds to {}\nin file, and has parent"\
+                " {}".format(element, fileEtElement, parentEtElement))
+        parentEtElement.remove(fileEtElement)
 
     writeXMLFile(xmlroot, filePath)
 

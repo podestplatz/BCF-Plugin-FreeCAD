@@ -33,10 +33,13 @@ class XMLName:
         pass
 
     def getEtElement(self, elem):
+
         """
         Convert the contents of the object to an xml.etree.ElementTree.Element
         representation. `element` is the object of type xml.e...Tree.Element
         which shall be modified and returned.
         """
 
-        raise NotImplementedError("The class inheriting should provide this method")
+        raise NotImplementedError("No implementation of `getEtElement` for {} found."\
+                " The class inheriting should provide this"\
+                " method".format(type(self)))

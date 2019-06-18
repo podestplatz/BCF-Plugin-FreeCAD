@@ -228,16 +228,11 @@ def buildComment(commentDict: Dict):
     id = UUID(commentDict["@Guid"])
     commentDate = dateutil.parser.parse(commentDict["Date"]) # parse ISO 8601 datetime
     commentAuthor = commentDict["Author"]
-    creationData = Modification(commentAuthor, commentDate)
 
-    modifiedAuthor = None
-    modifiedDate = None
-    modifiedData = None
-    if ("ModifiedAuthor" in commentDict and
-           "ModifiedDate" in commentDict):
-        modifiedAuthor = commentDict["ModifiedAuthor"]
-        modifiedDate = dateutil.parser.parse(commentDict["ModifiedDate"])
-        modifiedData = Modification(modifiedAuthor, modifiedDate)
+    modifiedAuthor = getOptionalFromDict(commentDict, "ModifiedAuthor", "")
+    modifiedDate = getOptionalFromDict(commentDict, "ModifiedDate", None)
+    if modifiedDate is not None:
+        modifiedDate = dateutil.parser.parse(modifiedDate)
 
     commentString = commentDict["Comment"]
 
@@ -245,7 +240,8 @@ def buildComment(commentDict: Dict):
     if viewpointRef:
         viewpointRef = ViewpointReference(id=UUID(viewpointRef["@Guid"]))
 
-    comment = Comment(id, creationData, commentString, viewpointRef, modifiedData)
+    comment = Comment(id, commentDate, commentAuthor,
+            commentString, viewpointRef, modifiedDate, modifiedAuthor)
 
     return comment
 
@@ -285,18 +281,13 @@ def buildTopic(topicDict: Dict):
 
     topicDate = dateutil.parser.parse(topicDict["CreationDate"])
     topicAuthor = topicDict["CreationAuthor"]
-    creationData = Modification(topicAuthor, topicDate)
 
     topicStatus = getOptionalFromDict(topicDict, "@TopicStatus", "")
     topicType = getOptionalFromDict(topicDict, "@TopicType", "")
     topicPriority = getOptionalFromDict(topicDict, "Priority", "")
 
     modifiedDate = getOptionalFromDict(topicDict, "ModifiedDate", None)
-    modifiedAuthor = getOptionalFromDict(topicDict, "ModifiedAuthor", None)
-    modifiedData = None
-    if not (modifiedDate is None or modifiedAuthor is None):
-        modifiedDate = dateutil.parser.parse(modifiedDate)
-        modifiedData = Modification(modifiedAuthor, modifiedDate)
+    modifiedAuthor = getOptionalFromDict(topicDict, "ModifiedAuthor", "")
 
     index = getOptionalFromDict(topicDict, "Index", 0)
     dueDate = getOptionalFromDict(topicDict, "DueDate", None)
@@ -321,10 +312,10 @@ def buildTopic(topicDict: Dict):
 
     referenceLinks = getOptionalFromDict(topicDict, "ReferenceLink", [])
 
-    topic = Topic(id, title, creationData,
+    topic = Topic(id, title, topicDate, topicAuthor,
             topicType, topicStatus, referenceLinks,
             docRefs, topicPriority, index,
-            labelList, modifiedData, dueDate,
+            labelList, modifiedDate, modifiedAuthor, dueDate,
             assignee, description, stage,
             relatedTopics, bimSnippet)
 

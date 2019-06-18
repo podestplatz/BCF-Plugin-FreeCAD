@@ -3,10 +3,10 @@ from uuid import UUID
 from datetime import datetime, date
 from typing import List # used for custom type annotations
 from bcf.uri import Uri
-from bcf.modification import (Modification, ModificationType)
+from bcf.modification import (ModificationDate, ModificationAuthor, ModificationType)
 from bcf.topic import Topic
 from bcf.project import (SimpleElement, Attribute, DEBUG,
-        listSetContainingElement)
+        listSetContainingElement, debug)
 from bcf.viewpoint import (Viewpoint)
 from interfaces.state import State
 from interfaces.hierarchy import Hierarchy
@@ -339,10 +339,12 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
 
     def __init__(self,
             guid: UUID,
-            creation: Modification,
+            date: datetime,
+            author: str,
             comment: str,
             viewpoint: ViewpointReference = None,
-            lastModification: Modification = None,
+            modDate: datetime = None,
+            modAuthor: str = "",
             containingElement = None,
             state: State.States = State.States.ORIGINAL):
 
@@ -352,19 +354,52 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
         Identifiable.__init__(self, guid)
         State.__init__(self, state)
         XMLName.__init__(self)
-        self.creation = creation
         self._comment = SimpleElement(comment, "Comment", self)
         self.viewpoint = viewpoint
-        self._lastModification = lastModification
+        self._date = ModificationDate(date, self)
+        self._author = ModificationAuthor(author, self)
+        self._modDate = ModificationDate(modDate, self,
+                ModificationType.MODIFICATION)
+        self._modAuthor = ModificationAuthor(modAuthor, self,
+                ModificationType.MODIFICATION)
 
         # set containingObject of complex members
-        if self.creation is not None:
-            self.creation.containingObject = self
         if self.viewpoint is not None:
             self.viewpoint.containingObject = self
-        if self._lastModification is not None:
-            self._lastModification.containingObject = self
 
+
+    @property
+    def date(self):
+        return self._date.value
+
+    @date.setter
+    def date(self, newVal):
+        self._date.date = newVal
+
+    @property
+    def author(self):
+        return self._author.value
+
+    @author.setter
+    def author(self, newVal):
+        self._author.author = newVal
+
+    @property
+    def modDate(self):
+        return self._modDate.value
+
+    @modDate.setter
+    def modDate(self, newVal):
+        self._modDate.date = newVal
+
+    @property
+    def modAuthor(self):
+        return self._modAuthor.value
+
+    @modAuthor.setter
+    def modAuthor(self, newVal):
+        debug("setting modAuthor to {}".format(newVal))
+        self._modAuthor.author = newVal
 
     @property
     def comment(self):
@@ -373,22 +408,6 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
     @comment.setter
     def comment(self, newVal):
         self._comment.value = newVal
-
-    @property
-    def lastModification(self):
-        return self._lastModification
-
-    @lastModification.setter
-    def lastModification(self, newVal):
-        if isinstance(newVal, Modification):
-            # create a new instance of Modification wit status added and type
-            # MODIFICATION
-            self._lastModification = Modification(newVal.author, newVal.date,
-                    self, State.States.ADDED, ModificationType.MODIFICATION)
-        elif newVal is None:
-            self._lastModification = None
-        else:
-            raise ValueError("New value has to be of type Modification")
 
 
     def __eq__(self, other):
@@ -416,25 +435,28 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
                 print("LastModification is different")
 
         return (self.idEquals(other.id) and
-                (self.creation == other.creation or
-                    (self.creation is None and
-                    other.creation is None)) and
+                (self.date == other.date or
+                    (self.date is None and
+                    other.date is None)) and
+                (self.author == other.author) and
                 (self.comment == other.comment or
                     (self.comment is None and
                     other.comment is None)) and
                 (self.viewpoint == other.viewpoint or
                     (self.viewpoint is None and
                     other.viewpoint is None)) and
-                (self.lastModification == other.lastModification or
-                    (self.lastModification is None and
-                    other.lastModifiction is None)))
+                (self.modDate == other.modDate or
+                    (self.modDate is None and
+                    other.modDate is None)) and
+                (self.modAuthor == other.modAuthor))
 
 
     def __str__(self):
 
-        ret_str = ("Comment(\n\tid='{}'\n\tcreation='{}', \n\tcomment='{}', \n\tviewpoint='{}',"\
-                "\n\tlastModification='{}')").format(self.id, self.creation, self.comment,
-                str(self.viewpoint), self.lastModification)
+        ret_str = ("Comment(\n\tid='{}'\n\tdate='{}', \n\tauthor='{}', \n\tcomment='{}', \n\tviewpoint='{}',"\
+                "\n\tModifiedAuthor='{}', ModifiedDate='{}')").format(self.id,
+                        self.date, self.author, self.comment,
+                str(self.viewpoint), self.modAuthor, self.modDate)
         return ret_str
 
 
@@ -444,10 +466,10 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
         elem.attrib["Guid"] = str(self.id)
 
         dateElem = ET.SubElement(elem, "Date")
-        dateElem.text = self.creation.date.isoformat("T", "seconds")
+        dateElem = self._date.getEtElement(dateElem)
 
         authorElem = ET.SubElement(elem, "Author")
-        authorElem.text = self.creation.author
+        authorElem = self._author.getEtElement(authorElem)
 
         commentElem = ET.SubElement(elem, "Comment")
         commentElem.text = self.comment
@@ -456,12 +478,12 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
             vpElem = ET.SubElement(elem, "Viewpoint")
             vpElem.attrib["Guid"] = str(self.viewpoint.id)
 
-        if self.lastModification is not None:
+        if self.modDate is not None:
             modDateElem = ET.SubElement(elem, "ModifiedDate")
-            modDateElem.text = self.lastModification.date.isoformat("T", "seconds")
+            modDateElem = self._modDate.getEtElement(modDateElem)
 
             modAuthorElem = ET.SubElement(elem, "ModifiedAuthor")
-            modAuthorElem.text = self.lastModification.author
+            modAuthorElem = self._modAuthor.getEtElement(modAuthorElem)
 
         return elem
 

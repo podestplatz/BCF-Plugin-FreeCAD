@@ -5,7 +5,8 @@ from enum import Enum
 from uuid import UUID
 from datetime import date
 from xmlschema import XMLSchema
-from bcf.modification import Modification
+from bcf.modification import (ModificationDate, ModificationAuthor,
+        ModificationType)
 from bcf.uri import Uri
 from bcf.project import (Attribute, SimpleElement, SimpleList)
 from bcf.project import DEBUG
@@ -234,7 +235,8 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
     def __init__(self,
             id: UUID,
             title: str,
-            creation: Modification,
+            date: ModificationDate,
+            author: ModificationAuthor,
             type: str = "",
             status: str = "",
             referenceLinks: List[str] = list(),
@@ -242,7 +244,8 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
             priority: str = "",
             index: int = 0,
             labels: List[str] = list(),
-            lastModification: Modification = None,
+            modDate: ModificationDate = None,
+            modAuthor: ModificationAuthor = "",
             dueDate: date = None,
             assignee: str = "",
             description: str = "",
@@ -259,7 +262,8 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         State.__init__(self, state)
         XMLName.__init__(self)
         self._title = SimpleElement(title, "Title", self)
-        self.creation = creation
+        self._date = ModificationDate(date, self)
+        self._author = ModificationAuthor(author, self)
         self._type = Attribute(type, "TopicType", self)
         self._status = Attribute(status, "TopicStatus", self)
         self.referenceLinks = SimpleList(referenceLinks, "ReferenceLink", self)
@@ -267,7 +271,10 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         self._priority = SimpleElement(priority, "Priority", self)
         self._index = SimpleElement(index, "Index", self)
         self.labels = SimpleList(labels, "Labels", self)
-        self.lastModification = lastModification
+        self._modDate = ModificationDate(modDate, self,
+                ModificationType.MODIFICATION)
+        self._modAuthor = ModificationAuthor(modAuthor, self,
+                ModificationType.MODIFICATION)
         self._dueDate = SimpleElement(dueDate, "DueDate", self)
         self._assignee = SimpleElement(assignee, "AssignedTo", self)
         self._description = SimpleElement(description, "Description", self)
@@ -282,6 +289,38 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         if self.bimSnippet is not None:
             self.bimSnippet.containingObject = self
 
+
+    @property
+    def date(self):
+        return self._date.value
+
+    @date.setter
+    def date(self, newVal):
+        self._date.date = newVal
+
+    @property
+    def author(self):
+        return self._author.value
+
+    @author.setter
+    def author(self, newVal):
+        self._author.author = newVal
+
+    @property
+    def modDate(self):
+        return self._modDate.value
+
+    @modDate.setter
+    def modDate(self, newVal):
+        self._modDate.date = newVal
+
+    @property
+    def modAuthor(self):
+        return self._modAuthor.value
+
+    @modAuthor.setter
+    def modAuthor(self, newVal):
+        self._modAuthor.author = newVal
 
     @property
     def stage(self):
@@ -355,6 +394,7 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
     def title(self, newVal):
         self._title.value = newVal
 
+
     def __checkNone(self, this, that):
 
         equal = False
@@ -379,8 +419,10 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
 
         self.__printEquality(self.id == other.id, "id")
         self.__printEquality(self.title == other.title, "title")
-        self.__printEquality(self.__checkNone(self.creation, other.creation),
-                "creation")
+        self.__printEquality(self.__checkNone(self.date, other.date),
+                "Date")
+        self.__printEquality(self.__checkNone(self.author, other.author),
+                "Author")
         self.__printEquality(self.type == other.type, "type")
         self.__printEquality(self.status == other.status, "status")
         self.__printEquality(self.refs == other.refs, "refs")
@@ -392,8 +434,10 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         self.__printEquality(self.stage == other.stage, "stage")
         self.__printEquality(self.relatedTopics == other.relatedTopics,
                 "relatedTopics")
-        self.__printEquality(self.__checkNone(self.lastModification,
-            other.lastModification), "lastModification")
+        self.__printEquality(self.__checkNone(self.modDate,
+            other.modDate), "ModificationDate")
+        self.__printEquality(self.__checkNone(self.modAuthor,
+            other.modAuthor), "ModificationAuthor")
         self.__printEquality(self.__checkNone(self.dueDate,
             other.dueDate), "dueDate")
         self.__printEquality(self.__checkNone(self.bimSnippet,
@@ -401,14 +445,16 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
 
         return (self.id == other.id and
                 self.title == other.title and
-                self.__checkNone(self.creation, other.creation) and
+                self.__checkNone(self.date, other.date) and
+                self.author == other.author and
                 self.type == other.type and
                 self.status == other.status and
                 self.refs == other.refs and
                 self.priority == other.priority and
                 self.index == other.index and
                 self.labels == other.labels and
-                self.__checkNone(self.lastModification, other.lastModification) and
+                self.__checkNone(self.modDate, other.modDate) and
+                self.modAuthor, other.modAuthor and
                 self.__checkNone(self.dueDate, other.dueDate) and
                 self.assignee == other.assignee and
                 self.description == other.description and
@@ -428,24 +474,93 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         str_ret = """---- Topic ----
     ID: {},
     Title: {},
-    Creation: {}
+    Date: {},
+    Author: {},
     Type: {},
     Status: {},
     Priority: {},
     Index: {},
-    Modification: {},
+    ModificationDate: {},
+    ModificationAuthor: {},
     DueDate: {},
     AssignedTo: {},
     Description: {},
     Stage: {},
     RelatedTopics: {},
     Labels: {},
-    DocumentReferences: {}""".format(self.id, self.title, str(self.creation),
+    DocumentReferences: {}""".format(self.id, self.title, str(self.date),
+            self.author,
             self.type, self.status, self.priority, self.index,
-            str(self.lastModification), self.dueDate,
+            str(self.modDate), self.modAuthor, self.dueDate,
             self.assignee, self.description, self.stage, self.relatedTopics,
             self.labels, doc_ref_str)
         return str_ret
+
+
+    def _createSimpleNode(self, parentNode: ET.Element,
+            classMember: SimpleElement,
+            dflValue):
+
+        newNode = None
+        if classMember.value != dflValue:
+            newNode = ET.SubElement(parentNode, classMember.xmlName)
+            newNode = classMember.getEtElement(newNode)
+
+        return newNode
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+        elem.attrib["Guid"] = str(self.id)
+
+        if self.type != "":
+            elem.attrib["type"] = self.type
+        if self.status != "":
+            elem.attrib["status"] = self.status
+
+        for refLink in self.referenceLinks:
+            refLinkElem = self._createSimpleNode(elem, refLink, None)
+
+        titleElem = ET.SubElement(elem, "Title")
+        titleElem = self._title.getEtElement(titleElem)
+
+        prioElem = self._createSimpleNode(elem, self._priority, "")
+        idxElem = self._createSimpleNode(elem, self._index, -1)
+
+        for lbl in self.labels:
+            lblElem = self._createSimpleNode(elem, lbl, None)
+
+        dateElem = ET.SubElement(elem, "Date")
+        dateElem = self._date.getEtElement(dateElem)
+
+        authorElem = ET.SubElement(elem, "Author")
+        authorElem = self._author.getEtElement(authorElem)
+
+        if self.modDate is not None:
+            modDateElem = self._createSimpleNode(elem,
+                    self._date,
+                    None)
+            modAuthorElem = self._createSimpleNode(elem,
+                    self._author,
+                    None)
+
+        dueDateElem = self._createSimpleNode(elem, self._dueDate, None)
+        assigneeElem = self._createSimpleNode(elem, self._assignee, "")
+        stageElem = self._createSimpleNode(elem, self._stage, "")
+        descElem = self._createSimpleNode(elem, self._description, "")
+
+        if self.bimSnippet is not None:
+            bimSnippetElem = ET.SubElement(elem, self.bimSnippet.xmlName)
+            bimSnippetElem = self.bimSnippet.getEtElement(bimSnippetElem)
+
+        for docRef in self.refs:
+            docRefElem = ET.SubElement(elem, docRef.xmlName)
+            docRefElem = docRef.getEtElement(docRefElem)
+
+        for relTopic in self.relatedTopics:
+            relTopicElem = self._createSimpleNode(elem, relTopic, None)
+
+        return elem
 
 
     def getStateList(self):

@@ -31,7 +31,7 @@ def setupBCFFile(testFile, testFileDir, testTopicDir, testBCFName):
 
     os.system("cp {} {}/{}/markup.bcf".format(testFile,
         testFileDir, testTopicDir))
-    os.system("cd ./writer_tests && zip {} {}/markup.bcf".format(testBCFName,
+    os.system("cd ./writer_tests && zip -q {} {}/markup.bcf".format(testBCFName,
         testTopicDir))
 
     return os.path.join(testFileDir, testBCFName)
@@ -145,15 +145,10 @@ class AddElementTests(unittest.TestCase):
 
         markup = project.topicList[0]
         comment = markup.comments[0]
-        modifiedDate = dateutil.parser.parse("2014-10-16T13:10:56+00:00")
-        modifiedAuthor = "fleopard@bim.col"
-        mod = modification.Modification(author = modifiedAuthor,
-                date = modifiedDate,
-                modType = modification.ModificationType.MODIFICATION)
-        comment.lastModification = mod
-        comment.lastModification.state = s.State.States.ADDED
-        writer.addElement(comment.lastModification._author)
-        writer.addElement(comment.lastModification._date)
+        comment.modAuthor = "fleopard@bim.col"
+        comment.modDate = dateutil.parser.parse("2014-10-16T13:10:56+00:00")
+        writer.addElement(comment._modAuthor)
+        writer.addElement(comment._modDate)
 
         (equal, diff) = compareFiles(self.checkFiles[1], self.testFileDir, self.testTopicDir, self.testBCFName)
         if not equal:
@@ -620,6 +615,14 @@ def handleFileCheck(expectedFile, fileName, testFileDir, testTopicDir, testBCFNa
     return equal
 
 
+def printVimDiffCommand(testFileDir, checkFile):
+    print("To view differences: \n"\
+            "vim -d {}/{} {}/{}".format(testFileDir,
+                "error.bcf",
+                testFileDir,
+                checkFile))
+
+
 class DeleteElementTests(unittest.TestCase):
 
     def setUp(self):
@@ -630,11 +633,17 @@ class DeleteElementTests(unittest.TestCase):
                 self.testTopicDir)
         self.testFiles = ["markup_delete_comment_test.bcf",
                 "markup_delete_label_test.bcf",
-                "markup_delete_ifcproject_test.bcf"
+                "markup_delete_ifcproject_test.bcf",
+                "markup_delete_file_test.bcf",
+                "markup_delete_viewpoint_test.bcf",
+                "markup_delete_viewpoint_reference_test.bcf"
                 ]
         self.checkFiles = ["markup_delete_comment_check.bcf",
                 "markup_delete_label_check.bcf",
-                "markup_delete_ifcproject_check.bcf"
+                "markup_delete_ifcproject_check.bcf",
+                "markup_delete_file_check.bcf",
+                "markup_delete_viewpoint_check.bcf",
+                "markup_delete_viewpoint_reference_check.bcf"
                 ]
         self.testFileDestinations = [os.path.join(self.markupDestDir, "markup.bcf"),
                 os.path.join(self.markupDestDir, "viewpoint.bcfv"),
@@ -648,29 +657,141 @@ class DeleteElementTests(unittest.TestCase):
         p = reader.readBcfFile(testFile)
 
         commentToDelete = p.topicList[0].comments[0]
-        project.debug("Starting to delete element {}".format(commentToDelete))
+        commentToDelete.state = s.State.States.DELETED
         writer.deleteElement(commentToDelete)
 
         equal = handleFileCheck(self.checkFiles[0], "markup.bcf", self.testFileDir,
                 self.testTopicDir, self.testBCFName)
 
-        self.assertTrue(equal)
+        if not equal:
+            printVimDiffCommand(self.testFileDir, self.checkFiles[0])
+
+        self.assertTrue(equal, "Failed to delete comment" \
+                " {}".format(commentToDelete))
+
 
 
     def test_deleteLabel(self):
-        pass
+
+        """
+        Tests the deletion of the label <Label>mechanical</Label> from topic
+        2e....
+        """
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[1])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        labelToDelete = p.topicList[0].topic.labels[2]
+        labelToDelete.state = s.State.States.DELETED
+        writer.deleteElement(labelToDelete)
+
+        equal = handleFileCheck(self.checkFiles[1], "markup.bcf", self.testFileDir,
+                self.testTopicDir, self.testBCFName)
+
+        if not equal:
+            printVimDiffCommand(self.testFileDir, self.checkFiles[1])
+
+        self.assertTrue(equal, "Failed to delete label {}".format(labelToDelete))
+
 
     def test_deleteIfcProject(self):
-        pass
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[2])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        fileToDeleteFrom = p.topicList[0].header.files[0]
+        ifcProject = fileToDeleteFrom._ifcProjectId
+        ifcProject.state = s.State.States.DELETED
+        writer.deleteElement(ifcProject)
+
+        equal = handleFileCheck(self.checkFiles[2], "markup.bcf", self.testFileDir,
+                self.testTopicDir, self.testBCFName)
+
+        if not equal:
+            printVimDiffCommand(self.testFileDir, self.checkFiles[2])
+
+        self.assertTrue(equal, "Failed to delete ifcProject attribute"\
+                " {}".format(ifcProject))
+
 
     def test_deleteFile(self):
-        pass
+
+        """
+        Tests the deletion of a File node inside a Header.
+        """
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[3])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        fileToDelete = p.topicList[0].header.files[1]
+        fileToDelete.state = s.State.States.DELETED
+        writer.deleteElement(fileToDelete)
+
+        equal = handleFileCheck(self.checkFiles[3], "markup.bcf", self.testFileDir,
+                self.testTopicDir, self.testBCFName)
+
+        if not equal:
+            printVimDiffCommand(self.testFileDir, self.checkFiles[3])
+
+        self.assertTrue(equal, "Failed to delete file {}".format(fileToDelete))
+
 
     def test_deleteViewpoint(self):
-        pass
+
+        """
+        Tests whether the referenced viewpoint file gets deleted if the
+        viewpoint reference is deleted AND the state of viewpoint is also
+        DELETED.
+        """
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[4])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        vpRefToDelete = p.topicList[0].viewpoints[0]
+        vpRefToDelete.state = s.State.States.DELETED
+        vpRefToDelete.viewpoint.state = s.State.States.DELETED
+        writer.deleteElement(vpRefToDelete)
+
+        vpFilePath = os.path.join(util.getSystemTmp(), self.testBCFName,
+                self.testTopicDir, "viewpoint.bcfv")
+        stillExists = os.path.exists(vpFilePath)
+        equal = handleFileCheck(self.checkFiles[4], "markup.bcf", self.testFileDir,
+                self.testTopicDir, self.testBCFName)
+
+        if not equal or stillExists:
+            printVimDiffCommand(self.testFileDir, self.checkFiles[4])
+
+        self.assertTrue((not stillExists) and equal, "Failed to delete the "\
+                "viewpoint and the accompanying file"\
+                " {}".format(vpRefToDelete.viewpoint))
+
 
     def test_deleteViewpointReference(self):
-        pass
+
+        """
+        Tests whether the first in the file testfiles[5] viewpoint reference can be deleted.
+        """
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[5])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        vpRefToDelete = p.topicList[0].viewpoints[0]
+        vpRefToDelete.state = s.State.States.DELETED
+        writer.deleteElement(vpRefToDelete)
+
+        equal = handleFileCheck(self.checkFiles[5], "markup.bcf", self.testFileDir,
+                self.testTopicDir, self.testBCFName)
+
+        if not equal:
+            printVimDiffCommand(self.testFileDir, self.checkFiles[5])
+
+        self.assertTrue(equal, "Failed to delete viewpoint Reference"\
+                " {}".format(vpRefToDelete))
 
 
 if __name__ == "__main__":
