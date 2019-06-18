@@ -648,7 +648,7 @@ def readBcfFile(bcfFile: str):
     tmpDir = util.getSystemTmp()
     (projectSchemaPath, extensionsSchemaPath,\
         markupSchemaPath, versionSchemaPath,\
-        visinfoSchemaPath) = util.downloadToDir(tmpDir)
+        visinfoSchemaPath) = util.copySchemas(tmpDir)
     bcfExtractedPath = extractFileToTmp(bcfFile)
 
     # before a file gets read into memory it needs to get validated (i.e.:

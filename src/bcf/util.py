@@ -1,6 +1,7 @@
 import os
 import urllib.request
 import tempfile
+import shutil
 from enum import Enum
 from urllib.error import URLError
 
@@ -13,23 +14,39 @@ class Schema(Enum):
 
 __schemaSrc = "https://raw.githubusercontent.com/buildingSMART/BCF-XML/{0}/{1}Schemas/{2}"
 __schemaVersion = "release_2_1"
-__schemaMap = {
+""" Names of the schema files necessary """
+__schemaNames = {
+        Schema.EXTENSION: "extensions.xsd",
+        Schema.PROJECT: "project.xsd",
+        Schema.MARKUP: "markup.xsd",
+        Schema.VERSION: "version.xsd",
+        Schema.VISINFO: "visinfo.xsd"
+        }
+
+""" URLs of the schema files, from where they can be retrieved """
+__schemaUrls = {
         Schema.EXTENSION: __schemaSrc.format(__schemaVersion,
             "Extension%20",
-            "extensions.xsd"),
+            __schemaNames[Schema.EXTENSION]),
         Schema.PROJECT: __schemaSrc.format(__schemaVersion,
             "",
-            "project.xsd"),
+            __schemaNames[Schema.PROJECT]),
         Schema.MARKUP: __schemaSrc.format(__schemaVersion,
             "",
-            "markup.xsd"),
+            __schemaNames[Schema.MARKUP]),
         Schema.VERSION: __schemaSrc.format(__schemaVersion,
             "",
-            "version.xsd"),
+            __schemaNames[Schema.VERSION]),
         Schema.VISINFO: __schemaSrc.format(__schemaVersion,
             "",
-            "visinfo.xsd")}
+            __schemaNames[Schema.VISINFO])}
 
+""" Specifies the name of the directory in which the schema files are stored """
+schemaDir = "schemas"
+""" Holds the paths of the schema files in the plugin directory. Gets set during runtime """
+schemaPaths = {} # during runtime this will be a map like __schemaUrls
+
+""" Working directory, here the extracted BCF file is stored """
 tempDir = None
 def getSystemTmp():
 
@@ -52,13 +69,13 @@ def retrieveWebFile(schema: Schema, storePath: str):
 
     """
     Tries to retrieve the XML Schema Definition file, identified by `schema`
-    from the url stored in `__schemaMap`. If the file could be loaded it is
+    from the url stored in `__schemaUrls`. If the file could be loaded it is
     stored at `storePath`.
     Returns `None` if an error occurs or the path of the written file if
     successful.
     """
 
-    fileUrl = __schemaMap[schema]
+    fileUrl = __schemaUrls[schema]
     try:
         with urllib.request.urlopen(fileUrl) as response:
             schemaContent = response.read()
@@ -78,7 +95,7 @@ def retrieveWebFile(schema: Schema, storePath: str):
 def downloadToDir(dirPath: str):
 
     """
-    Downloads all schema files, specified in `__schemaMap` to the specified
+    Downloads all schema files, specified in `__schemaUrls` to the specified
     directory `dirPath`
     """
 
@@ -111,8 +128,78 @@ def getDirectories(topDir: str):
     return subdirs
 
 
+def setSchemaPaths(rootPath: str):
+
+    """
+    Fill `schemaPaths` with the paths of the respective schema file, located in
+    `rootPath/schema`
+    """
+
+    schemaDirPath = os.path.join(rootPath, schemaDir)
+
+    schemaPaths[Schema.EXTENSION] = os.path.join(schemaDirPath,
+            __schemaNames[Schema.EXTENSION])
+    schemaPaths[Schema.PROJECT] = os.path.join(schemaDirPath,
+            __schemaNames[Schema.PROJECT])
+    schemaPaths[Schema.MARKUP] = os.path.join(schemaDirPath,
+            __schemaNames[Schema.MARKUP])
+    schemaPaths[Schema.VERSION] = os.path.join(schemaDirPath,
+            __schemaNames[Schema.VERSION])
+    schemaPaths[Schema.VISINFO] = os.path.join(schemaDirPath,
+            __schemaNames[Schema.VISINFO])
+
+
+def updateSchemas(rootPath: str):
+
+    """
+    Schema files are located in PLUGIN_ROOT/src/schemas/.
+    Here it is expected that `rootPath == PLUGIN_ROOT`.
+
+    The above mentioned path is created if not present. All schema files will be
+    retrieved using `retrieveWebFile` and stored in `rootPath/schemas`
+    """
+
+    schemaDirPath = os.path.join(rootPath, schemaDir)
+    if not os.path.exists(schemaDirPath):
+        os.mkdir(schemaDirPath)
+
+    (projectSchemaPath, extensionsSchemaPath,\
+        markupSchemaPath, versionSchemaPath,\
+        visinfoSchemaPath) = downloadToDir(schemaDirPath)
+
+    setSchemaPaths(rootPath)
+
+
+def copySchemas(dstDir: str):
+
+    """
+    Copies the schema files, located in PLUGIN_ROOT/src/schemas/ to the given
+    `dstDir` directory.
+
+    If prior to this function call no schema files were downloaded, the download
+    is automatically started.
+    """
+
+    rootPath = os.path.realpath(__file__)
+    rootPath = rootPath.replace("bcf/util.py", "")
+    schemaDirPath = os.path.join(rootPath, schemaDir)
+    if not os.path.exists(schemaDirPath):
+        updateSchemas(rootPath)
+    else:
+        setSchemaPaths(rootPath)
+
+    dstSchemaPaths = {}
+    for key in schemaPaths.keys():
+        dstSchemaPaths[key] = os.path.join(dstDir, __schemaNames[key])
+        shutil.copyfile(schemaPaths[key], os.path.join(dstDir, __schemaNames[key]))
+
+    return (dstSchemaPaths[Schema.PROJECT], dstSchemaPaths[Schema.EXTENSION],
+        dstSchemaPaths[Schema.MARKUP], dstSchemaPaths[Schema.VERSION],
+        dstSchemaPaths[Schema.VISINFO])
+
+
 if __name__ == "__main__":
-    for key in __schemaMap:
+    for key in __schemaUrls:
         retrieveWebFile(key, "test{}".format(str(key)))
     try:
         (valid, error) = schemaValidate("testSchema.PROJECT", "project.bcfp")
