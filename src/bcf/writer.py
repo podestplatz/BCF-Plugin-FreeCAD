@@ -579,6 +579,7 @@ def deleteIdentifiableElement(element, xmlroot):
 
 def deleteElement(element):
 
+    p.debug("Deleting element {}".format(element))
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
     if not fileName:
@@ -605,11 +606,6 @@ def deleteElement(element):
         pass
 
     writeXMLFile(xmlroot, filePath)
-
-
-def deleteElement(element):
-    pass
-
 
 
 def compileChanges(project: p.Project):

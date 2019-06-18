@@ -648,6 +648,7 @@ class DeleteElementTests(unittest.TestCase):
         p = reader.readBcfFile(testFile)
 
         commentToDelete = p.topicList[0].comments[0]
+        project.debug("Starting to delete element {}".format(commentToDelete))
         writer.deleteElement(commentToDelete)
 
         equal = handleFileCheck(self.checkFiles[0], "markup.bcf", self.testFileDir,
