@@ -1,6 +1,7 @@
 import os
 import io # used for writing files in utf8
 import sys
+import collections.deque
 from uuid import UUID
 
 if __name__ == "__main__":
@@ -76,6 +77,33 @@ listElements = ["Comment", "DocumentReference", "RelatedTopic", "Labels"]
 
 
 """
+An ordered list of tuples. Every tuple element denotes an addition,
+modification or deletion of exactly one object in the project. A tuple thereby
+consists of an project object, the object in question and a third value holding
+the old value iff the object shall be modified, otherwise this will be `None`.
+It is assumed that as soon as a new entry is added to the list, nothing holds
+the reference to the contents of the project object anymore. The project and
+object shall therefore be deep copies of the original state.
+Following a schematic element is depicted:
+
+    projectUpdats[x] = (project, element, prevVal)
+
+This list will contain all updates that were not processed.
+"""
+projectUpdates = list()
+
+"""
+An ordered list of five elements at most. Every element is a tuple previously
+held by `projectUpdates`. Every element of former list is, as soon as it is
+processed, appended to this list.
+It therefore serves as storage past plugin states and enables undo operations.
+"""
+SNAPSHOT_CNT = 5
+projectSnapshots = collections.deque([None]*SNAPSHOT_CNT, SNAPSHOT_CNT)
+
+
+################## DEPRECATED ##################
+"""
 Contains elements that have the state iS.State.States.ADDED. This list gets
 filled by writer.compileChanges() and the elements get consumed by
 writer.addElement()
@@ -95,6 +123,7 @@ filled by writer.compileChanges() and the elements get consumed by
 writer.modifyElement()
 """
 modifiedObjects = list()
+################################################
 
 
 def getUniqueIdOfListElementInHierarchy(element):
@@ -595,8 +624,8 @@ def deleteElement(element):
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
     if not fileName:
-        raise ValueError("{} is not applicable to be added to anyone"\
-            "file".format(element.__class__.__name__))
+        raise ValueError("For {} no file can be found to delete from"\
+            "".format(element.__class__.__name__))
 
     # path of the topic `element` is contained in
     topicPath = getTopicPath(element)
@@ -653,6 +682,212 @@ def deleteElement(element):
     writeXMLFile(xmlroot, filePath)
 
 
+
+def modifyElement(element, previousValue):
+
+    """
+    Modifies the xml node corresponding to `element`. `element` has to be of
+    type Attribute or SimpleElement. Other elements (e.g. comments, viewpoints,
+    etc.) must not be of state modified since the modification is inside an
+    child-member.
+    """
+
+    if not (issubclass(type(element), p.SimpleElement) or
+            issubclass(type(element), p.Attribute)):
+        raise ValueError("Element is not an attribute or simple element. Only"\
+                " these two types can be updated. Actual type of element:"\
+                " {}".format(type(element)))
+
+    p.debug("Modifying element {}".format(element))
+    # filename in which `element` will be found
+    fileName = getFileOfElement(element)
+    if not fileName:
+        raise ValueError("For {} no file can be found that contains it."\
+            "file".format(element))
+
+    # path of the topic `element` is contained in
+    topicPath = getTopicPath(element)
+    # filepath of the file `element` is contained in
+    filePath = os.path.join(topicPath, fileName)
+    # parsed version of the file
+    xmlfile = ET.parse(filePath)
+    xmlroot = xmlfile.getroot()
+
+    # set element to old state to get more reliable matching
+    newValue = element.value
+    element.value = previousValue
+    if issubclass(type(element), p.SimpleElement):
+        parentElem = element.containingObject
+        etElem = getEtElementFromFile(xmlroot, element, [])
+        etElem.text = newValue
+
+    elif issubclass(type(element), p.Attribute):
+        parentElem = element.containingObject
+        parentEtElem = getEtElementFromFile(xmlroot, parentElem, [])
+        parentEtElem.attrib[element.xmlName] = newValue
+
+    writeXMLFile(xmlroot, filePath)
+
+
+def addProjectUpdate(project: p.Project, element, prevVal):
+
+    global projectUpdates
+    if element.state != iI.State.States.ORIGINAL:
+        projectUpdates.append((project, element, prevVal))
+    else:
+        raise ValueError("Element is in its original state. Cannot be added as"\
+                " update")
+
+
+def writeHandlerErrMsg(msg):
+    p.debug(msg)
+    print(str(err), file=sys.stderr)
+    print(msg, file=sys.stderr)
+
+
+def handleAddElement(element, oldVal):
+
+    """
+    Calls `addElement` on `element` and handles the errors that might be raised.
+    Every error is printed to dbg output and stderr. If an error is catched then
+    `False` is returned to indicate that the update was not successful. In case
+    of a successful update `True` is returned.
+    """
+
+    try:
+        addElement(element)
+    except (RuntimeWarning, ValueError, NotImplementedError) as err:
+        msg = ("Element {} could not be added. Reverting to previous" \
+            " state".format(element))
+        if isinstance(err, NotImplementedError):
+            msg = ("Adding {} is not implemented. Reverting to previous"\
+                    " state".format(element))
+        writeHandlerErrMsg(msg)
+        return False
+    except Exception as exc:
+        msg = "An unknown excption occured while adding"\
+            " {}".format(element)
+        writeHandlerErrMsg(msg)
+        return False
+    else:
+        return True
+
+
+def handleDeleteElement(element, oldVal):
+
+    """
+    Calls `deleteElement` on `element` and handles the errors that might be raised.
+    Every error is printed to dbg output and stderr. If an error is catched then
+    `False` is returned to indicate that the update was not successful. In case
+    of a successful update `True` is returned.
+    """
+
+    try:
+        deleteElement(element)
+    except ValueError as err:
+        msg = ("Element {} could not be deleted. Reverting to previous "\
+                "state".format(element))
+        writeHandlerErrMsg(msg)
+        return False
+    except Exception as exc:
+        msg = "An unknown excption occured while adding"\
+            " {}".format(element)
+        writeHandlerErrMsg(msg)
+        return False
+    else:
+        return True
+
+
+def handleModifyElement(element, prevVal):
+
+    """
+    Calls `modifyElement` on `element` and handles the errors that might be raised.
+    Every error is printed to dbg output and stderr. If an error is catched then
+    `False` is returned to indicate that the update was not successful. In case
+    of a successful update `True` is returned.
+    """
+
+    try:
+        modifyElement(element, prevVal)
+    except ValueError as err:
+        msg = ("Element {} could not be modified. Reverting to previous "\
+                "state".format(element))
+        writeHandlerErrMsg(msg)
+        return False
+    except Exception as exc:
+        msg = "An unknown excption occured while adding"\
+            " {}".format(element)
+        writeHandlerErrMsg(msg)
+        return False
+    else:
+        return True
+
+
+def updateProjectSnapshots(newUpdates):
+
+    """
+    Adds the project copies to `projectSnapshots`, but preserves its length of
+    `SNAPSHOT_CNT` elements.
+    If the list `newUpdates` is longer than five elements all elements of
+    `projectSnapshots` are replaced with the last `SNAPSHOT_CNT` elements of
+    `newUpdates`. Otherwise the contents of `projectSnapshots` are shifted by
+    `len(newUpdates)` (i.e.: the `len(newUpdates)` oldest elements are deleted)
+    and the contents of newUpdates are pasted.
+    """
+
+    for newUpdate in newUpdates:
+        projectSnapshots.append(newUpdate)
+
+
+def processProjectUpdates():
+
+    """
+    Process to process all updates stored in `projectUpdates`. The updates are
+    processed in chronological order in a loop. If one update fails the
+    processing is stopped. Every update that was processed in a successful
+    manner is added to the `processedUpdates`.
+
+    If all updates were processed successfully then `None` is returned.
+    Otherwise the failed update will be returned.
+    """
+
+    global projectUpdates
+
+    # list of all updates that were successfully processed
+    processedUpdates = list()
+    # holds the update that failed to be able to revert back
+    errorenousUpdate = None
+    for update in projectUpdates:
+        element = update[1]
+        oldVal = update[2]
+        updateType = element.state
+        if  updateType == iI.State.States.ADDED:
+            if handleAddElement(element):
+                processedUpdates.append(update, oldVal)
+            else:
+                errorenousUpdate = update
+                break
+        if updateType == iI.State.States.DELETED:
+            if handleDeleteElement(element):
+                processedUpdates.append(update, oldVal)
+            else:
+                errorenousUpdate = update
+                break
+        if updateType == iI.State.States.MODIFIED:
+            if handleModifyElement(element, oldVal):
+                pass
+            else:
+                errorenousUpdate = update
+                break
+
+    updateProjectSnapshots(processedUpdates)
+    if errorenousUpdate is not None:
+        return errorenousUpdate
+    else:
+        return None
+
+
+################## DEPRECATED ##################
 def compileChanges(project: p.Project):
 
     """
@@ -677,6 +912,7 @@ def compileChanges(project: p.Project):
             deletedObjects.append(item[1])
         else: # Last option would be original state, which should not be contained in the list anyways
             pass
+################################################
 
 
 if __name__ == "__main__":

@@ -794,5 +794,105 @@ class DeleteElementTests(unittest.TestCase):
                 " {}".format(vpRefToDelete))
 
 
+class ModifyElementTests(unittest.TestCase):
+
+    def setUp(self):
+        self.testFileDir = "./writer_tests"
+        self.testTopicDir = "2e92784b-80fc-4e0e-ac02-b424dfd8e664"
+        self.testBCFName = "Issues-Example.bcf"
+        self.markupDestDir = os.path.join(util.getSystemTmp(), self.testBCFName,
+                self.testTopicDir)
+        self.testFiles = ["markup_modify_comment_test.bcf",
+                "markup_modify_filename_test.bcf",
+                "markup_modify_ifc_project_test.bcf"
+                ]
+        self.checkFiles = ["markup_modify_comment_check.bcf",
+                "markup_modify_filename_check.bcf",
+                "markup_modify_ifc_project_check.bcf"
+                ]
+        self.testFileDestinations = [os.path.join(self.markupDestDir, "markup.bcf"),
+                os.path.join(self.markupDestDir, "viewpoint.bcfv"),
+                os.path.join(self.markupDestDir, "viewpoint2.bcfv")]
+
+    def test_modifyComment(self):
+
+        """
+        Tests the modification of the comment node inside a comment
+        """
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        commentToModify = p.topicList[0].comments[0]
+        prevValue = commentToModify.comment
+        commentToModify.comment = "Hello this is me mario"
+        commentToModify._comment.state = s.State.States.MODIFIED
+        writer.modifyElement(commentToModify._comment, prevValue)
+
+        equal = handleFileCheck(self.checkFiles[0], "markup.bcf", self.testFileDir,
+                self.testTopicDir, self.testBCFName)
+
+        if not equal:
+            printVimDiffCommand(self.testFileDir, self.checkFiles[0])
+
+        self.assertTrue(equal, "Failed to modify {}"\
+                "".format(commentToModify, commentToModify))
+
+
+    def test_modifyFileName(self):
+
+        """
+        Tests the modification of the filename of the second file object
+        """
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[1])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        fileNameElement = p.topicList[0].header.files[1]._filename
+        prevValue = fileNameElement.value
+        fileNameElement.value = "Wassup with you?"
+        fileNameElement.state = s.State.States.MODIFIED
+        writer.modifyElement(fileNameElement, prevValue)
+
+        equal = handleFileCheck(self.checkFiles[1], "markup.bcf", self.testFileDir,
+                self.testTopicDir, self.testBCFName)
+
+        if not equal:
+            printVimDiffCommand(self.testFileDir, self.checkFiles[1])
+
+        self.assertTrue(equal, "Failed to modify {}"\
+                "".format(fileNameElement))
+
+
+    def test_modifyIfcProject(self):
+
+        """
+        Tests the modification of the IfcProject attribute of the second file
+        element.
+        """
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[2])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        ifcProjectAttribute = p.topicList[0].header.files[1]._ifcProjectId
+        prevValue = ifcProjectAttribute.value
+        ifcProjectAttribute.value = "bbbbbbbbbbbbbbbbbbbbbb"
+        ifcProjectAttribute.state = s.State.States.MODIFIED
+        writer.modifyElement(ifcProjectAttribute, prevValue)
+
+        equal = handleFileCheck(self.checkFiles[2], "markup.bcf", self.testFileDir,
+                self.testTopicDir, self.testBCFName)
+
+        if not equal:
+            printVimDiffCommand(self.testFileDir, self.checkFiles[2])
+
+        self.assertTrue(equal, "Failed to modify {}"\
+                "".format(ifcProjectAttribute))
+
+
+
 if __name__ == "__main__":
     unittest.main()

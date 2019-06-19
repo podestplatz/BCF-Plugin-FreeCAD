@@ -82,11 +82,11 @@ def retrieveWebFile(schema: Schema, storePath: str):
             with open(storePath, "wb+") as file:
                 file.write(schemaContent)
     except URLError as e:
-        print("Could not retrieve {}".format(fileUrl))
-        print("Here is the stack trace {}".format(str(e)))
+        print("Here is the stack trace {}".format(str(e)), file=sys.stderr)
+        print("Could not retrieve {}".format(fileUrl), file=sys.stderr)
         return None
     except Exception as e:
-        print("Error occured: {}".format(str(e)))
+        print("Error occured: {}".format(str(e)), file=sys.stderr)
         return None
     else:
         return storePath
@@ -134,6 +134,8 @@ def setSchemaPaths(rootPath: str):
     Fill `schemaPaths` with the paths of the respective schema file, located in
     `rootPath/schema`
     """
+
+    global schemaPaths
 
     schemaDirPath = os.path.join(rootPath, schemaDir)
 

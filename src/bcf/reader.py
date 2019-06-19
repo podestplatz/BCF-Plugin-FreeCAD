@@ -649,6 +649,16 @@ def readBcfFile(bcfFile: str):
     (projectSchemaPath, extensionsSchemaPath,\
         markupSchemaPath, versionSchemaPath,\
         visinfoSchemaPath) = util.copySchemas(tmpDir)
+    # extensionsSchemaPath is optional and currently not used => does not need
+    # to be downloaded.
+    if (projectSchemaPath is None or
+            markupSchemaPath is None or
+            versionSchemaPath is None or
+            visinfoSchemaPath is None):
+        print("One or more schema files could not be downloaded!"\
+                "Please try again in a few moments")
+        return None
+
     bcfExtractedPath = extractFileToTmp(bcfFile)
 
     # before a file gets read into memory it needs to get validated (i.e.:
