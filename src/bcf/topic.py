@@ -572,10 +572,10 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         if self.modDate is not None:
             modDateElem = self._createSimpleNode(elem,
-                    self._date,
+                    self._modDate,
                     None)
             modAuthorElem = self._createSimpleNode(elem,
-                    self._author,
+                    self._modAuthor,
                     None)
 
         dueDateElem = self._createSimpleNode(elem, self._dueDate, None)

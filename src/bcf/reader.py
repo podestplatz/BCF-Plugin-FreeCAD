@@ -287,6 +287,8 @@ def buildTopic(topicDict: Dict):
     topicPriority = getOptionalFromDict(topicDict, "Priority", "")
 
     modifiedDate = getOptionalFromDict(topicDict, "ModifiedDate", None)
+    if modifiedDate is not None:
+        modifiedDate = dateutil.parser.parse(modifiedDate)
     modifiedAuthor = getOptionalFromDict(topicDict, "ModifiedAuthor", "")
 
     index = getOptionalFromDict(topicDict, "Index", 0)

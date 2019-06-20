@@ -499,6 +499,89 @@ def writeXMLFile(xmlroot, filePath):
         f.write(xmlPrettyText)
 
 
+def _addAttribute(element, xmlroot):
+
+    newParent = element.containingObject
+
+    # parent element of the attribute how it should be
+    newParentEt = newParent.getEtElement(ET.Element(newParent.xmlName, {}))
+    p.debug("=========\nnew parent generated:\n{}\n=========".format(
+            ET.tostring(newParentEt)))
+
+    # parent element of the attribute as is in the file, and ignore the new
+    # attribute if the element is searched by its attributes
+    oldParentEt = getEtElementFromFile(xmlroot,
+            newParent, [element.xmlName])
+
+    if oldParentEt is None:
+        raise RuntimeWarning("The element {}, parent of the attribute {},"\
+            " was not present in the file. Not adding the attribute"\
+            " then!".format(newParentEt.tag, element.xmlName))
+
+    # add the value of the new attribute
+    oldParentEt.attrib[element.xmlName] = newParentEt.attrib[element.xmlName]
+
+    return xmlroot
+
+
+def _addElement(element, xmlroot):
+
+    # parent element read from file
+    etParent = getParentElement(element, xmlroot)
+
+    # index of the direct predecessor element in the xml file
+    insertionIndex = getInsertionIndex(element, etParent)
+    newEtElement = element.getEtElement(ET.Element(element.xmlName))
+    etParent.insert(insertionIndex, newEtElement)
+
+    return xmlroot
+
+
+def _createViewpoint(element, topicPath):
+
+    if element.file is None:
+        raise RuntimeWarning("The new viewpoint does not have a filename."\
+                "Generating a new one!")
+        # element.containingObject == Markup
+        element.file = generateViewpointFileName(element.containingObject)
+
+    vp = element.viewpoint
+    visinfoRootEtElem = ET.Element("", {})
+    vp.getEtElement(visinfoRootEtElem)
+
+    p.debug("Writing new viewpoint to"\
+                " {}".format(element.file))
+
+    vpFilePath = os.path.join(topicPath, str(element.file))
+    writeXMLFile(visinfoRootEtElem, vpFilePath)
+
+
+def _createMarkup(element, topicPath):
+
+    """
+    For the markup `element` create a new topic folder and the markup.bcf file.
+    If already viewpoints are referenced then also create the new viewpoint
+    files.
+    """
+
+    if os.path.exists(topicPath):
+        raise RuntimeError("The topic {} does already exist.")
+
+    p.debug("Creating new markup {}".format(topicPath))
+
+    os.mkdir(topicPath)
+    markupPath = os.path.join(topicPath, "markup.bcf")
+    # just create the markup file
+    with open(markupPath, 'w') as markupFile: pass
+
+    markupXMLRoot = ET.Element("Markup", {})
+    markupXMLRoot = element.getEtElement(markupXMLRoot)
+    writeXMLFile(markupXMLRoot, markupPath)
+
+    for viewpoint in element.viewpoints:
+        _createViewpoint(viewpoint, topicPath)
+
+
 def addElement(element):
 
     """
@@ -535,60 +618,29 @@ def addElement(element):
             "This may be the case if properties in project.bcfp should be"\
             "modified, which is currently not implemented!".format(str(element)))
 
+    p.debug("adding new element {}".format(element))
+    # adds a complete new topic folder to the zip file
+    if isinstance(element, m.Markup):
+        _createMarkup(element, topicPath)
+        return
+
     filePath = os.path.join(topicPath, fileName)
     xmltree = ET.parse(filePath)
     xmlroot = xmltree.getroot()
+
     # different handling for attributes and elements
     if isinstance(element, p.Attribute):
-        newParent = element.containingObject
-
-        # parent element of the attribute how it should be
-        newParentEt = newParent.getEtElement(ET.Element(newParent.xmlName, {}))
-        p.debug("=========\nwriter.{}(): new parent generated:\n{}\n=========".format(
-                addElement.__name__, ET.tostring(newParentEt)))
-
-        # parent element of the attribute as is in the file, and ignore the new
-        # attribute if the element is searched by its attributes
-        oldParentEt = getEtElementFromFile(xmlroot,
-                newParent, [element.xmlName])
-
-        if oldParentEt is None:
-            raise RuntimeWarning("The element {}, parent of the attribute {},"\
-                " was not present in the file. Not adding the attribute"\
-                " then!".format(newParentEt.tag, element.xmlName))
-
-        # add the value of the new attribute
-        oldParentEt.attrib[element.xmlName] = newParentEt.attrib[element.xmlName]
+        xmlroot = _addAttribute(element, xmlroot)
 
     else:
-        # parent element read from file
-        etParent = getParentElement(element, xmlroot)
-
-        # index of the direct predecessor element in the xml file
-        insertionIndex = getInsertionIndex(element, etParent)
-        newEtElement = element.getEtElement(ET.Element(element.xmlName))
-        etParent.insert(insertionIndex, newEtElement)
+        xmlroot = _addElement(element, xmlroot)
 
     # generate viewpoint.bcfv file for added viewpoint
     if (isinstance(element, m.ViewpointReference) and
             element.viewpoint is not None and
             element.viewpoint.state == iS.State.States.ADDED):
 
-        if element.file is None:
-            raise RuntimeWarning("The new viewpoint does not have a filename."\
-                    "Generating a new one!")
-            # element.containingObject == Markup
-            element.file = generateViewpointFileName(element.containingObject)
-
-        vp = element.viewpoint
-        visinfoRootEtElem = ET.Element("", {})
-        vp.getEtElement(visinfoRootEtElem)
-
-        p.debug("writer.{}(): Writing new viewpoint to"\
-                    " {}".format(addElement.__name__, element.file))
-
-        vpFilePath = os.path.join(topicPath, str(element.file))
-        writeXMLFile(visinfoRootEtElem, vpFilePath)
+        _createViewpoint(element, topicPath)
 
     writeXMLFile(xmlroot, filePath)
 

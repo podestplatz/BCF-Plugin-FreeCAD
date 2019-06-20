@@ -21,7 +21,7 @@ class ModificationAuthor(p.SimpleElement):
 
         name = ""
         if modType == ModificationType.CREATION:
-            name = "Author"
+            name = "CreationAuthor"
         if modType == ModificationType.MODIFICATION:
             name = "ModifiedAuthor"
         p.SimpleElement.__init__(self, author, name, containingElement, state)
@@ -63,7 +63,7 @@ class ModificationDate(p.SimpleElement):
 
         name = ""
         if modType == ModificationType.CREATION:
-            name = "Date"
+            name = "CreationDate"
         if modType == ModificationType.MODIFICATION:
             name = "ModifiedDate"
         p.SimpleElement.__init__(self, date, name, containingElement, state)

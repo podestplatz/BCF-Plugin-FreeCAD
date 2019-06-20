@@ -109,8 +109,11 @@ class Camera(Hierarchy, State, XMLName):
         State.__init__(self, state)
         XMLName.__init__(self, xmlName)
         self.viewPoint = viewPoint
+        self.viewpoint.xmlName = "CameraViewpoint"
         self.direction = direction
+        self.direction.xmlName = "CameraDirection"
         self.upVector = upVector
+        self.upVector.xmlName = "CameraUpVector"
 
         # set containingObject of complex members
         if self.viewPoint is not None:

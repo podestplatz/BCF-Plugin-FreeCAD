@@ -105,7 +105,7 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
 
     def getEtElement(self, elem):
 
-        elem.tag = "File"
+        elem.tag = self.xmlName
 
         if not self.external: # only write external if its not set to default
             elem.attrib["isExternal"] = str(self.external).lower() # xml bool is lowercase
@@ -198,7 +198,6 @@ class Header(Hierarchy, State, XMLName, Identifiable):
         for f in files:
             f.containingObject = self
 
-
     def getStateList(self):
 
         stateList = list()
@@ -222,6 +221,16 @@ class Header(Hierarchy, State, XMLName, Identifiable):
 
         searchResult = searchListObject(object, self.files)
         return searchResult
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        if self.files is not None:
+            for file in self.files:
+                fileElem = ET.SubElement(elem, "File")
+                fileElem = file.getEtElement(fileElem)
 
 
 class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
@@ -334,6 +343,7 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
 
     def getEtElement(self, elem):
 
+        elem.tag = self.xmlName
         elem.attrib["Guid"] = str(self.xmlId)
 
         if self.file is not None:
@@ -517,9 +527,11 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         dateElem = ET.SubElement(elem, "Date")
         dateElem = self._date.getEtElement(dateElem)
+        dateElem.tag = "Date"
 
         authorElem = ET.SubElement(elem, "Author")
         authorElem = self._author.getEtElement(authorElem)
+        authorElem.tag = "Author"
 
         commentElem = ET.SubElement(elem, "Comment")
         commentElem.text = self.comment
@@ -655,6 +667,30 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
         snapshotList = [ vp.snapshot for vp in self.viewpoints
                             if vp.snapshot ]
         return snapshotList
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+
+        if self.header is not None:
+            headerElem = ET.SubElement(elem, "Header")
+            headerElem = self.header.getEtElement(headerElem)
+
+        topicElem = ET.SubElement(elem, "Topic")
+        topicElem = self.topic.getEtElement(topicElem)
+
+        if self.comments is not None:
+            for comment in self.comments:
+                commentElem = ET.SubElement(elem, "Comment")
+                commentElem = comment.getEtElement(commentElem)
+
+        if self.viewpoints is not None:
+            for vpRef in self.viewpoints:
+                vpRefElem = ET.SubElement(elem, "Viewpoints")
+                vpRefElem = vpRef.getEtElement(vpRefElem)
+
+        return elem
 
 
     def getStateList(self):

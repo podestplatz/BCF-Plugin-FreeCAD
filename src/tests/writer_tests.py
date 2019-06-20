@@ -8,7 +8,7 @@ import xmlschema
 import dateutil.parser
 import xml.etree.ElementTree as ET
 
-from uuid import UUID
+from uuid import UUID, uuid4
 from shutil import rmtree
 from shutil import copyfile
 from xmlschema import XMLSchemaValidationError
@@ -103,7 +103,41 @@ class AddElementTests(unittest.TestCase):
                 os.path.join(self.markupDestDir, "viewpoint2.bcfv")]
 
 
-    def test_add_comment(self):
+    def test_addMarkup(self):
+
+        """
+        Tests the addition of a whole new markup object. This should result in
+        the creation of a new folder as well as a new markup.bcf file and a new
+        viewpoint file.
+        """
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        newMarkup = copy.deepcopy(p.topicList[0])
+        newMarkup.containingObject = p
+        newMarkup.state = s.State.States.ADDED
+        newMarkup.topic.xmlId = uuid4() # generate random uuid
+        p.topicList.append(newMarkup)
+        writer.addElement(newMarkup)
+
+        folderPath = os.path.join(util.getSystemTmp(), self.testBCFName,
+                str(newMarkup.topic.xmlId))
+        folderExists = os.path.exists(folderPath)
+        if not folderExists:
+            project.debug("Folder does not exist")
+
+        markupFilePath = os.path.join(folderPath, "markup.bcf")
+        markupFileExists = os.path.exists(markupFilePath)
+        if not markupFileExists:
+            project.debug("Markup file does not exist")
+
+        self.assertTrue(markupFileExists and folderExists)
+
+
+    def test_addComment(self):
+
         """
         Tests the addition of a comment.
         """
@@ -134,7 +168,8 @@ class AddElementTests(unittest.TestCase):
         self.assertTrue(equal)
 
 
-    def test_add_comment_modification(self):
+    def test_addCommentModification(self):
+
         """
         Tests the addition of modification data to an existing comment
         """
@@ -164,7 +199,8 @@ class AddElementTests(unittest.TestCase):
         self.assertTrue(equal)
 
 
-    def test_add_viewpointreference(self):
+    def test_addViewpointReference(self):
+
         """
         Tests whether a viewpoint reference can be added without having a new
         viewpoint file created.
@@ -197,7 +233,8 @@ class AddElementTests(unittest.TestCase):
         self.assertTrue(equal)
 
 
-    def test_add_viewpoint(self):
+    def test_addViewpoint(self):
+
         """
         Tests the correct addition of a complete new viewpoint including a new
         viewpoint reference in markup
@@ -243,7 +280,8 @@ class AddElementTests(unittest.TestCase):
         self.assertTrue(vpRefEqual and vpEqual)
 
 
-    def test_add_file(self):
+    def test_addFile(self):
+
         """
         Tests the addition of a file element in the header node
         """
@@ -285,10 +323,12 @@ class AddElementTests(unittest.TestCase):
         self.assertTrue(equal)
 
 
-    def test_add_file_attributes(self):
+    def test_addFileAttributes(self):
+
         """
         Tests the addition of the optional attributes to one of the file nodes
         """
+
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[6])
         testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
         p = reader.readBcfFile(testFile)
@@ -315,10 +355,12 @@ class AddElementTests(unittest.TestCase):
         self.assertTrue(equal)
 
 
-    def test_add_file_attributes2(self):
+    def test_addFileAttributes2(self):
+
         """
         Tests the addition of the optional attributes to one of the file nodes
         """
+
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[7])
         testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
         p = reader.readBcfFile(testFile)
@@ -345,11 +387,13 @@ class AddElementTests(unittest.TestCase):
         self.assertTrue(equal)
 
 
-    def test_add_documentReference_attributes(self):
+    def test_addDocumentReferenceAttributes(self):
+
         """
         Tests the addition of the optional attributes to one of the document
         reference nodes.
         """
+
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[8])
         testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
         p = reader.readBcfFile(testFile)
@@ -375,10 +419,12 @@ class AddElementTests(unittest.TestCase):
         self.assertTrue(equal)
 
 
-    def test_add_bimSnippet_attribute(self):
+    def test_addBimSnippetAttribute(self):
+
         """
         Tests the addition of the optional attribute of BimSnippet
         """
+
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[9])
         testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
         p = reader.readBcfFile(testFile)
@@ -404,10 +450,12 @@ class AddElementTests(unittest.TestCase):
         self.assertTrue(equal)
 
 
-    def test_add_label(self):
+    def test_addLabel(self):
+
         """
         Tests the addition of a label
         """
+
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[10])
         testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
         p = reader.readBcfFile(testFile)
@@ -433,7 +481,8 @@ class AddElementTests(unittest.TestCase):
         self.assertTrue(equal)
 
 
-    def test_add_assignedTo(self):
+    def test_addAssignedTo(self):
+
         """
         Tests the addition of the AssignedTo node to a topic
         """
@@ -484,6 +533,7 @@ class GetEtElementFromFileTests(unittest.TestCase):
 
 
     def test_findComment(self):
+
         """
         Tests whether a comment can be found by its children
         """
@@ -508,6 +558,7 @@ class GetEtElementFromFileTests(unittest.TestCase):
 
 
     def test_findComment2(self):
+
         """
         Tests whether the right comment is found if the text of one child
         differs only by one character
