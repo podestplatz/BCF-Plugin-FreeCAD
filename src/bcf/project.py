@@ -54,13 +54,14 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
     in the corresponding xsd file
     """
 
-    def __init__(self, value, xmlName, containingElement,
+    def __init__(self, value, xmlName, defaultValue, containingElement,
             state = State.States.ORIGINAL):
         XMLName.__init__(self, xmlName)
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         Identifiable.__init__(self)
         self.value = value
+        self.defaultValue = defaultValue
 
 
     def __eq__(self, other):
@@ -113,13 +114,13 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
     element just contains a string (and therefore is a simple type).
     """
 
-    def __init__(self, data=[], xmlName = "", containingElement = None,
-            state = State.States.ORIGINAL):
+    def __init__(self, data=[], xmlName = "", defaultValue = None,
+            containingElement = None, state = State.States.ORIGINAL):
 
         simpleElementList = list()
         for item in data:
-            newSimpleElement = SimpleElement(item, xmlName, containingElement,
-                    state)
+            newSimpleElement = SimpleElement(item, xmlName, defaultValue,
+                    containingElement, state)
             simpleElementList.append(newSimpleElement)
 
         list.__init__(self, simpleElementList)
@@ -127,6 +128,7 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
         State.__init__(self, state)
         Hierarchy.__init__(self, containingElement)
         Identifiable.__init__(self)
+        self.defaultListElement = defaultValue
 
 
     def append(self, item):
@@ -140,8 +142,8 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
 
         newElem = item
         if not isinstance(newElem, SimpleElement):
-            newElem = SimpleElement(item, self.xmlName, self.containingObject,
-                    self.States.ADDED)
+            newElem = SimpleElement(item, self.xmlName, self.defaultListElement,
+                    self.containingObject, self.States.ADDED)
         else:
             newElem.state = State.States.ADDED
 
@@ -160,13 +162,14 @@ class Attribute(XMLName, Hierarchy, State, Identifiable):
     Analogously to `SimpleElement` this class is used to represent attributes.
     """
 
-    def __init__(self, value, xmlName, containingElement,
+    def __init__(self, value, xmlName, defaultValue, containingElement,
             state = State.States.ORIGINAL):
         XMLName.__init__(self, xmlName)
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         Identifiable.__init__(self)
         self.value = value
+        self.defaultValue = defaultValue
 
 
     def searchObject(self, object):
@@ -195,8 +198,9 @@ class Project(Hierarchy, State, XMLName, XMLIdentifiable, Identifiable):
         XMLName.__init__(self)
         XMLIdentifiable.__init__(self, uuid)
         Identifiable.__init__(self)
-        self._name = SimpleElement(name, "Name", self)
-        self._extSchemaSrc = SimpleElement(extSchemaSrc, "ExtensionSchema", self)
+        self._name = SimpleElement(name, "Name", "", self)
+        self._extSchemaSrc = SimpleElement(extSchemaSrc, "ExtensionSchema",
+                None, self)
         self.topicList = list()
 
     @property
@@ -284,3 +288,47 @@ topicList='{}')""".format(str(self.xmlId),
             return searchResult
 
         return None
+
+
+    def deleteObject(self, object):
+
+        parent = object.containingObject
+
+        memberName = ""
+        isList = False
+
+        # find out the name of the member variable that references `object`
+        # if `object` is part of a list then its name will be referenced by
+        # `memberName`
+        for (mName, mValue) in vars(parent).items():
+            if issubclass(type(mValue), list):
+                if object in mValue:
+                    memberName = mName
+                    isList = True
+                    break
+            elif object.id == memberValue.id:
+                memberName = mName
+                break
+
+        if memberName == "":
+            msg = ("The name referencing {} in its parent {} could"\
+                    " not be found").format(object, parent)
+            debug(msg)
+            print(msg, file=sys.stderr)
+            return False
+
+        # remove the object fom the list
+        if isList:
+            getattr(parent, memberName).remove(object)
+
+        # set the object back to its default state
+        else:
+            objType = type(object)
+            if (issubclass(objType, p.Attribute) or
+                    issubclass(objType, p.SimpleElement)):
+                object.value = object.defaultValue
+                object.state = State.States.ORIGINAL
+            else:
+                setattr(parent, memberName, None)
+
+        return True

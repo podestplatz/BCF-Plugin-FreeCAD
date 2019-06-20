@@ -913,19 +913,19 @@ def processProjectUpdates():
         element = update[1]
         oldVal = update[2]
         updateType = element.state
-        if  updateType == iI.State.States.ADDED:
+        if  updateType == iS.State.States.ADDED:
             if handleAddElement(element):
                 processedUpdates.append(update, oldVal)
             else:
                 errorenousUpdate = update
                 break
-        if updateType == iI.State.States.DELETED:
+        if updateType == iS.State.States.DELETED:
             if handleDeleteElement(element):
                 processedUpdates.append(update, oldVal)
             else:
                 errorenousUpdate = update
                 break
-        if updateType == iI.State.States.MODIFIED:
+        if updateType == iS.State.States.MODIFIED:
             if handleModifyElement(element, oldVal):
                 pass
             else:
@@ -937,6 +937,19 @@ def processProjectUpdates():
         return errorenousUpdate
     else:
         return None
+
+
+def addUpdate(projectCpy, element, prevVal):
+
+    """
+    Adds the supplied parameters, packed into a tuple, to list
+    `projectUpdates`. Thereby it is assumed that `projectCpy` is a deep copy of
+    the current working `project` object and `element` is a reference into this
+    project copy. `prevVal` is the previous value of the element, it is only
+    set to `!= None` if `element.state == MODIFIED`.
+    """
+
+    projectUpdates.append((projectCpy, element, prevVal))
 
 
 ################## DEPRECATED ##################

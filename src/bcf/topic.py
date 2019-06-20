@@ -32,10 +32,12 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
         State.__init__(self, state)
         XMLName.__init__(self)
         Identifiable.__init__(self)
-        self._guid = Attribute(guid, "Guid", self)
-        self._external = Attribute(external, "isExternal", self)
-        self._reference = SimpleElement(reference, "ReferencedDocument", self)
-        self._description = SimpleElement(description, "Description", self)
+        self._guid = Attribute(guid, "Guid", UUID(int=0), self)
+        self._external = Attribute(external, "isExternal", False, self)
+        self._reference = SimpleElement(reference, "ReferencedDocument",
+                None, self)
+        self._description = SimpleElement(description, "Description",
+                "", self)
 
 
     @property
@@ -158,10 +160,10 @@ class BimSnippet(Hierarchy, State, XMLName, Identifiable):
         State.__init__(self, state)
         XMLName.__init__(self)
         Identifiable.__init__(self)
-        self._type = Attribute(type, "SnippetType", self)
-        self._external = Attribute(external, "isExternal", self)
-        self._reference = SimpleElement(reference, "Reference", self)
-        self._schema = SimpleElement(schema, "ReferenceSchema", self)
+        self._type = Attribute(type, "SnippetType", "", self)
+        self._external = Attribute(external, "isExternal", False, self)
+        self._reference = SimpleElement(reference, "Reference", None, self)
+        self._schema = SimpleElement(schema, "ReferenceSchema", None, self)
 
 
     @property
@@ -295,25 +297,28 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         State.__init__(self, state)
         XMLName.__init__(self)
         Identifiable.__init__(self)
-        self._title = SimpleElement(title, "Title", self)
+        self._title = SimpleElement(title, "Title", "", self)
         self._date = ModificationDate(date, self)
         self._author = ModificationAuthor(author, self)
-        self._type = Attribute(type, "TopicType", self)
-        self._status = Attribute(status, "TopicStatus", self)
-        self.referenceLinks = SimpleList(referenceLinks, "ReferenceLink", self)
+        self._type = Attribute(type, "TopicType", "", self)
+        self._status = Attribute(status, "TopicStatus", "", self)
+        self.referenceLinks = SimpleList(referenceLinks, "ReferenceLink",
+                "", self)
         self.refs = refs
-        self._priority = SimpleElement(priority, "Priority", self)
-        self._index = SimpleElement(index, "Index", self)
-        self.labels = SimpleList(labels, "Labels", self)
+        self._priority = SimpleElement(priority, "Priority", "", self)
+        self._index = SimpleElement(index, "Index", -1, self)
+        self.labels = SimpleList(labels, "Labels", "", self)
         self._modDate = ModificationDate(modDate, self,
                 ModificationType.MODIFICATION)
         self._modAuthor = ModificationAuthor(modAuthor, self,
                 ModificationType.MODIFICATION)
-        self._dueDate = SimpleElement(dueDate, "DueDate", self)
-        self._assignee = SimpleElement(assignee, "AssignedTo", self)
-        self._description = SimpleElement(description, "Description", self)
-        self._stage = SimpleElement(stage, "Stage", self)
-        self.relatedTopics = SimpleList(relatedTopics, "RelatedTopic", self)
+        self._dueDate = SimpleElement(dueDate, "DueDate", None, self)
+        self._assignee = SimpleElement(assignee, "AssignedTo", "", self)
+        self._description = SimpleElement(description, "Description",
+                "", self)
+        self._stage = SimpleElement(stage, "Stage", "", self)
+        self.relatedTopics = SimpleList(relatedTopics, "RelatedTopic",
+                UUID(int=0), self)
         self.bimSnippet = bimSnippet
 
         # set containingObjecf for all document references
