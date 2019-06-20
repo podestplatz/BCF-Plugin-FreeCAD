@@ -176,7 +176,7 @@ class AddElementTests(unittest.TestCase):
 
         markup = project.topicList[0]
         prototypeViewpointRef = copy.deepcopy(markup.viewpoints[0])
-        prototypeViewpointRef.id = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+        prototypeViewpointRef.xmlId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
         prototypeViewpointRef.viewpoint = None
         prototypeViewpointRef.state = s.State.States.ADDED
         markup.viewpoints.append(prototypeViewpointRef)

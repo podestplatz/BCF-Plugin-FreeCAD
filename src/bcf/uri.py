@@ -1,11 +1,12 @@
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
+from interfaces.identifiable import Identifiable
 
 """
 Wrapper class for a URI, maybe will get replaced by the uri module in the
 future
 """
-class Uri(Hierarchy, State):
+class Uri(Hierarchy, State, Identifiable):
     def __init__(self,
             uri: str,
             containingElement = None,
@@ -13,6 +14,7 @@ class Uri(Hierarchy, State):
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        Identifiable.__init__(self)
         self.uri = uri
 
 

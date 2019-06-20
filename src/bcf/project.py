@@ -3,7 +3,7 @@ from bcf.uri import Uri
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
 from interfaces.xmlname import XMLName
-from interfaces.identifiable import Identifiable
+from interfaces.identifiable import XMLIdentifiable, Identifiable
 
 DEBUG = False
 
@@ -31,7 +31,7 @@ def listSetContainingElement(itemList, containingObject):
 
 
 
-class SimpleElement(XMLName, Hierarchy, State):
+class SimpleElement(XMLName, Hierarchy, State, Identifiable):
 
     """
     Used for representing elements that are defined to be simple elements
@@ -43,6 +43,7 @@ class SimpleElement(XMLName, Hierarchy, State):
         XMLName.__init__(self, xmlName)
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        Identifiable.__init__(self)
         self.value = value
 
 
@@ -76,7 +77,7 @@ class SimpleElement(XMLName, Hierarchy, State):
         return elem
 
 
-class SimpleList(list, XMLName, Hierarchy, State):
+class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
 
     """
     Used for lists that contain just simple types. For example the `Labels`
@@ -97,6 +98,7 @@ class SimpleList(list, XMLName, Hierarchy, State):
         XMLName.__init__(self, xmlName)
         State.__init__(self, state)
         Hierarchy.__init__(self, containingElement)
+        Identifiable.__init__(self)
 
 
     def append(self, item):
@@ -125,7 +127,7 @@ class SimpleList(list, XMLName, Hierarchy, State):
 
 
 
-class Attribute(XMLName, Hierarchy, State):
+class Attribute(XMLName, Hierarchy, State, Identifiable):
 
     """
     Analogously to `SimpleElement` this class is used to represent attributes.
@@ -136,10 +138,11 @@ class Attribute(XMLName, Hierarchy, State):
         XMLName.__init__(self, xmlName)
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
+        Identifiable.__init__(self)
         self.value = value
 
 
-class Project(Hierarchy, State, XMLName, Identifiable):
+class Project(Hierarchy, State, XMLName, XMLIdentifiable, Identifiable):
     def __init__(self,
             uuid: UUID,
             name: str = "",
@@ -151,7 +154,8 @@ class Project(Hierarchy, State, XMLName, Identifiable):
         Hierarchy.__init__(self, None) # Project is the topmost element
         State.__init__(self, state)
         XMLName.__init__(self)
-        Identifiable.__init__(self, uuid)
+        XMLIdentifiable.__init__(self, uuid)
+        Identifiable.__init__(self)
         self._name = SimpleElement(name, "Name", self)
         self._extSchemaSrc = SimpleElement(extSchemaSrc, "ExtensionSchema", self)
         self.topicList = list()
@@ -182,7 +186,7 @@ class Project(Hierarchy, State, XMLName, Identifiable):
         if type(self) != type(other):
             return False
 
-        return self.id == other.id \
+        return self.xmlId == other.xmlId \
             and self.name == other.name \
             and self.extSchemaSrc == other.extSchemaSrc \
             and self.topicList == other.topicList
@@ -194,7 +198,7 @@ class Project(Hierarchy, State, XMLName, Identifiable):
 id='{}',
 name='{}',
 extSchemaSrc='{}',
-topicList='{}')""".format(str(self.id),
+topicList='{}')""".format(str(self.xmlId),
                 str(self.name),
                 str(self.extSchemaSrc),
                 self.topicList)

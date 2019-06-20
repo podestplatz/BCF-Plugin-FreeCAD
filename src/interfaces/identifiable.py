@@ -3,14 +3,25 @@ from uuid import UUID
 class Identifiable:
 
     """
-    Provides a member id to the inheriting class. This id is intended to be
-    of type: UUID. Although it can also be a string, which, however, must be
-    parsable as GUID for UUID.
+    This class supplies every object, that inherits it, with a unique id. This
+    id shall not be changed during runtime and is only set at object creation.
+    """
+
+    def __init__(self):
+        self.id = id(self)
+
+
+class XMLIdentifiable:
+
+    """
+    Holds the id the inheriting class should hold according to the xml file.
+    This id is intended to be of type: UUID. Although it can also be a string,
+    which, however, must be parsable as GUID for UUID.
     """
 
     def __init__(self, uId = UUID):
         if not uId:
-            raise ValueError("Id may not be `None`")
+            raise ValueError("XMLId may not be `None`")
 
         if isinstance(uId, str):
             try:
@@ -21,11 +32,11 @@ class Identifiable:
             self._id = uId
 
     @property
-    def id(self):
+    def xmlId(self):
         return self._id
 
-    @id.setter
-    def id(self, newVal):
+    @xmlId.setter
+    def xmlId(self, newVal):
         if isinstance(newVal, UUID):
             self._id = newVal
         elif isinstance(newVal, str):
@@ -42,10 +53,10 @@ class Identifiable:
         if otherId is None:
             return False
 
-        if type(self.id) != type(otherId):
+        if type(self.xmlId) != type(otherId):
             return False
 
-        return self.id == otherId
+        return self.xmlId == otherId
 
 
     def _raiseParseException(self, exc):

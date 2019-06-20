@@ -10,11 +10,11 @@ from bcf.project import (SimpleElement, Attribute, DEBUG,
 from bcf.viewpoint import (Viewpoint)
 from interfaces.state import State
 from interfaces.hierarchy import Hierarchy
-from interfaces.identifiable import Identifiable
+from interfaces.identifiable import XMLIdentifiable, Identifiable
 from interfaces.xmlname import XMLName
 
 
-class HeaderFile(Hierarchy, State, XMLName):
+class HeaderFile(Hierarchy, State, XMLName, Identifiable):
 
     def __init__(self,
             ifcProjectId: str = "",
@@ -29,6 +29,7 @@ class HeaderFile(Hierarchy, State, XMLName):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         XMLName.__init__(self, "File")
+        Identifiable.__init__(self)
         self._ifcProjectId = Attribute(ifcProjectId, "IfcProject", self)
         self._ifcSpatialStructureElement = Attribute(
                 ifcSpatialStructureElement, "IfcSpatialStructureElement", self)
@@ -156,7 +157,7 @@ class HeaderFile(Hierarchy, State, XMLName):
         return ret_str
 
 
-class Header(Hierarchy, State, XMLName):
+class Header(Hierarchy, State, XMLName, Identifiable):
 
     """
     Represents the Header Element. It is basically just a list of HeaderFiles as
@@ -173,6 +174,7 @@ class Header(Hierarchy, State, XMLName):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         XMLName.__init__(self)
+        Identifiable.__init__(self)
         self.files = files
 
         # set containingObject to itself for every file to perserve correct
@@ -193,7 +195,8 @@ class Header(Hierarchy, State, XMLName):
         return stateList
 
 
-class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
+class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
+        Identifiable):
 
     """ Base class for Viewpoint. """
 
@@ -208,9 +211,10 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
         """ Initialisation function of ViewpointReference """
 
         Hierarchy.__init__(self, containingElement)
-        Identifiable.__init__(self, id)
+        XMLIdentifiable.__init__(self, id)
         State.__init__(self, state)
         XMLName.__init__(self, "Viewpoints")
+        Identifiable.__init__(self)
         self._file = SimpleElement(file, "Viewpoint", self)
         self._snapshot = SimpleElement(snapshot, "Snapshot", self)
         self._index = SimpleElement(index, "Index", self)
@@ -272,8 +276,9 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
             return False
 
         if DEBUG:
-            if self.id != other.id:
-                print("Viewpoint: id is different {} {}".format(self.id, other.id))
+            if self.xmlId != other.xmlId:
+                print("Viewpoint: id is different {} {}".format(self.xmlId,
+                    other.xmlId))
             if self.file != other.file:
                 print("Viewpoint: file is different {} {}".format(
                     self.file, other.file))
@@ -284,7 +289,7 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
                 print("Viewpoint: index is different {} {}".format(
                     self.index, other.index))
 
-        return (self.id == other.id and
+        return (self.xmlId == other.xmlId and
                 self.file == other.file and
                 self.snapshot == other.snapshot and
                 self.index == other.index and
@@ -293,14 +298,14 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
 
     def __str__(self):
         ret_str = ("ViewpointReference(id='{}', file='{}', snapshot='{}',"\
-                        " index='{}')").format(self.id, self.file, self.snapshot,
+                        " index='{}')").format(self.xmlId, self.file, self.snapshot,
                         self.index)
         return ret_str
 
 
     def getEtElement(self, elem):
 
-        elem.attrib["Guid"] = str(self.id)
+        elem.attrib["Guid"] = str(self.xmlId)
 
         if self.file is not None:
             fileElem = ET.SubElement(elem, "Viewpoint")
@@ -333,7 +338,7 @@ class ViewpointReference(Hierarchy, State, Identifiable, XMLName):
         return stateList
 
 
-class Comment(Hierarchy, Identifiable, State, XMLName):
+class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
     """ Class holding all data about a comment """
 
@@ -351,9 +356,10 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
         """ Initialisation function of Comment """
 
         Hierarchy.__init__(self, containingElement)
-        Identifiable.__init__(self, guid)
+        XMLIdentifiable.__init__(self, guid)
         State.__init__(self, state)
         XMLName.__init__(self)
+        Identifiable.__init__(self)
         self._comment = SimpleElement(comment, "Comment", self)
         self.viewpoint = viewpoint
         self._date = ModificationDate(date, self)
@@ -423,7 +429,7 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
             return False
 
         if DEBUG:
-            if not self.idEquals(other.id):
+            if not self.idEquals(other.xmlId):
                 print("Id is different")
             if self.creation != other.creation:
                 print("Creation is different")
@@ -434,7 +440,7 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
             if self.lastModification != other.lastModification:
                 print("LastModification is different")
 
-        return (self.idEquals(other.id) and
+        return (self.idEquals(other.xmlId) and
                 (self.date == other.date or
                     (self.date is None and
                     other.date is None)) and
@@ -454,7 +460,7 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
     def __str__(self):
 
         ret_str = ("Comment(\n\tid='{}'\n\tdate='{}', \n\tauthor='{}', \n\tcomment='{}', \n\tviewpoint='{}',"\
-                "\n\tModifiedAuthor='{}', ModifiedDate='{}')").format(self.id,
+                "\n\tModifiedAuthor='{}', ModifiedDate='{}')").format(self.xmlId,
                         self.date, self.author, self.comment,
                 str(self.viewpoint), self.modAuthor, self.modDate)
         return ret_str
@@ -463,7 +469,7 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
     def getEtElement(self, elem):
 
         elem.tag = self.xmlName
-        elem.attrib["Guid"] = str(self.id)
+        elem.attrib["Guid"] = str(self.xmlId)
 
         dateElem = ET.SubElement(elem, "Date")
         dateElem = self._date.getEtElement(dateElem)
@@ -476,7 +482,7 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
 
         if self.viewpoint is not None:
             vpElem = ET.SubElement(elem, "Viewpoint")
-            vpElem.attrib["Guid"] = str(self.viewpoint.id)
+            vpElem.attrib["Guid"] = str(self.viewpoint.xmlId)
 
         if self.modDate is not None:
             modDateElem = ET.SubElement(elem, "ModifiedDate")
@@ -502,7 +508,7 @@ class Comment(Hierarchy, Identifiable, State, XMLName):
         return stateList
 
 
-class Markup(Hierarchy, State, XMLName):
+class Markup(Hierarchy, State, XMLName, Identifiable):
 
     """ Every topic folder has exactly one markup.bcf file. This forms the
     starting point for the ui to get the data """
@@ -520,6 +526,7 @@ class Markup(Hierarchy, State, XMLName):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         XMLName.__init__(self)
+        Identifiable.__init__(self)
         self.header = header
         self.topic = topic
         self.comments = comments
@@ -558,7 +565,7 @@ class Markup(Hierarchy, State, XMLName):
         if self.viewpoints is None:
             return None
 
-        resultList = list(filter(lambda item: item.id == guid, self.viewpoints))
+        resultList = list(filter(lambda item: item.xmlId == guid, self.viewpoints))
         if len(resultList) >= 1:
             return resultList[0]
         return None

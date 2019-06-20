@@ -408,7 +408,7 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
     # Add the right viewpoint references to each comment
     for comment in comments:
         if comment.viewpoint:
-            cViewpointRefGuid = comment.viewpoint.id
+            cViewpointRefGuid = comment.viewpoint.xmlId
             viewpointRef = markup.getViewpointRefByGuid(cViewpointRefGuid)
             comment.viewpoint = viewpointRef
 

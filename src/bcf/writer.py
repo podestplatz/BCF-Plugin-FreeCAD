@@ -1,8 +1,8 @@
 import os
 import io # used for writing files in utf8
 import sys
-import collections.deque
 from uuid import UUID
+from collections import deque
 
 if __name__ == "__main__":
     sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
@@ -99,7 +99,7 @@ processed, appended to this list.
 It therefore serves as storage past plugin states and enables undo operations.
 """
 SNAPSHOT_CNT = 5
-projectSnapshots = collections.deque([None]*SNAPSHOT_CNT, SNAPSHOT_CNT)
+projectSnapshots = deque([None]*SNAPSHOT_CNT, SNAPSHOT_CNT)
 
 
 ################## DEPRECATED ##################
@@ -151,11 +151,11 @@ def getUniqueIdOfListElementInHierarchy(element):
                         item))
             break
 
-    if isinstance(listElement, iI.Identifiable):
+    if isinstance(listElement, iI.XMLIdentifiable):
         p.debug("its id = {} element!".format(
                 getUniqueIdOfListElementInHierarchy.__name__,
-                    item.id))
-        return item.id
+                    item.xmlId))
+        return item.xmlId
     return None
 
 
@@ -483,7 +483,7 @@ def getTopicPath(element):
     if not topic:
         return None
 
-    topicDir = str(topic.id)
+    topicDir = str(topic.xmlId)
     bcfDir = reader.bcfDir
     return os.path.join(bcfDir, topicDir)
 
@@ -593,14 +593,14 @@ def addElement(element):
     writeXMLFile(xmlroot, filePath)
 
 
-def deleteIdentifiableElement(element, xmlroot):
+def deleteXMLIdentifiableElement(element, xmlroot):
 
     """
     Deletes an element that can be identified by an id.
     Returns the updated xmlroot
     """
 
-    elemId = element.id
+    elemId = element.xmlId
     etElem = getEtElementById(elemId, element.xmlName, xmlroot)
     p.debug("{} corresponds to ETElement {}".format(element, etElem))
 
@@ -636,10 +636,10 @@ def deleteElement(element):
     xmlroot = xmlfile.getroot()
 
     # if identifiable then search for the guid using xmlpath.
-    if issubclass(type(element), iI.Identifiable):
-        p.debug("{} inherits from Identifiable -> deleting by"\
+    if issubclass(type(element), iI.XMLIdentifiable):
+        p.debug("{} inherits from XMLIdentifiable -> deleting by"\
                 " Id".format(element))
-        deleteIdentifiableElement(element, xmlroot)
+        deleteXMLIdentifiableElement(element, xmlroot)
 
         if isinstance(element, m.ViewpointReference):
             if element.viewpoint.state == iS.State.States.DELETED:
@@ -668,7 +668,7 @@ def deleteElement(element):
 
     # otherwise employ getEtElementFromFile to get the right element
     else:
-        p.debug("{} does not inherit from Identifiable".format(element))
+        p.debug("{} does not inherit from XMLIdentifiable".format(element))
 
         fileEtElement = getEtElementFromFile(xmlroot, element, [])
         parentEtElement = getParentElement(element, xmlroot)

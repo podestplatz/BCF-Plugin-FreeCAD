@@ -6,6 +6,7 @@ from bcf.project import listSetContainingElement
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
 from interfaces.xmlname import XMLName
+from interfaces.identifiable import Identifiable
 
 
 class BitmapFormat(Enum):
@@ -458,7 +459,7 @@ class Components(Hierarchy, State, XMLName):
         return elem
 
 
-class Viewpoint(Hierarchy, State, XMLName):
+class Viewpoint(Hierarchy, State, XMLName, Identifiable):
 
     """
     Viewpoint uses the default implementation of getStateList(). Objects of type
@@ -482,7 +483,8 @@ class Viewpoint(Hierarchy, State, XMLName):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         XMLName.__init__(self, "VisualizationInfo")
-        self.id = id
+        Identifiable.__init__(self)
+        self.xmlId = id
         self.components = components
         self.oCamera = oCamera
         self.pCamera = pCamera
@@ -508,7 +510,7 @@ class Viewpoint(Hierarchy, State, XMLName):
         Returns true if every variable member of both classes are the same
         """
 
-        return (self.id == other.id and
+        return (self.xmlId == other.xmlId and
                 self.components == other.components and
                 self.oCamera == other.oCamera and
                 self.pCamera == other.pCamera and
@@ -525,7 +527,7 @@ class Viewpoint(Hierarchy, State, XMLName):
 \tpCamera='{}',
 \tlines='{}',
 \tclippingPlanes='{}',
-\tbitmaps='{}')""".format(self.id, str(self.components), str(self.oCamera),
+\tbitmaps='{}')""".format(self.xmlId, str(self.components), str(self.oCamera),
                 str(self.pCamera), str(self.lines), str(self.clippingPlanes),
                 str(self.bitmaps))
         return ret_str
@@ -543,7 +545,7 @@ class Viewpoint(Hierarchy, State, XMLName):
     def getEtElement(self, elem):
 
         elem.tag = self.xmlName
-        elem.attrib["Guid"] = str(self.id)
+        elem.attrib["Guid"] = str(self.xmlId)
 
         if self.components is not None:
             componentsElem = ET.SubElement(elem, "Components")

@@ -11,12 +11,12 @@ from bcf.uri import Uri
 from bcf.project import (Attribute, SimpleElement, SimpleList)
 from bcf.project import DEBUG
 from interfaces.hierarchy import Hierarchy
-from interfaces.identifiable import Identifiable
+from interfaces.identifiable import XMLIdentifiable, Identifiable
 from interfaces.state import State
 from interfaces.xmlname import XMLName
 
 
-class DocumentReference(Hierarchy, State, XMLName):
+class DocumentReference(Hierarchy, State, XMLName, Identifiable):
     def __init__(self,
                 guid: UUID = None,
                 external: bool = False,
@@ -30,6 +30,7 @@ class DocumentReference(Hierarchy, State, XMLName):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         XMLName.__init__(self)
+        Identifiable.__init__(self)
         self._guid = Attribute(guid, "Guid", self)
         self._external = Attribute(external, "isExternal", self)
         self._reference = SimpleElement(reference, "ReferencedDocument", self)
@@ -126,7 +127,7 @@ class DocumentReference(Hierarchy, State, XMLName):
         return stateList
 
 
-class BimSnippet(Hierarchy, State, XMLName):
+class BimSnippet(Hierarchy, State, XMLName, Identifiable):
     def __init__(self,
             type: str = "",
             external: bool = False,
@@ -140,6 +141,7 @@ class BimSnippet(Hierarchy, State, XMLName):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         XMLName.__init__(self)
+        Identifiable.__init__(self)
         self._type = Attribute(type, "SnippetType", self)
         self._external = Attribute(external, "isExternal", self)
         self._reference = SimpleElement(reference, "Reference", self)
@@ -228,7 +230,7 @@ class BimSnippet(Hierarchy, State, XMLName):
         return stateList
 
 
-class Topic(Hierarchy, Identifiable, State, XMLName):
+class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
     """ Topic contains all metadata about one ... topic """
 
@@ -258,9 +260,10 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         """ Initialisation function of Topic """
 
         Hierarchy.__init__(self, containingElement)
-        Identifiable.__init__(self, id)
+        XMLIdentifiable.__init__(self, id)
         State.__init__(self, state)
         XMLName.__init__(self)
+        Identifiable.__init__(self)
         self._title = SimpleElement(title, "Title", self)
         self._date = ModificationDate(date, self)
         self._author = ModificationAuthor(author, self)
@@ -417,7 +420,7 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         Returns true if every variable member of both classes are the same
         """
 
-        self.__printEquality(self.id == other.id, "id")
+        self.__printEquality(self.xmlId == other.xmlId, "id")
         self.__printEquality(self.title == other.title, "title")
         self.__printEquality(self.__checkNone(self.date, other.date),
                 "Date")
@@ -443,7 +446,7 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
         self.__printEquality(self.__checkNone(self.bimSnippet,
             other.bimSnippet), "bimSnippet")
 
-        return (self.id == other.id and
+        return (self.xmlId == other.xmlId and
                 self.title == other.title and
                 self.__checkNone(self.date, other.date) and
                 self.author == other.author and
@@ -488,7 +491,7 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
     Stage: {},
     RelatedTopics: {},
     Labels: {},
-    DocumentReferences: {}""".format(self.id, self.title, str(self.date),
+    DocumentReferences: {}""".format(self.xmlId, self.title, str(self.date),
             self.author,
             self.type, self.status, self.priority, self.index,
             str(self.modDate), self.modAuthor, self.dueDate,
@@ -511,7 +514,7 @@ class Topic(Hierarchy, Identifiable, State, XMLName):
     def getEtElement(self, elem):
 
         elem.tag = self.xmlName
-        elem.attrib["Guid"] = str(self.id)
+        elem.attrib["Guid"] = str(self.xmlId)
 
         if self.type != "":
             elem.attrib["type"] = self.type
