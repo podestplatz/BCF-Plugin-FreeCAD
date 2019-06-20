@@ -572,3 +572,22 @@ class Viewpoint(Hierarchy, State, XMLName, Identifiable):
             self._generateListElements(elem, self.bitmaps)
 
         return elem
+
+
+    def searchObject(self, object):
+
+        """
+        A viewpoint is thought of as one object that gets transmitted. One
+        member object of viewpoint does not get copied or handed over by
+        itself. Always a reference, or copy of a whole viewpoint object is
+        passed along. ==> only viewpoint has an id and is checked against it.
+        """
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        return None

@@ -32,3 +32,15 @@ class Uri(Hierarchy, State, Identifiable):
     def __str__(self):
         ret_str = "{}".format(self.uri)
         return ret_str
+
+
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        return None

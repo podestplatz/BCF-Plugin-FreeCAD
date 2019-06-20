@@ -8,7 +8,8 @@ from xmlschema import XMLSchema
 from bcf.modification import (ModificationDate, ModificationAuthor,
         ModificationType)
 from bcf.uri import Uri
-from bcf.project import (Attribute, SimpleElement, SimpleList)
+from bcf.project import (Attribute, SimpleElement, SimpleList,
+        searchListObject)
 from bcf.project import DEBUG
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import XMLIdentifiable, Identifiable
@@ -127,6 +128,21 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
         return stateList
 
 
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        members = [ self._guid, self._external, self._reference,
+                self._description ]
+        searchResult = searchListObject(object, members)
+        return searchResult
+
+
 class BimSnippet(Hierarchy, State, XMLName, Identifiable):
     def __init__(self,
             type: str = "",
@@ -228,6 +244,21 @@ class BimSnippet(Hierarchy, State, XMLName, Identifiable):
         stateList += self._schema.getStateList()
 
         return stateList
+
+
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        members = [ self._type, self._external, self._reference, self._schema ]
+        searchResult = searchListObject(object, members)
+
+        return searchResult
 
 
 class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
@@ -598,3 +629,38 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             print("Topic.getStateList(): returning {}".format(stateList))
         return stateList
 
+
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        members = [ self._title, self._date, self._author, self._type,
+                self._status, self._priority, self._index, self._modDate,
+                self._modAuthor, self._dueDate, self._assignee,
+                self._description, self._stage, self.bimSnippet ]
+        searchResult = searchListObject(object, members)
+        if searchResult is not None:
+            return searchResult
+
+        searchResult = searchListObject(object, self.referenceLinks)
+        if searchResult is not None:
+            return searchResult
+
+        searchResult = searchListObject(object, self.refs)
+        if searchResult is not None:
+            return searchResult
+
+        searchResult = searchListObject(object, self.labels)
+        if searchResult is not None:
+            return searchResult
+
+        searchResult = searchListObject(object, self.relatedTopics)
+        if searchResult is not None:
+            return searchResult
+
+        return None

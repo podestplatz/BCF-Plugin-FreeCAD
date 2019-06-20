@@ -5,7 +5,7 @@ from interfaces.state import State
 from interfaces.xmlname import XMLName
 from interfaces.identifiable import XMLIdentifiable, Identifiable
 
-DEBUG = False
+DEBUG = True
 
 if DEBUG:
     import inspect
@@ -29,6 +29,22 @@ def listSetContainingElement(itemList, containingObject):
     for item in itemList:
         item.containingObject = containingObject
 
+
+def searchListObject(object, elementList):
+
+    if not issubclass(type(object), Identifiable):
+        return None
+
+    searchResult = None
+    for item in elementList:
+        if item is None:
+            continue
+
+        searchResult = item.searchObject(object)
+        if searchResult is not None:
+            break
+
+    return searchResult
 
 
 class SimpleElement(XMLName, Hierarchy, State, Identifiable):
@@ -75,6 +91,18 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
         elem.text = str(self.value)
 
         return elem
+
+
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+        else:
+            return None
 
 
 class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
@@ -126,7 +154,6 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
                 XMLName.__eq__(self, other))
 
 
-
 class Attribute(XMLName, Hierarchy, State, Identifiable):
 
     """
@@ -140,6 +167,18 @@ class Attribute(XMLName, Hierarchy, State, Identifiable):
         State.__init__(self, state)
         Identifiable.__init__(self)
         self.value = value
+
+
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+        else:
+            return None
 
 
 class Project(Hierarchy, State, XMLName, XMLIdentifiable, Identifiable):
@@ -218,3 +257,30 @@ topicList='{}')""".format(str(self.xmlId),
             stateList += markup.getStateList()
 
         return stateList
+
+
+    def searchObject(self, object):
+
+        """
+        Checks whether the current object has the id equal to `id`. If so it is
+        returned. If not the members of the object are checked against `id`.
+        Thereby implementing a depth first search.
+        """
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        members = [self._name, self._extSchemaSrc]
+        searchResult = searchListObject(object, members)
+        if searchResult is not None:
+            return searchResult
+
+        searchResult = searchListObject(object, self.topicList)
+        if searchResult is not None:
+            return searchResult
+
+        return None

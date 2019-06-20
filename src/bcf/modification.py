@@ -2,6 +2,7 @@ from enum import Enum
 from datetime import datetime
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
+from interfaces.identifiable import Identifiable
 
 import bcf.project as p
 
@@ -40,6 +41,18 @@ class ModificationAuthor(p.SimpleElement):
             self.value = newVal
 
 
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        return None
+
+
 class ModificationDate(p.SimpleElement):
 
     def __init__(self,
@@ -76,6 +89,18 @@ class ModificationDate(p.SimpleElement):
         elem.text = self.date.isoformat("T", "seconds")
 
         return elem
+
+
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        return None
 
 
 class Modification(Hierarchy, State):

@@ -11,6 +11,10 @@ class Identifiable:
         self.id = id(self)
 
 
+    def searchObject(self, object):
+        pass
+
+
 class XMLIdentifiable:
 
     """

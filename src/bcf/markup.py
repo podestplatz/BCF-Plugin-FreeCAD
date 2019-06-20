@@ -6,7 +6,7 @@ from bcf.uri import Uri
 from bcf.modification import (ModificationDate, ModificationAuthor, ModificationType)
 from bcf.topic import Topic
 from bcf.project import (SimpleElement, Attribute, DEBUG,
-        listSetContainingElement, debug)
+        listSetContainingElement, debug, searchListObject)
 from bcf.viewpoint import (Viewpoint)
 from interfaces.state import State
 from interfaces.hierarchy import Hierarchy
@@ -37,6 +37,7 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
         self._filename = SimpleElement(filename, "Filename", self)
         self._time = SimpleElement(time, "Date", self)
         self._reference = SimpleElement(reference, "Reference", self)
+
 
 
     @property
@@ -157,6 +158,21 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
         return ret_str
 
 
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        members = [self._ifcProjectId, self._ifcSpatialStructureElement,
+                self._external, self._filename, self._time, self._reference]
+        searchResult = searchListObject(object, members) # imported from project
+        return searchResult
+
+
 class Header(Hierarchy, State, XMLName, Identifiable):
 
     """
@@ -193,6 +209,19 @@ class Header(Hierarchy, State, XMLName, Identifiable):
             stateList += f.getStateList()
 
         return stateList
+
+
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        searchResult = searchListObject(object, self.files)
+        return searchResult
 
 
 class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
@@ -336,6 +365,21 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
             stateList += self._viewpoint.getStateList()
 
         return stateList
+
+
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        members = [self._file, self._snapshot, self._index, self._viewpoint]
+
+        searchResult = searchListObject(object, members)
+        return searchResult
 
 
 class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
@@ -508,6 +552,21 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         return stateList
 
 
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        members = [self._comment, self.viewpoint, self._date, self._author,
+                self._modDate, self._modAuthor]
+        searchResult = searchListObject(object, members)
+        return searchResult
+
+
 class Markup(Hierarchy, State, XMLName, Identifiable):
 
     """ Every topic folder has exactly one markup.bcf file. This forms the
@@ -617,3 +676,27 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
 
         return stateList
 
+
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        members = [self.header, self.topic]
+        searchResult = searchListObject(object, members)
+        if searchResult is not None:
+            return searchResult
+
+        searchResult = searchListObject(object, self.comments)
+        if searchResult is not None:
+            return searchResult
+
+        searchResult = searchListObject(object, self.viewpoints)
+        if searchResult is not None:
+            return searchResult
+
+        return None
