@@ -301,8 +301,8 @@ class AddElementTests(unittest.TestCase):
             containingElement = header,
             state = s.State.States.ADDED)
         header.files.append(newFile)
-        project.debug("writer_tests.{}(): type of newFile is"
-                " {}".format(self.test_add_file.__name__,
+        project.debug("type of newFile is"
+                " {}".format(
                     type(newFile)))
 
         writer.addElement(newFile)
@@ -312,10 +312,10 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_file.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
+            project.debug("copied erroneous file to"\
                     " {}".format(self.test_add_file.__name__,
                         wrongFileDestination))
-            print("writer_tests.{}(): Following is the diff between the file that was generated"\
+            project.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
                     self.test_add_viewpointreference.__name__,
                     wrongFileDestination))
@@ -344,13 +344,11 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_file_attribute.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            print("writer_tests.{}(): Following is the diff between the file that was generated"\
+            project.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            project.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
-                    self.test_add_viewpointreference.__name__,
-                    wrongFileDestination))
+                   wrongFileDestination))
             pprint.pprint(diff)
         self.assertTrue(equal)
 
@@ -376,13 +374,10 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_file_attribute2.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            print("writer_tests.{}(): Following is the diff between the file that was generated"\
-                " and the prepared file:".format(
-                    self.test_add_viewpointreference.__name__,
-                    wrongFileDestination))
+            project.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            project.debug("Following is the diff between the file that was generated"\
+                    " and the prepared file:".format(wrongFileDestination))
             pprint.pprint(diff)
         self.assertTrue(equal)
 
@@ -408,12 +403,10 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_doc_ref_attribute.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            print("writer_tests.{}(): Following is the diff between the file that was generated"\
+            project.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            project.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
-                    self.test_add_viewpointreference.__name__,
                     wrongFileDestination))
             pprint.pprint(diff)
         self.assertTrue(equal)
@@ -439,12 +432,10 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_bim_snippet.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            print("writer_tests.{}(): Following is the diff between the file that was generated"\
+            project.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            project.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
-                    self.test_add_viewpointreference.__name__,
                     wrongFileDestination))
             pprint.pprint(diff)
         self.assertTrue(equal)
@@ -470,12 +461,10 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_label.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            print("writer_tests.{}(): Following is the diff between the file that was generated"\
+            project.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            project.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
-                    self.test_add_viewpointreference.__name__,
                     wrongFileDestination))
             pprint.pprint(diff)
         self.assertTrue(equal)
@@ -501,12 +490,10 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_assignedTo.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            print("writer_tests.{}(): Following is the diff between the file that was generated"\
+            project.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            project.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
-                    self.test_add_viewpointreference.__name__,
                     wrongFileDestination))
             pprint.pprint(diff)
         self.assertTrue(equal)

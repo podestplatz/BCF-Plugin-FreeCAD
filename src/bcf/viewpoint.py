@@ -109,7 +109,7 @@ class Camera(Hierarchy, State, XMLName):
         State.__init__(self, state)
         XMLName.__init__(self, xmlName)
         self.viewPoint = viewPoint
-        self.viewpoint.xmlName = "CameraViewpoint"
+        self.viewPoint.xmlName = "CameraViewpoint"
         self.direction = direction
         self.direction.xmlName = "CameraDirection"
         self.upVector = upVector
