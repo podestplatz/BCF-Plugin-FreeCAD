@@ -12,7 +12,6 @@ if __name__ == "__main__":
 import bcf.util as util
 from bcf.project import (Project, debug, DEBUG)
 from bcf.uri import Uri as Uri
-from bcf.modification import Modification
 from bcf.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
 from bcf.topic import (Topic, BimSnippet, DocumentReference)
 from bcf.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
