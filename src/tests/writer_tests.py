@@ -29,8 +29,14 @@ import interfaces.hierarchy as hierarchy
 
 def setupBCFFile(testFile, testFileDir, testTopicDir, testBCFName):
 
-    os.system("cp {} {}/{}/markup.bcf".format(testFile,
-        testFileDir, testTopicDir))
+    cmd = "cp {} {}/{}/markup.bcf".format(testFile,
+        testFileDir, testTopicDir)
+    project.debug("Executing: {}".format(cmd))
+    os.system(cmd)
+
+    cmd = "cd ./writer_tests && zip -q {} {}/markup.bcf".format(testBCFName,
+        testTopicDir)
+    project.debug("Executing: {}".format(cmd))
     os.system("cd ./writer_tests && zip -q {} {}/markup.bcf".format(testBCFName,
         testTopicDir))
 
@@ -101,6 +107,12 @@ class AddElementTests(unittest.TestCase):
         self.testFileDestinations = [os.path.join(self.markupDestDir, "markup.bcf"),
                 os.path.join(self.markupDestDir, "viewpoint.bcfv"),
                 os.path.join(self.markupDestDir, "viewpoint2.bcfv")]
+
+
+    def tearDown(self):
+
+        path = os.path.join(util.getSystemTmp(), self.testBCFName)
+        rmtree(path)
 
 
     def test_addMarkup(self):
@@ -519,6 +531,12 @@ class GetEtElementFromFileTests(unittest.TestCase):
                 os.path.join(self.markupDestDir, "viewpoint2.bcfv")]
 
 
+    def tearDown(self):
+
+        path = os.path.join(util.getSystemTmp(), self.testBCFName)
+        rmtree(path)
+
+
     def test_findComment(self):
 
         """
@@ -686,6 +704,12 @@ class DeleteElementTests(unittest.TestCase):
         self.testFileDestinations = [os.path.join(self.markupDestDir, "markup.bcf"),
                 os.path.join(self.markupDestDir, "viewpoint.bcfv"),
                 os.path.join(self.markupDestDir, "viewpoint2.bcfv")]
+
+
+    def tearDown(self):
+
+        path = os.path.join(util.getSystemTmp(), self.testBCFName)
+        rmtree(path)
 
 
     def test_deleteComment(self):
