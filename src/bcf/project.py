@@ -65,6 +65,7 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
 
 
     def __eq__(self, other):
+
         if type(self) != type(other):
             return False
 
@@ -301,12 +302,17 @@ topicList='{}')""".format(str(self.xmlId),
         # if `object` is part of a list then its name will be referenced by
         # `memberName`
         for (mName, mValue) in vars(parent).items():
+            debug("checking member {}".format(mName))
             if issubclass(type(mValue), list):
                 if object in mValue:
                     memberName = mName
                     isList = True
                     break
-            elif object.id == memberValue.id:
+            # catch members that don't inherit Identifiable and thus aren't
+            # applicable to deletion (e.g.: state, xmlName)
+            elif not issubclass(type(mValue), Identifiable):
+                continue
+            elif object.id == mValue.id:
                 memberName = mName
                 break
 
@@ -319,13 +325,15 @@ topicList='{}')""".format(str(self.xmlId),
 
         # remove the object fom the list
         if isList:
+            debug("Removing {} from list member {}".format(object, memberName))
             getattr(parent, memberName).remove(object)
 
         # set the object back to its default state
         else:
+            debug("Removing {} from {}".format(memberName, object))
             objType = type(object)
-            if (issubclass(objType, p.Attribute) or
-                    issubclass(objType, p.SimpleElement)):
+            if (issubclass(objType, Attribute) or
+                    issubclass(objType, SimpleElement)):
                 object.value = object.defaultValue
                 object.state = State.States.ORIGINAL
             else:

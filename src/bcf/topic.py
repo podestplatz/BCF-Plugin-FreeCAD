@@ -81,6 +81,9 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
         Returns true if every variable member of both classes are the same
         """
 
+        if type(self) != type(other):
+            return False
+
         return (self.guid == other.guid and
                 self.external == other.external and
                 self.reference == other.reference and
@@ -203,6 +206,9 @@ class BimSnippet(Hierarchy, State, XMLName, Identifiable):
         """
         Returns true if every variable member of both classes are the same
         """
+
+        if type(self) != type(other):
+            return False
 
         return (self.type == other.type and
                 self.external == other.external and
@@ -455,6 +461,9 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         """
         Returns true if every variable member of both classes are the same
         """
+
+        if type(self) != type(other):
+            return False
 
         self.__printEquality(self.xmlId == other.xmlId, "id")
         self.__printEquality(self.title == other.title, "title")

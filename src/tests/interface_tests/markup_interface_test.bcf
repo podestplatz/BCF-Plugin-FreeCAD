@@ -4,7 +4,7 @@
 		<File></File>
 		<File />
 		<File isExternal="true" />
-		<File isExternal="false">
+		<File IfcProject="aaaaaaaaaaaaaaaaaaaaaa" isExternal="false">
 			<Filename>Yo wassup?</Filename>
 			<Date>2019-05-31T09:41:48+02:00</Date>
 			<Reference>https://www.example.org/example.ifc</Reference>
@@ -36,7 +36,7 @@
 		<Date>2014-10-16T13:10:56+00:00</Date>
 		<Author>fleopard@bim.col</Author>
 		<Comment>Ducts and walls are clashing. Make sure there is a hole in the wall large enough to accomodate these ducts.</Comment>
-		<Viewpoint Guid="a7230ae3-d17d-46fa-8fbd-775d1a0e3efb" />
+		<Viewpoint Guid="b7230ae3-d17d-46fa-8fbd-775d1a0e3efb" />
 		<ModifiedDate>2014-10-16T13:10:56+00:00</ModifiedDate>
 		<ModifiedAuthor>fleopard@bim.col</ModifiedAuthor>
 	</Comment>

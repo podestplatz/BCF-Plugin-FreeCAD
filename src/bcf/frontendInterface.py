@@ -31,7 +31,7 @@ def deleteObject(project, object):
     # ==> `result == projectCpy` will be returned to stay on the errorenous
     # state and give the user the chance to fix the issue.
     if result is not None:
-        return result
+        return result[0]
 
     # otherwise the updated project is returned
     else:

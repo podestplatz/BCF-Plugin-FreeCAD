@@ -47,12 +47,21 @@ class DeleteObjectTest(unittest.TestCase):
         self.testBCFName = "Issues-Example.bcf"
         self.markupDestDir = os.path.join(util.getSystemTmp(), self.testBCFName,
                 self.testTopicDir)
-        self.testFiles = ["markup_interface_test.bcf" ]
+        self.testFiles = [ "markup_interface_test.bcf" ]
+
+    def tearDown(self):
+        dirPath = os.path.join(util.getSystemTmp(), self.testBCFName)
+        rmtree(dirPath)
+
 
     def test_deleteComment(self):
 
+        project.debug("+++++++++++++++++++")
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
-        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        testFile = setupBCFFile(srcFilePath,
+                self.testFileDir,
+                self.testTopicDir,
+                self.testBCFName)
         p = reader.readBcfFile(testFile)
 
         commentToDelete = p.topicList[0].comments[0]
@@ -60,17 +69,160 @@ class DeleteObjectTest(unittest.TestCase):
 
         self.assertTrue(len(p.topicList[0].comments)==0)
 
+
     def test_deleteIfcProject(self):
-        pass
+
+        """
+        Checks whether after deletion of the IfcProject attribute, the
+        attribute holds the default value or not.
+        """
+
+        project.debug("+++++++++++++++++++")
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath,
+                self.testFileDir,
+                self.testTopicDir,
+                self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        objectToDelete = p.topicList[0].header.files[1]._ifcProjectId
+        objectToDelete.state = s.State.States.DELETED
+        newProject = bFI.deleteObject(p, objectToDelete)
+
+        newObject = newProject.topicList[0].header.files[1]._ifcProjectId
+        newObjectValue = newObject.value
+        defaultValue = newObject.defaultValue
+        self.assertTrue(newObjectValue == defaultValue)
+
 
     def test_deleteFile(self):
-        pass
+
+        """
+        Tests the deletion of a file node.
+        """
+
+        project.debug("+++++++++++++++++++")
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath,
+                self.testFileDir,
+                self.testTopicDir,
+                self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        objectToDelete = p.topicList[0].header.files[0]
+        objectToDelete.state = s.State.States.DELETED
+        newProject = bFI.deleteObject(p, objectToDelete)
+
+        searchResult = newProject.searchObject(objectToDelete)
+        self.assertTrue(len(newProject.topicList[0].header.files) == 1 and
+                searchResult == None)
+
 
     def test_deleteHeader(self):
-        pass
+
+        """
+        Tests the deletion of the complete Header element
+        """
+
+        project.debug("+++++++++++++++++++")
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath,
+                self.testFileDir,
+                self.testTopicDir,
+                self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        objectToDelete = p.topicList[0].header
+        objectToDelete.state = s.State.States.DELETED
+        newProject = bFI.deleteObject(p, objectToDelete)
+
+        searchResult = newProject.searchObject(objectToDelete)
+        self.assertTrue(newProject.topicList[0].header == None and
+                searchResult == None)
+
 
     def test_deleteLabel(self):
-        pass
+
+        """
+        Tests the deletion of a Label
+        """
+
+        project.debug("+++++++++++++++++++")
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath,
+                self.testFileDir,
+                self.testTopicDir,
+                self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        objectToDelete = p.topicList[0].topic.labels[0]
+        objectToDelete.state = s.State.States.DELETED
+        newProject = bFI.deleteObject(p, objectToDelete)
+
+        labelList = newProject.topicList[0].topic.labels
+        searchResult = newProject.searchObject(objectToDelete)
+        self.assertTrue(len(labelList) == 2 and searchResult == None)
+
+
+    def test_deleteViewpoint(self):
+
+        project.debug("+++++++++++++++++++")
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath,
+                self.testFileDir,
+                self.testTopicDir,
+                self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        objectToDelete = p.topicList[0].viewpoints[0]
+        objectToDelete.state = s.State.States.DELETED
+        objectToDelete.viewpoint.state = s.State.States.DELETED
+        newProject = bFI.deleteObject(p, objectToDelete)
+
+        vpList = newProject.topicList[0].viewpoints
+        searchResult = newProject.searchObject(objectToDelete)
+        vpFilePath = os.path.join(util.getSystemTmp(), self.testBCFName,
+                self.testTopicDir, "viewpoint.bcfv")
+        vpFileExists = os.path.exists(vpFilePath)
+
+        project.debug("\n\tlen(vpList)={}\n\tsearchResult={}\n\t"\
+                "vpFileExists={}".format(len(vpList), searchResult,
+                    vpFileExists))
+        self.assertTrue(len(vpList) == 0 and searchResult == None and
+                not vpFileExists)
+
+
+    def test_deleteViewpointReference(self):
+
+        """
+        Tests the deletion of a viewpoint reference while preserving the
+        underlying viewpoint object
+        """
+
+        project.debug("+++++++++++++++++++")
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath,
+                self.testFileDir,
+                self.testTopicDir,
+                self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        objectToDelete = p.topicList[0].viewpoints[0]
+        objectToDelete.state = s.State.States.DELETED
+        newProject = bFI.deleteObject(p, objectToDelete)
+
+        vpList = newProject.topicList[0].viewpoints
+        searchResult = newProject.searchObject(objectToDelete)
+        vpFilePath = os.path.join(util.getSystemTmp(), self.testBCFName,
+                self.testTopicDir, "viewpoint.bcfv")
+        vpFileExists = os.path.exists(vpFilePath)
+
+        project.debug("\n\tlen(vpList)={}\n\tsearchResult={}\n\t"\
+                "vpFileExists={}".format(len(vpList), searchResult,
+                    vpFileExists))
+        self.assertTrue(len(vpList) == 0 and searchResult == None and
+                vpFileExists)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -95,6 +95,9 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
         Returns true if every variable member of both classes are the same
         """
 
+        if type(self) != type(other):
+            return False
+
         return (self.ifcProjectId == other.ifcProjectId and
                 self.ifcSpatialStructureElement ==
                 other.ifcSpatialStructureElement and
@@ -233,6 +236,8 @@ class Header(Hierarchy, State, XMLName, Identifiable):
                 fileElem = ET.SubElement(elem, "File")
                 fileElem = file.getEtElement(fileElem)
 
+        return elem
+
 
 class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         Identifiable):
@@ -312,6 +317,9 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         """
 
         if other is None:
+            return False
+
+        if type(self) != type(other):
             return False
 
         if DEBUG:
@@ -577,6 +585,7 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         members = [self._comment, self.viewpoint, self._date, self._author,
                 self._modDate, self._modAuthor]
         searchResult = searchListObject(object, members)
+
         return searchResult
 
 
@@ -618,6 +627,9 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
         """
         Returns true if every variable member of both classes are the same
         """
+
+        if type(self) != type(other):
+            return False
 
         return (self.header == other.header and
                 self.topic == other.topic and
