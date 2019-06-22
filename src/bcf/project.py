@@ -5,7 +5,7 @@ from interfaces.state import State
 from interfaces.xmlname import XMLName
 from interfaces.identifiable import XMLIdentifiable, Identifiable
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     import inspect

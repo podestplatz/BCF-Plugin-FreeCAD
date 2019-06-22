@@ -90,3 +90,9 @@ To delete an element again you can just issue:
 Be cautious here, the call to `deleteElement()` does **not** delete the element from the data model
 it simply removes it from the file. So a second attempt to delete the same element will result in an 
 error.
+
+
+## Debugging
+
+If you want to show all debug messages (be warned they are a lot) then you can
+enable debugging by setting the value of `project.DEBUG` to `True`.

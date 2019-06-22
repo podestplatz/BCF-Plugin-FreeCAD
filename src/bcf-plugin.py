@@ -1,3 +1,4 @@
+import sys
 
 # detection if this script is run inside FreeCAD
 try:
@@ -9,6 +10,28 @@ else:
         import FreeCADGui as FGui
         from PySide import QtCore, QtGui
 
+def check_dependencies():
+    try:
+        import dateutil
+    except:
+        print("Could not find the module `python-dateutil`. Install it through"\
+                " pip\n\tpip install python-dateutil\nYou also might want to"\
+                "install it in a virtual environment. To create and initialise"\
+                "said env execute\n\tpython -m venv <NAME>\n\tsource"\
+                " ./<NAME>/bin/activate", file=sys.stderr)
+        return False
+    else:
+        try:
+            import xmlschema
+        except:
+            print("Could not find the module `xmlschema`. Install it through"\
+                    " pip\n\tpip install python-dateutil\nYou also might want to"\
+                    "install it in a virtual environment. To create and initialise"\
+                    "said env execute\n\tpython -m venv <NAME>\n\tsource"\
+                    " ./<NAME>/bin/activate", file=sys.stderr)
+            return False
+
+    return True
 
 
 
@@ -26,10 +49,15 @@ can be imported:
       it.
     - bcf.writer: lets you write out the contents of an object of type `Project`
       to the desired path. Most important function is:
-      bcf.writer.writeBcfFile(project: Project, desiredPath: str)
+      bcf.writer.addUpdate(project: Project, element, prevVal)
 
 The internal data structure implements interfaces that make it easy to operate
 on a project. So have a look into ./interfaces if you are interested.
 TODO: add documentation on the interfaces part.
             """
-    print(help_str)
+    #print(help_str)
+    if not check_dependencies():
+        exit(1)
+
+    import bcf.reader as reader
+    import bcf.writer as writer
