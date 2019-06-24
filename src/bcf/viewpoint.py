@@ -58,6 +58,9 @@ class Bitmap(Hierarchy, State, XMLName):
         Returns true if every variable member of both classes are the same
         """
 
+        if type(self) != type(other):
+            return False
+
         return (self.format == other.format and
                 self.reference == other.reference and
                 self.location == other.location and
@@ -129,6 +132,9 @@ class Camera(Hierarchy, State, XMLName):
         """
         Returns true if every variable member of both classes are the same
         """
+
+        if type(self) != type(other):
+            return False
 
         return (self.viewPoint == other.viewPoint and
                 self.direction == other.direction and
@@ -262,6 +268,9 @@ class Component(Hierarchy, State, XMLName):
         Returns true if every variable member of both classes are the same
         """
 
+        if type(self) != type(other):
+            return False
+
         return (self.ifcId == other.ifcId and
                 self.originatingSystem == other.originatingSystem and
                 self.authoringtoolId == other.authoringtoolId)
@@ -319,6 +328,9 @@ class ComponentColour(Hierarchy, State, XMLName):
         Returns true if every variable member of both classes are the same
         """
 
+        if type(self) != type(other):
+            return False
+
         return (self.colour == other.colour and
                 self.components == other.components)
 
@@ -352,6 +364,9 @@ class ViewSetupHints(Hierarchy, State, XMLName):
         """
         Returns true if every variable member of both classes are the same
         """
+
+        if type(self) != type(other):
+            return False
 
         return (self.openingsVisible == other.openingsVisible and
                 self.spaceBoundariesVisible == other.spaceBoundariesVisible and
@@ -401,6 +416,9 @@ class Components(Hierarchy, State, XMLName):
         """
         Returns true if every variable member of both classes are the same
         """
+
+        if type(self) != type(other):
+            return False
 
         return (self.viewSetuphints == other.viewSetuphints and
                 self.selection == other.selection and
@@ -512,6 +530,9 @@ class Viewpoint(Hierarchy, State, XMLName, Identifiable):
         """
         Returns true if every variable member of both classes are the same
         """
+
+        if type(self) != type(other):
+            return False
 
         return (self.xmlId == other.xmlId and
                 self.components == other.components and

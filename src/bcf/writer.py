@@ -366,11 +366,14 @@ def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
     match is found then `None` is returned.
     """
 
+    p.debug("Getting xml element to {} in the tree {}".format(wantedElement,
+        rootElem))
     # candidates are the set of elements that have the same tag as
     # containingElement
+    p.debug("Searching with XMLPath: .//{}".format(wantedElement.xmlName))
     candidates = rootElem.findall(".//{}".format(wantedElement.xmlName))
-    parentEt = wantedElement.getEtElement(
-           ET.Element(wantedElement.xmlName, {}))
+    p.debug("Got possible list of candidates: {}".format(candidates))
+    parentEt = wantedElement.getEtElement(ET.Element("", {}))
     parentEtChildren = list(parentEt)
     p.debug("looking for {} element in: \n\t{}\n\twith the"\
             " exceptions of: {}".format(
@@ -791,7 +794,7 @@ def addProjectUpdate(project: p.Project, element, prevVal):
                 " update")
 
 
-def writeHandlerErrMsg(msg):
+def writeHandlerErrMsg(msg, err):
     p.debug(msg)
     print(str(err), file=sys.stderr)
     print(msg, file=sys.stderr)
@@ -814,12 +817,12 @@ def handleAddElement(element, oldVal):
         if isinstance(err, NotImplementedError):
             msg = ("Adding {} is not implemented. Reverting to previous"\
                     " state".format(element))
-        writeHandlerErrMsg(msg)
+        writeHandlerErrMsg(msg, err)
         return False
     except Exception as exc:
         msg = "An unknown excption occured while adding"\
             " {}".format(element)
-        writeHandlerErrMsg(msg)
+        writeHandlerErrMsg(msg, exc)
         return False
     else:
         return True
@@ -839,12 +842,12 @@ def handleDeleteElement(element, oldVal):
     except ValueError as err:
         msg = ("Element {} could not be deleted. Reverting to previous "\
                 "state".format(element))
-        writeHandlerErrMsg(msg)
+        writeHandlerErrMsg(msg, err)
         return False
     except Exception as exc:
         msg = "An unknown excption occured while adding"\
             " {}".format(element)
-        writeHandlerErrMsg(msg)
+        writeHandlerErrMsg(msg, exc)
         return False
     else:
         return True
@@ -864,12 +867,12 @@ def handleModifyElement(element, prevVal):
     except ValueError as err:
         msg = ("Element {} could not be modified. Reverting to previous "\
                 "state".format(element))
-        writeHandlerErrMsg(msg)
+        writeHandlerErrMsg(msg, err)
         return False
     except Exception as exc:
         msg = "An unknown excption occured while adding"\
             " {}".format(element)
-        writeHandlerErrMsg(msg)
+        writeHandlerErrMsg(msg, exc)
         return False
     else:
         return True
@@ -889,6 +892,16 @@ def updateProjectSnapshots(newUpdates):
 
     for newUpdate in newUpdates:
         projectSnapshots.append(newUpdate)
+
+
+def updateProjectUpdates(successfullyProcessed):
+
+    """
+    Remove all elements in `successfullyProcessed` from `projectUpdates`
+    """
+
+    for success in successfullyProcessed:
+        projectUpdates.remove(success)
 
 
 def processProjectUpdates():
@@ -913,30 +926,46 @@ def processProjectUpdates():
         element = update[1]
         oldVal = update[2]
         updateType = element.state
-        if  updateType == iI.State.States.ADDED:
-            if handleAddElement(element):
-                processedUpdates.append(update, oldVal)
+        if  updateType == iS.State.States.ADDED:
+            if handleAddElement(element, oldVal):
+                processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
-        if updateType == iI.State.States.DELETED:
-            if handleDeleteElement(element):
-                processedUpdates.append(update, oldVal)
+        if updateType == iS.State.States.DELETED:
+            if handleDeleteElement(element, oldVal):
+                processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
-        if updateType == iI.State.States.MODIFIED:
+        if updateType == iS.State.States.MODIFIED:
             if handleModifyElement(element, oldVal):
-                pass
+                processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
 
+    # delete processed updates from pending updates list `projectUpdates`
+    updateProjectUpdates(processedUpdates)
+    # add all processed updates to snapshots
     updateProjectSnapshots(processedUpdates)
     if errorenousUpdate is not None:
         return errorenousUpdate
     else:
         return None
+
+
+def addUpdate(projectCpy, element, prevVal):
+
+    """
+    Adds the supplied parameters, packed into a tuple, to list
+    `projectUpdates`. Thereby it is assumed that `projectCpy` is a deep copy of
+    the current working `project` object and `element` is a reference into this
+    project copy. `prevVal` is the previous value of the element, it is only
+    set to `!= None` if `element.state == MODIFIED`.
+    """
+
+    projectUpdates.append((projectCpy, element, prevVal))
 
 
 ################## DEPRECATED ##################

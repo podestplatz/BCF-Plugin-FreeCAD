@@ -30,13 +30,14 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
         State.__init__(self, state)
         XMLName.__init__(self, "File")
         Identifiable.__init__(self)
-        self._ifcProjectId = Attribute(ifcProjectId, "IfcProject", self)
+        self._ifcProjectId = Attribute(ifcProjectId, "IfcProject", "", self)
         self._ifcSpatialStructureElement = Attribute(
-                ifcSpatialStructureElement, "IfcSpatialStructureElement", self)
-        self._external = Attribute(isExternal, "isExternal", self)
-        self._filename = SimpleElement(filename, "Filename", self)
-        self._time = SimpleElement(time, "Date", self)
-        self._reference = SimpleElement(reference, "Reference", self)
+                ifcSpatialStructureElement, "IfcSpatialStructureElement", "",
+                self)
+        self._external = Attribute(isExternal, "isExternal", True, self)
+        self._filename = SimpleElement(filename, "Filename", "", self)
+        self._time = SimpleElement(time, "Date", None, self)
+        self._reference = SimpleElement(reference, "Reference", "", self)
 
 
 
@@ -93,6 +94,9 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
         """
         Returns true if every variable member of both classes are the same
         """
+
+        if type(self) != type(other):
+            return False
 
         return (self.ifcProjectId == other.ifcProjectId and
                 self.ifcSpatialStructureElement ==
@@ -232,6 +236,8 @@ class Header(Hierarchy, State, XMLName, Identifiable):
                 fileElem = ET.SubElement(elem, "File")
                 fileElem = file.getEtElement(fileElem)
 
+        return elem
+
 
 class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         Identifiable):
@@ -253,9 +259,9 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         State.__init__(self, state)
         XMLName.__init__(self, "Viewpoints")
         Identifiable.__init__(self)
-        self._file = SimpleElement(file, "Viewpoint", self)
-        self._snapshot = SimpleElement(snapshot, "Snapshot", self)
-        self._index = SimpleElement(index, "Index", self)
+        self._file = SimpleElement(file, "Viewpoint", None, self)
+        self._snapshot = SimpleElement(snapshot, "Snapshot", None, self)
+        self._index = SimpleElement(index, "Index", -1, self)
         self._viewpoint = None
 
     @property
@@ -311,6 +317,9 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         """
 
         if other is None:
+            return False
+
+        if type(self) != type(other):
             return False
 
         if DEBUG:
@@ -414,7 +423,7 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         State.__init__(self, state)
         XMLName.__init__(self)
         Identifiable.__init__(self)
-        self._comment = SimpleElement(comment, "Comment", self)
+        self._comment = SimpleElement(comment, "Comment", "", self)
         self.viewpoint = viewpoint
         self._date = ModificationDate(date, self)
         self._author = ModificationAuthor(author, self)
@@ -576,6 +585,7 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         members = [self._comment, self.viewpoint, self._date, self._author,
                 self._modDate, self._modAuthor]
         searchResult = searchListObject(object, members)
+
         return searchResult
 
 
@@ -617,6 +627,9 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
         """
         Returns true if every variable member of both classes are the same
         """
+
+        if type(self) != type(other):
+            return False
 
         return (self.header == other.header and
                 self.topic == other.topic and
