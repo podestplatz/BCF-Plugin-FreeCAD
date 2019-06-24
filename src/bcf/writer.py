@@ -894,6 +894,16 @@ def updateProjectSnapshots(newUpdates):
         projectSnapshots.append(newUpdate)
 
 
+def updateProjectUpdates(successfullyProcessed):
+
+    """
+    Remove all elements in `successfullyProcessed` from `projectUpdates`
+    """
+
+    for success in successfullyProcessed:
+        projectUpdates.remove(success)
+
+
 def processProjectUpdates():
 
     """
@@ -935,6 +945,9 @@ def processProjectUpdates():
                 errorenousUpdate = update
                 break
 
+    # delete processed updates from pending updates list `projectUpdates`
+    updateProjectUpdates(processedUpdates)
+    # add all processed updates to snapshots
     updateProjectSnapshots(processedUpdates)
     if errorenousUpdate is not None:
         return errorenousUpdate

@@ -49,8 +49,10 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testTopicDir)
         self.testFiles = [ "markup_interface_test.bcf" ]
 
+
     def tearDown(self):
         dirPath = os.path.join(util.getSystemTmp(), self.testBCFName)
+        project.debug("Deleted tree {}".format(dirPath))
         rmtree(dirPath)
 
 
