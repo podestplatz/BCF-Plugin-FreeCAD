@@ -1,6 +1,7 @@
 import os
 import io # used for writing files in utf8
 import sys
+import zipfile
 from uuid import UUID
 from collections import deque
 
@@ -17,6 +18,7 @@ import interfaces.identifiable as iI
 import bcf.markup as m
 import bcf.project as p
 import bcf.uri as u
+import bcf.util as util
 
 
 elementOrder = {"Markup": ["Header", "Topic", "Comment", "Viewpoints"],
@@ -960,6 +962,49 @@ def processProjectUpdates():
         return errorenousUpdate
     else:
         return None
+
+
+def recursiveZipping(curDir, zipFile):
+
+    """ Recursively walks through curDir and adds the contents to zipFile.
+
+    Directories are added before the files in the directory. For every step
+    deeper recursiveZipping is called => for every sudirectory recursiveZipping
+    is called once.
+    """
+
+    for (root, dirs, files) in os.walk(curDir):
+        for dir in dirs:
+            dirPath = os.path.join(curDir, dir)
+            zipFile.write(dirPath)
+            zipFile = recursiveZipping(dirPath, zipFile)
+
+        for file in files:
+            filePath = os.path.join(curDir, file)
+            zipFile.write(filePath)
+
+        # don't use the recursive behavior of os.walk()
+        # only look in the current directory `curDir`
+        break
+
+    return zipFile
+
+
+def createBcfFile(bcfRootPath, dstFile):
+
+    """ Packs the contents of `bcfRootPath` into a single archive `dstFile`.
+
+    All files are archived with their relative paths in relation to
+    `bcfRootPath`.
+    `dstFile` and `bcfRootPath` are expected to be absolute paths!
+    Returns the path of the zipped file `dstFile`
+    """
+
+    with util.cd(bcfRootPath):
+        with zipfile.ZipFile(dstFile, "w") as zipFile:
+            recursiveZipping("./", zipFile)
+
+    return dstFile
 
 
 ################## UNUSED ##################
