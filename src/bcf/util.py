@@ -200,6 +200,21 @@ def copySchemas(dstDir: str):
         dstSchemaPaths[Schema.VISINFO])
 
 
+class cd:
+
+    """ Context manager for changing working directory """
+
+    def __init__(self, newDir):
+        self.newDir = os.path.expanduser(newDir)
+
+    def __enter__(self):
+        self.saveDir = os.getcwd()
+        os.chdir(self.newDir)
+
+    def __exit__(self, etype, value, traceback):
+        os.chdir(self.saveDir)
+
+
 if __name__ == "__main__":
     for key in __schemaUrls:
         retrieveWebFile(key, "test{}".format(str(key)))

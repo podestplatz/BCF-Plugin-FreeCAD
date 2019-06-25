@@ -13,6 +13,13 @@ class ModificationType(Enum):
 
 class ModificationAuthor(p.SimpleElement):
 
+    """ Holds the value of an `Author` xml element.
+
+    This class represents two kinds of xml elements. CreationAuthor and
+    ModifiedAuthor. To report the correct name a differentiation at creation is
+    done and self.name properly set.
+    """
+
     def __init__(self,
             author: str,
             containingElement = None,
@@ -55,6 +62,13 @@ class ModificationAuthor(p.SimpleElement):
 
 class ModificationDate(p.SimpleElement):
 
+    """ Holds the value of an `Date` xml element.
+
+    This class represents two kinds of xml elements. CreationDate and
+    ModifiedDate. To report the correct name a differentiation at creation is
+    done and self.name properly set.
+    """
+
     def __init__(self,
             date: datetime,
             containingElement = None,
@@ -84,6 +98,12 @@ class ModificationDate(p.SimpleElement):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
         elem.text = self.date.isoformat("T", "seconds")

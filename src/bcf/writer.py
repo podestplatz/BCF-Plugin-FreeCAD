@@ -1,6 +1,7 @@
 import os
 import io # used for writing files in utf8
 import sys
+import zipfile
 from uuid import UUID
 from collections import deque
 
@@ -17,36 +18,21 @@ import interfaces.identifiable as iI
 import bcf.markup as m
 import bcf.project as p
 import bcf.uri as u
-
-"""
-`elementHierarchy` contains for each element, the writer supports writing, the
-hierarchy of the element in its corresponding XML file. Thereby hierarchy is
-defined to be the sequence of parents till the root element of the XML document
-is reached.
-This information is used for adding new elements to the existing XML file.
-Keys that contain `@` as second character are attributes that can be changed or
-added, all other keys correspond to acutal elements in the XML file.
-The first character of every element is the first letter in the name of the
-containing element.
-
-"""
-elementHierarchy = {"Comment": ["Comment", "Markup"],
-    "MViewpoints": ["Viewpoint", "Markup"],
-    "TDocumentReference": ["DocumentReference", "Topic", "Markup"],
-    "MTopic": ["Topic", "Markup"],
-    "TLastModifiedDate": ["LastModifiedDate", "Topic", "Markup"],
-    "TLastModifiedAuthor": ["LastModifiedAuthor", "Topic", "Markup"],
-    "CLastModifiedDate": ["LastModifiedDate", "Comment", "Markup"],
-    "CLastModifiedAuthor": ["LastModifiedAuthor", "Comment", "Markup"],
-    "TStage": ["Stage", "Topic", "Markup"],
-    "TDueDate": ["DueDate", "Topic", "Markup"],
-    "TLabels": ["Labels", "Topic", "Markup"],
-    "T@TopicStatus": ["@TopicStatus", "Topic", "Markup"],
-    "T@TopicType": ["@TopicType", "Topic", "Markup"],
-    }
+import bcf.util as util
 
 
-"""
+elementOrder = {"Markup": ["Header", "Topic", "Comment", "Viewpoints"],
+        "Topic": ["ReferenceLink", "Title", "Priority", "Index", "Labels",
+            "CreationDate", "CreationAuthor", "ModifiedDate", "ModifiedAuthor",
+            "DueDate", "AssignedTo", "Stage", "Description", "BimSnippet",
+            "DocumentReference", "RelatedTopic"],
+        "Comment": ["Date", "Author", "Comment", "Viewpoint", "ModifiedDate",
+            "ModifiedAuthor"],
+        "Header": ["File"],
+        "File": ["Filename", "Date", "Reference"]
+        }
+""" Relative order of all nodes that can be added to.
+
 `elementOrder` contains the relative order of elements in each changeable
 parent element. `Comment`, for example, is changeable, but according to the
 definition a viewpoint (whose corresponding XML element is `VisualizationInfo`
@@ -58,26 +44,16 @@ elements for `Markup` is now: 'Header'->'Topic'->'Comment'->'Viewpoints',
 therefore, given `Markup` is defined complete, `Comment` will be third to find
 in `Markup`.
 """
-elementOrder = {"Markup": ["Header", "Topic", "Comment", "Viewpoints"],
-        "Topic": ["ReferenceLink", "Title", "Priority", "Index", "Labels",
-            "CreationDate", "CreationAuthor", "ModifiedDate", "ModifiedAuthor",
-            "DueDate", "AssignedTo", "Stage", "Description", "BimSnippet",
-            "DocumentReference", "RelatedTopic"],
-        "Comment": ["Date", "Author", "Comment", "Viewpoint", "ModifiedDate",
-            "ModifiedAuthor"],
-        "Header": ["File"],
-        "File": ["Filename", "Date", "Reference"]
-        }
 
 
-"""
-A list of elements that can occur multiple times in the corresponding XML file
-"""
 listElements = ["Comment", "DocumentReference", "RelatedTopic", "Labels"]
+""" A list of elements that can occur multiple times in the corresponding XML file """
 
 
-"""
-An ordered list of tuples. Every tuple element denotes an addition,
+projectUpdates = list()
+""" An ordered list of tuples.
+
+Every tuple element denotes an addition,
 modification or deletion of exactly one object in the project. A tuple thereby
 consists of an project object, the object in question and a third value holding
 the old value iff the object shall be modified, otherwise this will be `None`.
@@ -90,16 +66,16 @@ Following a schematic element is depicted:
 
 This list will contain all updates that were not processed.
 """
-projectUpdates = list()
 
-"""
-An ordered list of five elements at most. Every element is a tuple previously
+SNAPSHOT_CNT = 5
+projectSnapshots = deque([None]*SNAPSHOT_CNT, SNAPSHOT_CNT)
+""" An ordered list of N elements.
+
+Every element is a tuple previously
 held by `projectUpdates`. Every element of former list is, as soon as it is
 processed, appended to this list.
 It therefore serves as storage past plugin states and enables undo operations.
 """
-SNAPSHOT_CNT = 5
-projectSnapshots = deque([None]*SNAPSHOT_CNT, SNAPSHOT_CNT)
 
 
 ################## DEPRECATED ##################
@@ -215,33 +191,28 @@ def getTopicOfElement(element):
     return None
 
 
-def getIdAttrName(elementId):
-
-    idAttrName = ""
-    if isinstance(elementId, UUID):
-        idAttrName = "Guid"
-    elif isinstance(elementId, str):
-        idAttrName = "IfcGuid"
-
-    return idAttrName
-
-
 def getEtElementById(elemId, elemName, etRoot):
 
     """
-    Searches for an element with the attribute `idAttrName` that has the value
-    of `listElemId`.
+    Searches for an element with the attribute `Guid` that has the value
+    of `elemId`.
     """
 
-    idAttrName = getIdAttrName(elemId)
-    p.debug("searching elementtree for .//{}[@{}='{}']".format(
-            elemName, idAttrName, elemId))
-    etParent = etRoot.find(".//{}[@{}='{}']".format(elemName,
-            idAttrName, str(elemId)))
+    p.debug("searching elementtree for .//{}[@Guid='{}']".format(
+            elemName, elemId))
+    etParent = etRoot.find(".//{}[@Guid='{}']".format(elemName,
+            str(elemId)))
     return etParent
 
 
 def searchEtByTag(etRoot, tag):
+
+    """
+    Searches for the first occurence of an element with the name `tag` below
+    `etRoot` => `etRoot` is not returned if `etRoot.tag == tag`.
+
+    Returns the first result as instance of ET.Element
+    """
 
     p.debug("searching elementtree for .//{} starting at {}".format(
             tag, etRoot.tag))
@@ -254,9 +225,13 @@ def searchEtByTag(etRoot, tag):
 def getParentElement(element, etRoot):
 
     """
-    Searches `etRoot` for the parent of `element` and returns it if found. If
-    the element turns out to be itself a root element of a file (e.g.:
+    Searches `etRoot` for the parent of `element` and returns it if found.
+    Element is expected to be an instance of one class of the data model, and
+    not already an instance of ET.Element.
+    If the element turns out to be itself a root element of a file (e.g.:
     VisualizationInfo in viewpoint.bcfv) then a NotImplementedError is raised.
+
+    Returns the XML parent of `element` if found.
     """
 
     elementHierarchy = element.getHierarchyList()
@@ -359,8 +334,13 @@ def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
     """
     This function searches `rootElem` for all occurences for
     containingElement.xmlName. This set of elements is then searched for the
-    best match. First the strategy of matching on the containing elements is
-    tried. If the element is empty then it is tried to match on the attributes.
+    best match against `wantedElement`. `wantedElement` is expected to be an
+    instance of a class of the data model not one of ET.Element.
+    The first strategy that is attempted is matching on the child elements.
+    If the element is empty then matching on the attributes of `wantedElement`
+    is attempted.
+    If both strategies fail then a last attempt is made by matching on the text
+    of the element.
     For both strategies it holds that the first match is returned. If a match is
     found it is returned as object of type xml.etree.ElementTree.Element. If no
     match is found then `None` is returned.
@@ -482,6 +462,11 @@ def xmlPrettify(element: ET.Element):
 
 def getTopicPath(element):
 
+    """
+    Retrieves the xmlID of the topic that contains `element` and returns the
+    working topic directory path. This path is located in the temp directory
+    """
+
     topic = getTopicOfElement(element)
     if not topic:
         return None
@@ -503,6 +488,10 @@ def writeXMLFile(xmlroot, filePath):
 
 
 def _addAttribute(element, xmlroot):
+
+    """
+    Helper function for `addElement`. Handles the addition of an attribute.
+    """
 
     newParent = element.containingObject
 
@@ -529,6 +518,10 @@ def _addAttribute(element, xmlroot):
 
 def _addElement(element, xmlroot):
 
+    """
+    Helper function for `addElement`. Adds a new element inside xmlroot.
+    """
+
     # parent element read from file
     etParent = getParentElement(element, xmlroot)
 
@@ -541,6 +534,11 @@ def _addElement(element, xmlroot):
 
 
 def _createViewpoint(element, topicPath):
+
+    """
+    Helper function for `addElement`. Adds a new viewpoint file with the
+    contents of `element.viewpoint`.
+    """
 
     if element.file is None:
         raise RuntimeWarning("The new viewpoint does not have a filename."\
@@ -562,6 +560,7 @@ def _createViewpoint(element, topicPath):
 def _createMarkup(element, topicPath):
 
     """
+    Helper function for `addElement`.
     For the markup `element` create a new topic folder and the markup.bcf file.
     If already viewpoints are referenced then also create the new viewpoint
     files.
@@ -786,6 +785,11 @@ def modifyElement(element, previousValue):
 
 def addProjectUpdate(project: p.Project, element, prevVal):
 
+    """
+    Adds `project`, `element` and `prevVal` as tuple to `projectUpdates` iff
+    `element` actually has changed since the last read/write.
+    """
+
     global projectUpdates
     if element.state != iI.State.States.ORIGINAL:
         projectUpdates.append((project, element, prevVal))
@@ -795,6 +799,11 @@ def addProjectUpdate(project: p.Project, element, prevVal):
 
 
 def writeHandlerErrMsg(msg, err):
+
+    """
+    writes an error message to stderr and prints a debug message
+    """
+
     p.debug(msg)
     print(str(err), file=sys.stderr)
     print(msg, file=sys.stderr)
@@ -955,20 +964,50 @@ def processProjectUpdates():
         return None
 
 
-def addUpdate(projectCpy, element, prevVal):
+def recursiveZipping(curDir, zipFile):
 
+    """ Recursively walks through curDir and adds the contents to zipFile.
+
+    Directories are added before the files in the directory. For every step
+    deeper recursiveZipping is called => for every sudirectory recursiveZipping
+    is called once.
     """
-    Adds the supplied parameters, packed into a tuple, to list
-    `projectUpdates`. Thereby it is assumed that `projectCpy` is a deep copy of
-    the current working `project` object and `element` is a reference into this
-    project copy. `prevVal` is the previous value of the element, it is only
-    set to `!= None` if `element.state == MODIFIED`.
+
+    for (root, dirs, files) in os.walk(curDir):
+        for dir in dirs:
+            dirPath = os.path.join(curDir, dir)
+            zipFile.write(dirPath)
+            zipFile = recursiveZipping(dirPath, zipFile)
+
+        for file in files:
+            filePath = os.path.join(curDir, file)
+            zipFile.write(filePath)
+
+        # don't use the recursive behavior of os.walk()
+        # only look in the current directory `curDir`
+        break
+
+    return zipFile
+
+
+def createBcfFile(bcfRootPath, dstFile):
+
+    """ Packs the contents of `bcfRootPath` into a single archive `dstFile`.
+
+    All files are archived with their relative paths in relation to
+    `bcfRootPath`.
+    `dstFile` and `bcfRootPath` are expected to be absolute paths!
+    Returns the path of the zipped file `dstFile`
     """
 
-    projectUpdates.append((projectCpy, element, prevVal))
+    with util.cd(bcfRootPath):
+        with zipfile.ZipFile(dstFile, "w") as zipFile:
+            recursiveZipping("./", zipFile)
+
+    return dstFile
 
 
-################## DEPRECATED ##################
+################## UNUSED ##################
 def compileChanges(project: p.Project):
 
     """
@@ -993,43 +1032,4 @@ def compileChanges(project: p.Project):
             deletedObjects.append(item[1])
         else: # Last option would be original state, which should not be contained in the list anyways
             pass
-################################################
-
-
-if __name__ == "__main__":
-    argFile = "test_data/Issues_BIMcollab_Example.bcf"
-    if len(sys.argv) >= 2:
-        argFile = sys.argv[1]
-    project = reader.readBcfFile(argFile)
-    markup = project.topicList[0]
-    topic = project.topicList[0].topic
-    """
-    hFiles = project.topicList[0].header.files
-    addElement(project.topicList[0].viewpoints[0])
-    addElement(project.topicList[0].comments[0])
-    hFiles[1].ifcProjectId = "abcdefg"
-    hFiles[1].ifcSpatialStructureElement = "abcdefg"
-    addElement(hFiles[1]._ifcProjectId)
-    addElement(hFiles[1]._ifcSpatialStructureElement)
-    bimSnippet = topic.bimSnippet
-    print(topic.bimSnippet)
-    addElement(bimSnippet._external)
-
-    docRef = topic.refs[0]
-    docRef.external = True
-    docRef.guid = "98b5802c-4ca0-4032-9128-b9c606955c4f"
-    print(docRef)
-    addElement(docRef._external)
-    addElement(docRef._guid)
-    """
-
-    print(markup.viewpoints)
-    newVp = c.deepcopy(markup.viewpoints[0])
-    newVp.file = u.Uri("viewpoint2.bcfv")
-    newVp.index = 2
-    newVp.state = iS.State.States.ADDED
-    newVp.viewpoint.state = iS.State.States.ADDED
-    markup.viewpoints.append(newVp)
-    addElement(newVp)
-    stateList = project.getStateList()
-    print(stateList)
+###############################################

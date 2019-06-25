@@ -83,7 +83,8 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
 
     def getEtElement(self, elem):
 
-        """
+        """ Generate a xml.etree.ElementTree.Element from members.
+
         Default implementation for simple elements. Constructs an ET.Element
         with the tag equal to `xmlName` and pastes `value` into the text section
         of the node
@@ -134,7 +135,8 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
 
     def append(self, item):
 
-        """
+        """ Envelope item into SimpleElement before appending to self.
+
         Envelope every type that is not of instance SimpleElement into an object
         of simple element, with the default values of the class object itself
         (xmlname, containintObject). The state is automatically set to
@@ -159,8 +161,12 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
 
 class Attribute(XMLName, Hierarchy, State, Identifiable):
 
-    """
-    Analogously to `SimpleElement` this class is used to represent attributes.
+    """ Attribute is used to represent XML attributes.
+
+    Apart from the value of the attribute, also its Hierarchy, State (was it
+    recently added, modified, deleted and name are stored. As well as all other
+    XML representing classes, it implements Identifiable so it can be found by
+    id.
     """
 
     def __init__(self, value, xmlName, defaultValue, containingElement,
@@ -265,12 +271,6 @@ topicList='{}')""".format(str(self.xmlId),
 
 
     def searchObject(self, object):
-
-        """
-        Checks whether the current object has the id equal to `id`. If so it is
-        returned. If not the members of the object are checked against `id`.
-        Thereby implementing a depth first search.
-        """
 
         if not issubclass(type(object), Identifiable):
             return None

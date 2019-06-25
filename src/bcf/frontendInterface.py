@@ -24,7 +24,7 @@ def deleteObject(project, object):
 
     projectCpy = copy.deepcopy(project)
     newObject = projectCpy.searchObject(object)
-    w.addUpdate(projectCpy, newObject, None)
+    w.addProjectUpdate(projectCpy, newObject, None)
     result = w.processProjectUpdates()
 
     # `result == None` if the update could not be processed.
