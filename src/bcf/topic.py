@@ -281,7 +281,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             type: str = "",
             status: str = "",
             referenceLinks: List[str] = list(),
-            refs: List[DocumentReference] = list(),
+            docRefs: List[DocumentReference] = list(),
             priority: str = "",
             index: int = 0,
             labels: List[str] = list(),
@@ -310,7 +310,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         self._status = Attribute(status, "TopicStatus", "", self)
         self.referenceLinks = SimpleList(referenceLinks, "ReferenceLink",
                 "", self)
-        self.refs = refs
+        self.docRefs = docRefs
         self._priority = SimpleElement(priority, "Priority", "", self)
         self._index = SimpleElement(index, "Index", -1, self)
         self.labels = SimpleList(labels, "Labels", "", self)
@@ -328,7 +328,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         self.bimSnippet = bimSnippet
 
         # set containingObjecf for all document references
-        for docRef in self.refs:
+        for docRef in self.docRefs:
             docRef.containingObject = self
 
         if self.bimSnippet is not None:
@@ -467,13 +467,11 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         self.__printEquality(self.xmlId == other.xmlId, "id")
         self.__printEquality(self.title == other.title, "title")
-        self.__printEquality(self.__checkNone(self.date, other.date),
-                "Date")
-        self.__printEquality(self.__checkNone(self.author, other.author),
-                "Author")
+        self.__printEquality(self.date == other.date, "date")
+        self.__printEquality(self.author == other.author, "author")
         self.__printEquality(self.type == other.type, "type")
         self.__printEquality(self.status == other.status, "status")
-        self.__printEquality(self.refs == other.refs, "refs")
+        self.__printEquality(self.docRefs == other.docRefs, "docRefs")
         self.__printEquality(self.priority == other.priority, "priority")
         self.__printEquality(self.index == other.index, "index")
         self.__printEquality(self.labels == other.labels, "labels")
@@ -482,10 +480,8 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         self.__printEquality(self.stage == other.stage, "stage")
         self.__printEquality(self.relatedTopics == other.relatedTopics,
                 "relatedTopics")
-        self.__printEquality(self.__checkNone(self.modDate,
-            other.modDate), "ModificationDate")
-        self.__printEquality(self.__checkNone(self.modAuthor,
-            other.modAuthor), "ModificationAuthor")
+        self.__printEquality(self.modDate == other.modDate, "ModificationDate")
+        self.__printEquality(self.modAuthor == other.modAuthor, "ModificationAuthor")
         self.__printEquality(self.__checkNone(self.dueDate,
             other.dueDate), "dueDate")
         self.__printEquality(self.__checkNone(self.bimSnippet,
@@ -497,7 +493,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
                 self.author == other.author and
                 self.type == other.type and
                 self.status == other.status and
-                self.refs == other.refs and
+                self.docRefs == other.docRefs and
                 self.priority == other.priority and
                 self.index == other.index and
                 self.labels == other.labels and
@@ -513,9 +509,9 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
     def __str__(self):
         import pprint
         doc_ref_str = "None"
-        if self.refs:
+        if self.docRefs:
             doc_ref_str = "["
-            for doc_ref in self.refs:
+            for doc_ref in self.docRefs:
                 doc_ref_str += str(doc_ref)
             doc_ref_str += "]"
 
@@ -601,7 +597,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             bimSnippetElem = ET.SubElement(elem, self.bimSnippet.xmlName)
             bimSnippetElem = self.bimSnippet.getEtElement(bimSnippetElem)
 
-        for docRef in self.refs:
+        for docRef in self.docRefs:
             docRefElem = ET.SubElement(elem, docRef.xmlName)
             docRefElem = docRef.getEtElement(docRefElem)
 
