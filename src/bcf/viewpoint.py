@@ -71,6 +71,12 @@ class Bitmap(Hierarchy, State, XMLName):
 
     def getEtElement(self, elem):
 
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
+
         elem.tag = self.xmlName
 
         formatElem = ET.SubElement(elem, "Format")
@@ -143,6 +149,12 @@ class Camera(Hierarchy, State, XMLName):
 
     def getEtElement(self, elem):
 
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
+
         elem.tag = self.xmlName
 
         cViewpointElem = ET.SubElement(elem, "CameraViewPoint")
@@ -191,6 +203,12 @@ class PerspectiveCamera(Camera, XMLName):
 
     def getEtElement(self, elem):
 
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
+
         elem = Camera.getEtElement(self, elem)
 
         fieldOfViewElem = ET.SubElement(elem, "FieldOfView")
@@ -236,6 +254,12 @@ class OrthogonalCamera(Camera, XMLName):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem = Camera.getEtElement(self, elem)
 
@@ -285,6 +309,12 @@ class Component(Hierarchy, State, XMLName):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
 
@@ -375,6 +405,12 @@ class ViewSetupHints(Hierarchy, State, XMLName):
 
     def getEtElement(self, elem):
 
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
+
         elem.tag = self.xmlName
 
         elem.attrib["SpacesVisible"] = str(self.spacesVisible).lower()
@@ -451,6 +487,12 @@ class Components(Hierarchy, State, XMLName):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
 
@@ -567,6 +609,12 @@ class Viewpoint(Hierarchy, State, XMLName, Identifiable):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
         elem.attrib["Guid"] = str(self.xmlId)

@@ -12,6 +12,13 @@ class Identifiable:
 
 
     def searchObject(self, object):
+
+        """ Search for a member whose id == object.id
+
+        Check whether `self.id == object.id` and return self.
+        If this is not the case check every instance member.
+        """
+
         pass
 
 

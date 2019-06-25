@@ -109,6 +109,12 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
 
     def getEtElement(self, elem):
 
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
+
         elem.tag = self.xmlName
 
         if not self.external: # only write external if its not set to default
@@ -228,6 +234,12 @@ class Header(Hierarchy, State, XMLName, Identifiable):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
 
@@ -351,6 +363,12 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
         elem.attrib["Guid"] = str(self.xmlId)
@@ -494,14 +512,18 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         if DEBUG:
             if not self.idEquals(other.xmlId):
                 print("Id is different")
-            if self.creation != other.creation:
-                print("Creation is different")
+            if self.author != other.author:
+                print("Author is different")
+            if self.date != other.date:
+                print("Date is different")
             if self.comment != other.comment:
                 print("Comment is different")
             if self.viewpoint != other.viewpoint:
                 print("Viewpoint is different")
-            if self.lastModification != other.lastModification:
-                print("LastModification is different")
+            if self.modDate != other.modDate:
+                print("modDate is different")
+            if self.modAuthor != other.modAuthor:
+                print("modAuthor is different")
 
         return (self.idEquals(other.xmlId) and
                 (self.date == other.date or
@@ -530,6 +552,12 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
         elem.attrib["Guid"] = str(self.xmlId)
@@ -683,6 +711,12 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
 

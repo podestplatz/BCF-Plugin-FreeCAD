@@ -38,6 +38,12 @@ class ThreeDVector(Hierarchy, State, XMLName):
 
     def getEtElement(self, elem):
 
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
+
         elem.tag = self.xmlName
 
         xElem = ET.SubElement(elem, "X")
@@ -69,6 +75,12 @@ class Point(ThreeDVector):
 
     def getEtElement(self, elem):
 
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
+
         return ThreeDVector.getEtElement(self, elem)
 
 
@@ -88,6 +100,12 @@ class Direction(ThreeDVector, XMLName):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         return ThreeDVector.getEtElement(self, elem)
 
@@ -125,6 +143,12 @@ class Line(Hierarchy, State, XMLName):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
 
@@ -169,6 +193,12 @@ class ClippingPlane(Hierarchy, State, XMLName):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
 

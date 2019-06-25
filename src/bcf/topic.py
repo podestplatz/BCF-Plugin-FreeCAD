@@ -100,6 +100,12 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
 
     def getEtElement(self, elem):
 
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
+
         elem.tag = self.xmlName
 
         # guid is optional in DocumentReference
@@ -224,6 +230,12 @@ class BimSnippet(Hierarchy, State, XMLName, Identifiable):
 
 
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = "BimSnippet"
         elem.attrib["SnippetType"] = str(self.type)
@@ -545,6 +557,10 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             classMember: SimpleElement,
             dflValue):
 
+        """
+        Create a simple xml node with the content of `classMember`.
+        """
+
         newNode = None
         if classMember.value != dflValue:
             newNode = ET.SubElement(parentNode, classMember.xmlName)
@@ -552,7 +568,14 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         return newNode
 
+
     def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
 
         elem.tag = self.xmlName
         elem.attrib["Guid"] = str(self.xmlId)

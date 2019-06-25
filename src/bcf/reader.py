@@ -19,6 +19,7 @@ from bcf.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         Bitmap)
 from bcf.threedvector import (Point, Line, Direction, ClippingPlane)
 
+# BCF standard versions that can be read in
 SUPPORTED_VERSIONS = ["2.1"]
 
 # path to the extracted BCF file
@@ -131,20 +132,14 @@ def getFileListByExtension(topDir: str, extension: str):
 
 def getOptionalFromDict(d: Dict, desiredValue: str, empty):
 
+    """
+    Returns `d[desiredValue]` if desiredValue is a key of `d`. Otherwise empty
+    is returned
+    """
+
     if desiredValue in d:
         return d[desiredValue]
     return empty
-
-
-def setContainingElement(item, cE):
-    if item:
-        item.containingObject = cE
-
-
-def listSetContainingElement(l, cE):
-    if l:
-        for item in l:
-            setContainingElement(item, cE)
 
 
 ########## Object builder functions ##########
@@ -321,6 +316,7 @@ def buildTopic(topicDict: Dict):
             relatedTopics, bimSnippet)
 
     return topic
+
 
 def buildFile(fileDict):
 
@@ -717,7 +713,7 @@ def readBcfFile(bcfFile: str):
             vp = buildViewpoint(vpPath, visinfoSchemaPath)
             vpRef.viewpoint = vp
 
-        setContainingElement(markup, proj)
+        markup.containingObject = proj
         # add the finished markup object to the project
         proj.topicList.append(markup)
 
