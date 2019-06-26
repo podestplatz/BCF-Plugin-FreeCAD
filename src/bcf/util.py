@@ -1,4 +1,5 @@
 import os
+import sys
 import urllib.request
 import tempfile
 import shutil
@@ -63,6 +64,21 @@ def getSystemTmp():
 
     #return tempDir.name
     return tempDir
+
+
+def printErr(msg):
+
+    """ Print msg to stderr """
+
+    print(msg, file=sys.stderr)
+
+
+def printErrorList(errors):
+
+    """ Print every error message from errors """
+
+    for error in errors:
+        printErr(error)
 
 
 def retrieveWebFile(schema: Schema, storePath: str):

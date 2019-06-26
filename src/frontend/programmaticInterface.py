@@ -9,6 +9,8 @@ if __name__ == "__main__":
 import bcf.reader as reader
 import bcf.writer as writer
 import bcf.project as p
+import bcf.util as util
+from bcf.topic import Topic
 from interfaces.identifiable import Identifiable
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
@@ -22,11 +24,18 @@ class OperationResults(Enum):
     FAILURE = 2
 
 
-def printErr(msg):
+def isProjectOpen():
 
-    """ Print msg to stderr """
+    """ Check whether a project is currently open and display an error message
 
-    print(msg, file=sys.stderr)
+    Returns true if a project is currently open. False otherwise.
+    """
+
+    if curProject is None:
+        util.printErr("No project is open. Please open a project before trying to"\
+            " retrieve topics")
+        return False
+    return True
 
 
 def deleteObject(object):
@@ -39,12 +48,12 @@ def deleteObject(object):
     """
 
     if not issubclass(type(object), Identifiable):
-        printErr("Cannot delete {} since it doesn't inherit from"\
+        util.printErr("Cannot delete {} since it doesn't inherit from"\
             " interfaces.Identifiable".format(object))
         return OperationResults.FAILURE
 
     if not issubclass(type(object), Hierarchy):
-        printErr("Cannot delete {} since it seems to be not part of" \
+        util.printErr("Cannot delete {} since it seems to be not part of" \
             " the data model. It has to inherit from"\
             " hierarchy.Hierarchy".format(object))
         return OperationResults.FAILURE
@@ -63,7 +72,7 @@ def deleteObject(object):
     if result is not None:
         curProject = result[0]
         errMsg = "Couldn't delete {} from the file.".format(result[1])
-        printErr(errMsg)
+        util.printErr(errMsg)
         return OperationResults.FAILURE
 
     # otherwise the updated project is returned
@@ -83,13 +92,13 @@ def openProject(bcfFile):
     global curProject
 
     if not os.path.exists(bcfFile):
-        printErr("File {} does not exist. Please choose a valid"\
+        util.printErr("File {} does not exist. Please choose a valid"\
             " file!".format(bcfFile))
         return None
 
     project = reader.readBcfFile(bcfFile)
     if project is None:
-        printErr("{} could not be read.".format(bcfFile))
+        util.printErr("{} could not be read.".format(bcfFile))
         return None
 
     curProject = project
@@ -106,16 +115,13 @@ def getTopics():
     an index are shown as last elements.
     """
 
-    if curProject is None:
-        printErr("No project is open. Please open a project before trying to"\
-            " retrieve topics")
+    if not isProjectOpen():
         return OperationResults.FAILURE
 
     topics = list()
     for markup in curProject.topicList:
-        topicTitle = markup.topic.title
-        topic = markup.topic
-        topics.append((topicTitle, topic))
+        topic = copy.deepcopy(markup.topic)
+        topics.append((topic.title, topic))
 
     # move all topics without an index to the end of the list
     topics = sorted(topics, key=lambda topic: topic[1].index)
@@ -131,3 +137,29 @@ def getTopics():
             del topics[i]
 
     return topics
+
+
+def getComments(topic: Topic):
+
+    """ Collect an ordered list of comments inside of topic.
+
+    The list of comments is sorted by the date they were created in ascending
+    order => oldest entries will be first in the list.
+    Every list element item will be a tuple where the first element is the
+    comments string representation and the second is the comment object itself.
+    """
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    realTopic = curProject.searchObject(topic)
+    if realTopic is None:
+        util.printErr("Topic {} could not be found in the open project."\
+                "Cannot retrieve any comments for it then".format(topic))
+        return OperationResults.FAILURE
+
+    markup = realTopic.containingObject
+    comments = [ (str(comment), copy.deepcopy(comment)) for comment in markup.comments ]
+
+    comments = sorted(comments, key=lambda cm: cm[1].date)
+    return comments

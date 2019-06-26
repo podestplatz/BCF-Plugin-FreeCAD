@@ -557,10 +557,14 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
     def __str__(self):
 
-        ret_str = ("Comment(\n\tid='{}'\n\tdate='{}', \n\tauthor='{}', \n\tcomment='{}', \n\tviewpoint='{}',"\
-                "\n\tModifiedAuthor='{}', ModifiedDate='{}')").format(self.xmlId,
-                        self.date, self.author, self.comment,
-                str(self.viewpoint), self.modAuthor, self.modDate)
+        dateFormat = "%Y-%m-%d %X"
+        ret_str = "{} -- {}, {}".format(self.comment, self.author,
+            self.date.strftime(dateFormat))
+
+        if self.modDate != self._modDate.defaultValue:
+            ret_str = ("{} modified on"\
+                " {}").format(ret_str, self.modDate.strftime(dateFormat))
+
         return ret_str
 
 

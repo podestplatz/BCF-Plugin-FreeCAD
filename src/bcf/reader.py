@@ -29,6 +29,7 @@ bcfDir = ""
 if DEBUG:
     import pprint
 
+
 def readFile(path: str):
 
     """
@@ -176,6 +177,7 @@ def buildProject(projectFilePath: str, projectSchema: str):
 
     schema = XMLSchema(projectSchema)
     (projectDict, errors) = schema.to_dict(projectFilePath, validation="lax")
+    util.printErrorList([ err.message for err in errors ])
 
     # can do that because the project file is valid and ProjectId is required
     # by the schema
@@ -357,6 +359,7 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
 
     markupSchema = XMLSchema(markupSchemaPath)
     (markupDict, errors) = markupSchema.to_dict(markupFilePath, validation="lax")
+    util.printErrorList([ err.message for err in errors ])
 
     commentList = getOptionalFromDict(markupDict, "Comment", list())
     comments = [ buildComment(comment) for comment in commentList ]
@@ -540,6 +543,7 @@ def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
 
     vpSchema = XMLSchema(viewpointSchemaPath)
     (vpDict, errors) = vpSchema.to_dict(viewpointFilePath, validation="lax")
+    util.printErrorList([ str(err) for err in errors ])
 
     id = UUID(vpDict["@Guid"])
 
@@ -686,8 +690,17 @@ def readBcfFile(bcfFile: str):
         # inside markup
         for vpRef in markup.viewpoints:
             vpPath = os.path.join(topicDir, vpRef.file.uri)
-            vp = buildViewpoint(vpPath, visinfoSchemaPath)
-            vpRef.viewpoint = vp
+            try:
+                # if some required element was not found, indicated by a key
+                # error then skip the viewpoint
+                vp = buildViewpoint(vpPath, visinfoSchemaPath)
+            except KeyError as err:
+                util.printErr("{} is required in a viewpoint file."
+                    " Viewpoint {}/{} is skipped"\
+                        "".format(str(err), topic, vpRef.file))
+                continue
+            else:
+                vpRef.viewpoint = vp
 
         markup.containingObject = proj
         # add the finished markup object to the project
