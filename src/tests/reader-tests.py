@@ -56,20 +56,6 @@ class BuildProjectTest(unittest.TestCase):
                 self.projectSchemaPath)
         self.assertEqual(expectedProject, resultingProject)
 
-    def test_project_with_two_names(self):
-
-        """
-        Input: project-with-two-names.bcfp, a project file that has two names
-        specified, normal project.xsd
-        Expected Output: XMLSchemaValidationError
-        """
-
-        # copy the prepared project file to the temporary directory
-        srcFilePath = self.fileDirectory + "/project-with-two-names.bcfp"
-        copyfile(srcFilePath, self.projectFilePath)
-
-        with self.assertRaises(XMLSchemaValidationError):
-            reader.buildProject(self.projectFilePath, self.projectSchemaPath)
 
     def test_empty_project_file_path(self):
 

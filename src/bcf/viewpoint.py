@@ -6,7 +6,7 @@ from bcf.project import listSetContainingElement
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
 from interfaces.xmlname import XMLName
-from interfaces.identifiable import Identifiable
+from interfaces.identifiable import Identifiable, XMLIdentifiable
 
 
 class BitmapFormat(Enum):

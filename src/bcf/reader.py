@@ -50,32 +50,6 @@ def readFile(path: str):
     return file
 
 
-def schemaValidate(schemaPath: str, xmlFile: str):
-
-    """
-    Takes the schemaFile and loads it into the module xmlschema. With the
-    resulting object `xmlFile` is checked whether it adheres to the
-    specification or not.
-    Returns a tuple: first element is a boolean value, and the second is a
-    string containing the error message.
-    """
-
-    if not (os.path.exists(schemaPath) or os.path.exists(xmlFile)):
-        raise ValueError
-
-    schema = XMLSchema(schemaPath)
-    valid = schema.is_valid(xmlFile)
-    debug("reader.schemaValidate(): validating {} against {}".format(xmlFile, schemaPath))
-    if valid:
-        return (valid, "")
-    else:
-        try:
-            # it is going to fail. I want the error message to return it
-            schema.validate(xmlFile)
-        except Exception as e:
-            return (valid, str(e))
-
-
 def extractFileToTmp(zipFilePath: str):
 
     """
@@ -201,7 +175,7 @@ def buildProject(projectFilePath: str, projectSchema: str):
         return None
 
     schema = XMLSchema(projectSchema)
-    projectDict = schema.to_dict(projectFilePath)
+    (projectDict, errors) = schema.to_dict(projectFilePath, validation="lax")
 
     # can do that because the project file is valid and ProjectId is required
     # by the schema
@@ -382,7 +356,7 @@ def buildViewpointReference(viewpointDict):
 def buildMarkup(markupFilePath: str, markupSchemaPath: str):
 
     markupSchema = XMLSchema(markupSchemaPath)
-    markupDict = markupSchema.to_dict(markupFilePath)
+    (markupDict, errors) = markupSchema.to_dict(markupFilePath, validation="lax")
 
     commentList = getOptionalFromDict(markupDict, "Comment", list())
     comments = [ buildComment(comment) for comment in commentList ]
@@ -565,7 +539,7 @@ def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
     """
 
     vpSchema = XMLSchema(viewpointSchemaPath)
-    vpDict = vpSchema.to_dict(viewpointFilePath)
+    (vpDict, errors) = vpSchema.to_dict(viewpointFilePath, validation="lax")
 
     id = UUID(vpDict["@Guid"])
 
@@ -685,8 +659,9 @@ def readBcfFile(bcfFile: str):
     if os.path.exists(projectFilePath):
         error = validateFile(projectFilePath, projectSchemaPath, bcfFile)
         if error != "":
-            pprint.pprint(error, file=sys.stderr)
-            return None
+            debug("{} is not completely valid. Some parts won't be available."\
+                    " Following the error message:\n{}".format(projectFilePath,
+                        error))
         proj = buildProject(projectFilePath, projectSchemaPath)
 
     ### Iterate over the topic directories ###
@@ -701,8 +676,9 @@ def readBcfFile(bcfFile: str):
         debug("reader.readBcfFile(): looking into topic {}".format(topicDir))
         error = validateFile(markupFilePath, markupSchemaPath, bcfFile)
         if error != "":
-            print(error, file=sys.stderr)
-            return None
+            debug("{} is not completely valid. Some parts won't be available."\
+                    " Following the error message:\n{}".format(markupFilePath,
+                        error))
         markup = buildMarkup(markupFilePath, markupSchemaPath)
 
         # generate a viewpoint object for all viewpoints listed in the markup
