@@ -522,7 +522,7 @@ class Components(Hierarchy, State, XMLName):
         return elem
 
 
-class Viewpoint(Hierarchy, State, XMLName, Identifiable):
+class Viewpoint(Hierarchy, State, XMLName, Identifiable, XMLIdentifiable):
 
     """
     Viewpoint uses the default implementation of getStateList(). Objects of type
@@ -547,7 +547,7 @@ class Viewpoint(Hierarchy, State, XMLName, Identifiable):
         State.__init__(self, state)
         XMLName.__init__(self, "VisualizationInfo")
         Identifiable.__init__(self)
-        self.xmlId = id
+        XMLIdentifiable.__init__(self, id)
         self.components = components
         self.oCamera = oCamera
         self.pCamera = pCamera

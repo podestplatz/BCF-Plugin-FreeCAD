@@ -293,6 +293,14 @@ topicList='{}')""".format(str(self.xmlId),
 
     def deleteObject(self, object):
 
+        """ Remove `object` from the data model (i.e. instance of Project)
+
+        Removal is done depending on whether object is part of a list, if its a
+        SimpleElement or Attribute or a complex element (e.g. instance of
+        comment). From a list it will be removed, SimpleElements and Attributes
+        are assigned their default value and complex objects are set to None.
+        """
+
         parent = object.containingObject
 
         memberName = ""
@@ -340,3 +348,16 @@ topicList='{}')""".format(str(self.xmlId),
                 setattr(parent, memberName, None)
 
         return True
+
+
+    def getEtElement(self, elem):
+
+        elem.tag = self.xmlName
+        elem.attrib["ProjectId"] = str(self.xmlId)
+
+        dflValue = self._name.defaultValue
+        if self.name != dflValue:
+            nameElem = ET.SubElement(elem, self._name.xmlName)
+            nameElem = self._name.getEtElement(nameElem)
+
+        return elem

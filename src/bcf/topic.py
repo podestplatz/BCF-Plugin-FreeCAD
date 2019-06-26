@@ -109,16 +109,21 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
         elem.tag = self.xmlName
 
         # guid is optional in DocumentReference
-        if self.guid is not None:
+        defaultValue = self._guid.defaultValue
+        if self.guid != defaultValue:
             elem.attrib["Guid"] = str(self.guid)
-        if self.external: # false is default. Not written if false
+
+        defaultValue = self._external.defaultValue
+        if self.external != defaultValue:
             elem.attrib["isExternal"] = str(self.external).lower()
 
-        if str(self.reference) != "":
+        defaultValue = self._reference.defaultValue
+        if str(self.reference) != defaultValue:
             refElem = ET.SubElement(elem, "ReferencedDocument")
             refElem.text = str(self.reference)
 
-        if self.description != "":
+        defaultValue = self._description.defaultValue
+        if self.description != defaultValue:
             descElem = ET.SubElement(elem, "Description")
             descElem.text = self.description
 
@@ -241,11 +246,13 @@ class BimSnippet(Hierarchy, State, XMLName, Identifiable):
         elem.attrib["SnippetType"] = str(self.type)
         elem.attrib["isExternal"] = str(self.external).lower()
 
-        if self.reference != "":
+        defaultValue = self._reference.defaultValue
+        if self.reference != defaultValue:
             refElem = ET.SubElement(elem, "Reference")
             refElem.text = str(self.reference)
 
-        if self.schema is not None:
+        defaultValue = self._schema.defaultValue
+        if self.schema != defaultValue:
             schemaElem = ET.SubElement(elem, "ReferenceSchema")
             schemaElem.text = str(self.schema)
 
@@ -554,14 +561,14 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
 
     def _createSimpleNode(self, parentNode: ET.Element,
-            classMember: SimpleElement,
-            dflValue):
+            classMember: SimpleElement):
 
         """
         Create a simple xml node with the content of `classMember`.
         """
 
         newNode = None
+        dflValue = classMember.defaultValue
         if classMember.value != dflValue:
             newNode = ET.SubElement(parentNode, classMember.xmlName)
             newNode = classMember.getEtElement(newNode)
@@ -580,22 +587,25 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         elem.tag = self.xmlName
         elem.attrib["Guid"] = str(self.xmlId)
 
-        if self.type != "":
+        defaultValue = self._type.defaultValue
+        if self.type != defaultValue:
             elem.attrib["type"] = self.type
-        if self.status != "":
+
+        defaultValue = self._status.defaultValue
+        if self.status != defaultValue:
             elem.attrib["status"] = self.status
 
         for refLink in self.referenceLinks:
-            refLinkElem = self._createSimpleNode(elem, refLink, None)
+            refLinkElem = self._createSimpleNode(elem, refLink)
 
         titleElem = ET.SubElement(elem, "Title")
         titleElem = self._title.getEtElement(titleElem)
 
-        prioElem = self._createSimpleNode(elem, self._priority, "")
-        idxElem = self._createSimpleNode(elem, self._index, -1)
+        prioElem = self._createSimpleNode(elem, self._priority)
+        idxElem = self._createSimpleNode(elem, self._index)
 
         for lbl in self.labels:
-            lblElem = self._createSimpleNode(elem, lbl, None)
+            lblElem = self._createSimpleNode(elem, lbl)
 
         dateElem = ET.SubElement(elem, "Date")
         dateElem = self._date.getEtElement(dateElem)
@@ -605,16 +615,14 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         if self.modDate is not None:
             modDateElem = self._createSimpleNode(elem,
-                    self._modDate,
-                    None)
+                    self._modDate)
             modAuthorElem = self._createSimpleNode(elem,
-                    self._modAuthor,
-                    None)
+                    self._modAuthor)
 
-        dueDateElem = self._createSimpleNode(elem, self._dueDate, None)
-        assigneeElem = self._createSimpleNode(elem, self._assignee, "")
-        stageElem = self._createSimpleNode(elem, self._stage, "")
-        descElem = self._createSimpleNode(elem, self._description, "")
+        dueDateElem = self._createSimpleNode(elem, self._dueDate)
+        assigneeElem = self._createSimpleNode(elem, self._assignee)
+        stageElem = self._createSimpleNode(elem, self._stage)
+        descElem = self._createSimpleNode(elem, self._description)
 
         if self.bimSnippet is not None:
             bimSnippetElem = ET.SubElement(elem, self.bimSnippet.xmlName)
@@ -625,7 +633,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             docRefElem = docRef.getEtElement(docRefElem)
 
         for relTopic in self.relatedTopics:
-            relTopicElem = self._createSimpleNode(elem, relTopic, None)
+            relTopicElem = self._createSimpleNode(elem, relTopic)
 
         return elem
 

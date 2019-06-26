@@ -117,20 +117,30 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
 
         elem.tag = self.xmlName
 
-        if not self.external: # only write external if its not set to default
+        defaultValue = self._external.defaultValue
+        if self.external != defaultValue: # only write external if its not set to default
             elem.attrib["isExternal"] = str(self.external).lower() # xml bool is lowercase
-        if self.ifcSpatialStructureElement != "":
+
+        defaultValue = self._ifcSpatialStructureElement.defaultValue
+        if self.ifcSpatialStructureElement != defaultValue:
             elem.attrib["IfcSpatialStructureElement"] = self.ifcSpatialStructureElement
-        if self.ifcProjectId != "":
+
+        defaultValue = self._ifcProjectId.defaultValue
+        if self.ifcProjectId != defaultValue:
             elem.attrib["IfcProject"] = self.ifcProjectId
 
-        if self.filename != "":
+        defaultValue = self._filename.defaultValue
+        if self.filename != defaultValue:
             filenameElem = ET.SubElement(elem, "Filename")
             filenameElem.text = self.filename
-        if self.time is not None:
+
+        defaultValue = self._time.defaultValue
+        if self.time != defaultValue:
             timeElem = ET.SubElement(elem, "Date")
             timeElem.text = self.time.isoformat("T", "seconds")
-        if self.reference != "":
+
+        defaultValue = self._reference.defaultValue
+        if self.reference != defaultValue:
             refElem = ET.SubElement(elem, "Reference")
             refElem.text = str(self.reference)
 
@@ -373,15 +383,18 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         elem.tag = self.xmlName
         elem.attrib["Guid"] = str(self.xmlId)
 
-        if self.file is not None:
+        defaultValue = self._file.defaultValue
+        if self.file != defaultValue:
             fileElem = ET.SubElement(elem, "Viewpoint")
             fileElem.text = str(self.file)
 
-        if self.snapshot is not None:
+        defaultValue = self._snapshot.defaultValue
+        if self.snapshot != defaultValue:
             snapElem = ET.SubElement(elem, "Snapshot")
             snapElem.text = str(self.snapshot)
 
-        if self.index != -1:
+        defaultValue = self._index.defaultValue
+        if self.index != defaultValue:
             indexElem = ET.SubElement(elem, "Index")
             indexElem.text = str(self.index)
 
@@ -577,7 +590,8 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             vpElem = ET.SubElement(elem, "Viewpoint")
             vpElem.attrib["Guid"] = str(self.viewpoint.xmlId)
 
-        if self.modDate is not None:
+        defaultValue = self._modDate.defaultValue
+        if self.modDate != defaultValue:
             modDateElem = ET.SubElement(elem, "ModifiedDate")
             modDateElem = self._modDate.getEtElement(modDateElem)
 
