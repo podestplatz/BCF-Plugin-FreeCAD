@@ -26,8 +26,8 @@ def check_dependencies():
         except:
             print("Could not find the module `xmlschema`. Install it through"\
                     " pip\n\tpip install python-dateutil\nYou also might want to"\
-                    "install it in a virtual environment. To create and initialise"\
-                    "said env execute\n\tpython -m venv <NAME>\n\tsource"\
+                    " install it in a virtual environment. To create and initialise"\
+                    " said env execute\n\tpython -m venv <NAME>\n\tsource"\
                     " ./<NAME>/bin/activate", file=sys.stderr)
             return False
 
@@ -59,5 +59,8 @@ TODO: add documentation on the interfaces part.
     if not check_dependencies():
         exit(1)
 
-    import bcf.reader as reader
-    import bcf.writer as writer
+    import frontend.programmaticInterface as plugin
+    project = plugin.openProject("./bcf/test_data/Issues_BIMcollab_Example.bcf.original")
+    topics = plugin.getTopics()
+    a = lambda x: x[1].index
+    print([ a(topic) for topic in topics ])

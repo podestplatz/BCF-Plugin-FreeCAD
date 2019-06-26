@@ -259,7 +259,7 @@ def buildTopic(topicDict: Dict):
         modifiedDate = dateutil.parser.parse(modifiedDate)
     modifiedAuthor = getOptionalFromDict(topicDict, "ModifiedAuthor", "")
 
-    index = getOptionalFromDict(topicDict, "Index", 0)
+    index = getOptionalFromDict(topicDict, "Index", -1)
     dueDate = getOptionalFromDict(topicDict, "DueDate", None)
     if dueDate is not None:
         dueDate = dateutil.parser.parse(dueDate)
