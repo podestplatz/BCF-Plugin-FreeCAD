@@ -683,6 +683,20 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
                 self.viewpoints == other.viewpoints)
 
 
+    def __str__(self):
+
+        ret_str = "---- Markup ----\n"\
+                "header: {}\n"\
+                "topic: {}\n"\
+                "comments: {}\n"\
+                "viewpoints: {}\n".format(self.header,
+                        self.topic.xmlId,
+                        self.comments,
+                        self.viewpoints)
+
+        return ret_str
+
+
     def getViewpointRefByGuid(self, guid: UUID):
 
         """

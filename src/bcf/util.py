@@ -73,6 +73,13 @@ def printErr(msg):
     print(msg, file=sys.stderr)
 
 
+def printInfo(msg):
+
+    """ Print informative message to the user """
+
+    print(msg)
+
+
 def printErrorList(errors):
 
     """ Print every error message from errors """

@@ -157,8 +157,6 @@ def _filterCommentsForViewpoint(comments: List[Tuple[str, m.Comment]], viewpoint
 
     realVp = curProject.searchObject(viewpoint)
     realVpRef = realVp.containingObject
-    print("found viewpoint reference is: {}".format(realVpRef))
-    print("filtering comments {}".format(comments))
 
     f = lambda cm:\
         cm if (cm[1].viewpoint and cm[1].viewpoint.id == realVpRef.id) else None
@@ -221,9 +219,44 @@ def getViewpoints(topic: Topic):
         return OperationResults.FAILURE
 
     markup = realTopic.containingObject
-    viewpoints = [ (str(vpRef.file), vpRef.viewpoint)
+    viewpoints = [ (str(vpRef.file), copy.deepcopy(vpRef.viewpoint))
             for vpRef in markup.viewpoints ]
 
     return viewpoints
 
 
+def getRelevantIfcFiles(topic: Topic):
+
+    """ Return a list of Ifc files relevant to this topic.
+
+    This list is basically markup.Header.files. files is further filtered for
+    ones that at least have the attribute IfcProjectId and a path associated.
+    If the list cannot be constructed, because for example no project is
+    currently open, OperationResults.FAILURE is returned.
+    """
+
+    global curProject
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    realTopic = curProject.searchObject(topic)
+    if realTopic is None:
+        util.printErr("Topic {} could not be found in the open project."\
+                "Cannot retrieve any comments for it then".format(topic))
+        return OperationResults.FAILURE
+
+    markup = realTopic.containingObject
+    if markup.header is None:
+        return []
+
+    files = copy.deepcopy(markup.header.files)
+
+    hasIfcProjectId = lambda file: file.ifcProjectId != file._ifcProjectId.defaultValue
+    hasReference = lambda file: file.reference != file._reference.defaultValue
+    files = filter(lambda f: hasIfcProjectId(f) and hasReference(f), files)
+
+    util.printInfo("If you want to open one of the files in FreeCAD run:\n"\
+            "\t plugin.openIfcProject(file)")
+
+    return list(files)

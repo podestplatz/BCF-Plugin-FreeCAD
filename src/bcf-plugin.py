@@ -71,4 +71,9 @@ TODO: add documentation on the interfaces part.
     comments = plugin.getComments(topics[0][1], viewpoints[0][1])
     print(comments)
 
+    files = list()
+    for (topicUUID, topic) in topics:
+        files.append(plugin.getRelevantIfcFiles(topic))
+    print(files)
+
 

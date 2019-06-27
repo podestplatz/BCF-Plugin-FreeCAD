@@ -65,7 +65,8 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testTopicDir,
                 self.testBCFName)
         if pI.openProject(testFile) == pI.OperationResults.FAILURE:
-            print("Well something happened")
+            print("Could not open file")
+            self.assertTrue(False)
 
         commentToDelete = pI.curProject.topicList[0].comments[0]
         pI.deleteObject(commentToDelete)
@@ -86,13 +87,15 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testFileDir,
                 self.testTopicDir,
                 self.testBCFName)
-        p = reader.readBcfFile(testFile)
+        if pI.openProject(testFile) == pI.OperationResults.FAILURE:
+            print("Could not open file")
+            self.assertTrue(False)
 
-        objectToDelete = p.topicList[0].header.files[1]._ifcProjectId
+        objectToDelete = pI.curProject.topicList[0].header.files[1]._ifcProjectId
         objectToDelete.state = s.State.States.DELETED
-        newProject = pI.deleteObject(p, objectToDelete)
+        pI.deleteObject(objectToDelete)
 
-        newObject = newProject.topicList[0].header.files[1]._ifcProjectId
+        newObject = pI.curProject.topicList[0].header.files[1]._ifcProjectId
         newObjectValue = newObject.value
         defaultValue = newObject.defaultValue
         self.assertTrue(newObjectValue == defaultValue)
@@ -110,11 +113,14 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testFileDir,
                 self.testTopicDir,
                 self.testBCFName)
-        p = reader.readBcfFile(testFile)
+        if pI.openProject(testFile) == pI.OperationResults.FAILURE:
+            print("Could not open file")
+            self.assertTrue(False)
 
-        objectToDelete = p.topicList[0].header.files[0]
+        objectToDelete = pI.curProject.topicList[0].header.files[0]
         objectToDelete.state = s.State.States.DELETED
-        newProject = pI.deleteObject(p, objectToDelete)
+        pI.deleteObject(objectToDelete)
+        newProject = pI.curProject
 
         searchResult = newProject.searchObject(objectToDelete)
         self.assertTrue(len(newProject.topicList[0].header.files) == 1 and
@@ -133,12 +139,15 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testFileDir,
                 self.testTopicDir,
                 self.testBCFName)
-        p = reader.readBcfFile(testFile)
+        if pI.openProject(testFile) == pI.OperationResults.FAILURE:
+            print("Could not open file")
+            self.assertTrue(False)
 
-        objectToDelete = p.topicList[0].header
+        objectToDelete = pI.curProject.topicList[0].header
         objectToDelete.state = s.State.States.DELETED
-        newProject = pI.deleteObject(p, objectToDelete)
+        pI.deleteObject(objectToDelete)
 
+        newProject = pI.curProject
         searchResult = newProject.searchObject(objectToDelete)
         self.assertTrue(newProject.topicList[0].header == None and
                 searchResult == None)
@@ -156,11 +165,14 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testFileDir,
                 self.testTopicDir,
                 self.testBCFName)
-        p = reader.readBcfFile(testFile)
+        if pI.openProject(testFile) == pI.OperationResults.FAILURE:
+            print("Could not open file")
+            self.assertTrue(False)
 
-        objectToDelete = p.topicList[0].topic.labels[0]
+        objectToDelete = pI.curProject.topicList[0].topic.labels[0]
         objectToDelete.state = s.State.States.DELETED
-        newProject = pI.deleteObject(p, objectToDelete)
+        pI.deleteObject(objectToDelete)
+        newProject = pI.curProject
 
         labelList = newProject.topicList[0].topic.labels
         searchResult = newProject.searchObject(objectToDelete)
@@ -175,12 +187,15 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testFileDir,
                 self.testTopicDir,
                 self.testBCFName)
-        p = reader.readBcfFile(testFile)
+        if pI.openProject(testFile) == pI.OperationResults.FAILURE:
+            print("Could not open file")
+            self.assertTrue(False)
 
-        objectToDelete = p.topicList[0].viewpoints[0]
+        objectToDelete = pI.curProject.topicList[0].viewpoints[0]
         objectToDelete.state = s.State.States.DELETED
         objectToDelete.viewpoint.state = s.State.States.DELETED
-        newProject = pI.deleteObject(p, objectToDelete)
+        pI.deleteObject(objectToDelete)
+        newProject = pI.curProject
 
         vpList = newProject.topicList[0].viewpoints
         searchResult = newProject.searchObject(objectToDelete)
@@ -208,11 +223,14 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testFileDir,
                 self.testTopicDir,
                 self.testBCFName)
-        p = reader.readBcfFile(testFile)
+        if pI.openProject(testFile) == pI.OperationResults.FAILURE:
+            print("Could not open file")
+            self.assertTrue(False)
 
-        objectToDelete = p.topicList[0].viewpoints[0]
+        objectToDelete = pI.curProject.topicList[0].viewpoints[0]
         objectToDelete.state = s.State.States.DELETED
-        newProject = pI.deleteObject(p, objectToDelete)
+        pI.deleteObject(objectToDelete)
+        newProject = pI.curProject
 
         vpList = newProject.topicList[0].viewpoints
         searchResult = newProject.searchObject(objectToDelete)
@@ -226,6 +244,29 @@ class DeleteObjectTest(unittest.TestCase):
         self.assertTrue(len(vpList) == 0 and searchResult == None and
                 vpFileExists)
 
+
+class GetTopicsTest(unittest.TestCase):
+
+    def setUp(self):
+        self.testFileDir = "./interface_tests"
+        self.testBCFName = "Issues-Example_topics_test.bcf"
+
+
+    def tearDown(self):
+        dirPath = os.path.join(util.getSystemTmp(), self.testBCFName)
+        project.debug("Deleted tree {}".format(dirPath))
+        rmtree(dirPath)
+
+
+    def test_indexOrdering(self):
+
+        """ Test the sorting of the topic List
+
+        Topics with no index shall be displayed at the end of the list. No index
+        is indicated by an index value of -1
+        """
+
+        pass
 
 if __name__ == "__main__":
     unittest.main()

@@ -791,7 +791,7 @@ def addProjectUpdate(project: p.Project, element, prevVal):
     """
 
     global projectUpdates
-    if element.state != iI.State.States.ORIGINAL:
+    if element.state != iS.State.States.ORIGINAL:
         projectUpdates.append((project, element, prevVal))
     else:
         raise ValueError("Element is in its original state. Cannot be added as"\
