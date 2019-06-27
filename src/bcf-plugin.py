@@ -64,5 +64,9 @@ TODO: add documentation on the interfaces part.
     topics = plugin.getTopics()
     a = lambda x: x[1].index
     print([ a(topic) for topic in topics ])
+
     comments = plugin.getComments(topics[0][1])
     print(comments)
+
+    viewpoints = plugin.getViewpoints(topics[0][1])
+    print(viewpoints)

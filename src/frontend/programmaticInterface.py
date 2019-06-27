@@ -61,8 +61,6 @@ def deleteObject(object):
         return OperationResults.FAILURE
 
     if not isProjectOpen():
-        util.printErr("Cannot delete anything, no project is open. Please "\
-                "open a project and try again.")
         return OperationResults.FAILURE
 
     # find out the name of the object in its parent
@@ -155,6 +153,7 @@ def getComments(topic: Topic):
     order => oldest entries will be first in the list.
     Every list element item will be a tuple where the first element is the
     comments string representation and the second is the comment object itself.
+    If this cannot be done OperationsResult.FAILURE is returned instead.
     """
 
     if not isProjectOpen():
@@ -171,3 +170,32 @@ def getComments(topic: Topic):
 
     comments = sorted(comments, key=lambda cm: cm[1].date)
     return comments
+
+
+def getViewpoints(topic: Topic):
+
+    """ Collect a list of viewpoints associated with the given topic.
+
+    The list is constructed of tuples. Each tuple element contains the name of
+    the viewpoint file and a reference to the read-in viewpoint.
+    If the list cannot be constructed, because for example no project is
+    currently open, OperationResults.FAILURE is returned.
+    """
+
+    global curProject
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    # given topic is a copy of the topic contained in curProject
+    realTopic = curProject.searchObject(topic)
+    if realTopic is None:
+        util.printErr("Topic {} could not be found in the open project."\
+                "Cannot retrieve any comments for it then".format(topic))
+        return OperationResults.FAILURE
+
+    markup = realTopic.containingObject
+    viewpoints = [ (str(vpRef.file), vpRef.viewpoint)
+            for vpRef in markup.viewpoints ]
+
+    return viewpoints
