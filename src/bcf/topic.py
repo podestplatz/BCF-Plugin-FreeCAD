@@ -692,7 +692,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         if searchResult is not None:
             return searchResult
 
-        searchResult = searchListObject(object, self.refs)
+        searchResult = searchListObject(object, self.docRefs)
         if searchResult is not None:
             return searchResult
 

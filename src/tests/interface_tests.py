@@ -25,7 +25,7 @@ import bcf.project as project
 import bcf.threedvector as tdv
 import bcf.viewpoint as viewpoint
 import bcf.modification as modification
-import bcf.frontendInterface as bFI
+import frontend.programmaticInterface as pI
 import interfaces.hierarchy as hierarchy
 
 
@@ -64,12 +64,13 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testFileDir,
                 self.testTopicDir,
                 self.testBCFName)
-        p = reader.readBcfFile(testFile)
+        if pI.openProject(testFile) == pI.OperationResults.FAILURE:
+            print("Well something happened")
 
-        commentToDelete = p.topicList[0].comments[0]
-        newProject = bFI.deleteObject(p, commentToDelete)
+        commentToDelete = pI.curProject.topicList[0].comments[0]
+        pI.deleteObject(commentToDelete)
 
-        self.assertTrue(len(p.topicList[0].comments)==0)
+        self.assertTrue(len(pI.curProject.topicList[0].comments)==0)
 
 
     def test_deleteIfcProject(self):
@@ -89,7 +90,7 @@ class DeleteObjectTest(unittest.TestCase):
 
         objectToDelete = p.topicList[0].header.files[1]._ifcProjectId
         objectToDelete.state = s.State.States.DELETED
-        newProject = bFI.deleteObject(p, objectToDelete)
+        newProject = pI.deleteObject(p, objectToDelete)
 
         newObject = newProject.topicList[0].header.files[1]._ifcProjectId
         newObjectValue = newObject.value
@@ -113,7 +114,7 @@ class DeleteObjectTest(unittest.TestCase):
 
         objectToDelete = p.topicList[0].header.files[0]
         objectToDelete.state = s.State.States.DELETED
-        newProject = bFI.deleteObject(p, objectToDelete)
+        newProject = pI.deleteObject(p, objectToDelete)
 
         searchResult = newProject.searchObject(objectToDelete)
         self.assertTrue(len(newProject.topicList[0].header.files) == 1 and
@@ -136,7 +137,7 @@ class DeleteObjectTest(unittest.TestCase):
 
         objectToDelete = p.topicList[0].header
         objectToDelete.state = s.State.States.DELETED
-        newProject = bFI.deleteObject(p, objectToDelete)
+        newProject = pI.deleteObject(p, objectToDelete)
 
         searchResult = newProject.searchObject(objectToDelete)
         self.assertTrue(newProject.topicList[0].header == None and
@@ -159,7 +160,7 @@ class DeleteObjectTest(unittest.TestCase):
 
         objectToDelete = p.topicList[0].topic.labels[0]
         objectToDelete.state = s.State.States.DELETED
-        newProject = bFI.deleteObject(p, objectToDelete)
+        newProject = pI.deleteObject(p, objectToDelete)
 
         labelList = newProject.topicList[0].topic.labels
         searchResult = newProject.searchObject(objectToDelete)
@@ -179,7 +180,7 @@ class DeleteObjectTest(unittest.TestCase):
         objectToDelete = p.topicList[0].viewpoints[0]
         objectToDelete.state = s.State.States.DELETED
         objectToDelete.viewpoint.state = s.State.States.DELETED
-        newProject = bFI.deleteObject(p, objectToDelete)
+        newProject = pI.deleteObject(p, objectToDelete)
 
         vpList = newProject.topicList[0].viewpoints
         searchResult = newProject.searchObject(objectToDelete)
@@ -211,7 +212,7 @@ class DeleteObjectTest(unittest.TestCase):
 
         objectToDelete = p.topicList[0].viewpoints[0]
         objectToDelete.state = s.State.States.DELETED
-        newProject = bFI.deleteObject(p, objectToDelete)
+        newProject = pI.deleteObject(p, objectToDelete)
 
         vpList = newProject.topicList[0].viewpoints
         searchResult = newProject.searchObject(objectToDelete)

@@ -47,6 +47,8 @@ def deleteObject(object):
     one deletes the object from the data model.
     """
 
+    global curProject
+
     if not issubclass(type(object), Identifiable):
         util.printErr("Cannot delete {} since it doesn't inherit from"\
             " interfaces.Identifiable".format(object))
@@ -56,6 +58,11 @@ def deleteObject(object):
         util.printErr("Cannot delete {} since it seems to be not part of" \
             " the data model. It has to inherit from"\
             " hierarchy.Hierarchy".format(object))
+        return OperationResults.FAILURE
+
+    if not isProjectOpen():
+        util.printErr("Cannot delete anything, no project is open. Please "\
+                "open a project and try again.")
         return OperationResults.FAILURE
 
     # find out the name of the object in its parent
@@ -94,14 +101,15 @@ def openProject(bcfFile):
     if not os.path.exists(bcfFile):
         util.printErr("File {} does not exist. Please choose a valid"\
             " file!".format(bcfFile))
-        return None
+        return OperationResults.FAILURE
 
     project = reader.readBcfFile(bcfFile)
     if project is None:
         util.printErr("{} could not be read.".format(bcfFile))
-        return None
+        return OperationResults.FAILURE
 
     curProject = project
+    return OperationResults.SUCCESS
 
 
 def getTopics():

@@ -61,8 +61,6 @@ TODO: add documentation on the interfaces part.
 
     import frontend.programmaticInterface as plugin
     project = plugin.openProject("./bcf/test_data/Issues_BIMcollab_Example.bcf.original")
-    if project is None:
-        exit()
     topics = plugin.getTopics()
     a = lambda x: x[1].index
     print([ a(topic) for topic in topics ])

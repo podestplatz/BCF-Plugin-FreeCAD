@@ -680,8 +680,9 @@ def readBcfFile(bcfFile: str):
         debug("reader.readBcfFile(): looking into topic {}".format(topicDir))
         error = validateFile(markupFilePath, markupSchemaPath, bcfFile)
         if error != "":
-            debug("{} is not completely valid. Some parts won't be available."\
-                    " Following the error message:\n{}".format(markupFilePath,
+            util.printErr("{} does not comply with the standard of versions {}."\
+                   " Some parts won't be available."\
+                   " Error:\n{}".format(markupFilePath, SUPPORTED_VERSIONS,
                         error))
         markup = buildMarkup(markupFilePath, markupSchemaPath)
 

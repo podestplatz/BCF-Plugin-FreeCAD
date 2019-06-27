@@ -77,6 +77,8 @@ def printErrorList(errors):
 
     """ Print every error message from errors """
 
+    return
+
     for error in errors:
         printErr(error)
 
