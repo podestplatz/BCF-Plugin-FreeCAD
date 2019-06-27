@@ -2,6 +2,7 @@ import os
 import sys
 import copy
 from enum import Enum
+from typing import List, Tuple
 
 if __name__ == "__main__":
     sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
@@ -10,6 +11,8 @@ import bcf.reader as reader
 import bcf.writer as writer
 import bcf.project as p
 import bcf.util as util
+import bcf.markup as m
+from bcf.viewpoint import Viewpoint
 from bcf.topic import Topic
 from interfaces.identifiable import Identifiable
 from interfaces.hierarchy import Hierarchy
@@ -145,7 +148,25 @@ def getTopics():
     return topics
 
 
-def getComments(topic: Topic):
+def _filterCommentsForViewpoint(comments: List[Tuple[str, m.Comment]], viewpoint: Viewpoint):
+
+    """ Filter comments referencing viewpoint """
+
+    if viewpoint is None:
+        return comments
+
+    realVp = curProject.searchObject(viewpoint)
+    realVpRef = realVp.containingObject
+    print("found viewpoint reference is: {}".format(realVpRef))
+    print("filtering comments {}".format(comments))
+
+    f = lambda cm:\
+        cm if (cm[1].viewpoint and cm[1].viewpoint.id == realVpRef.id) else None
+    filtered = list(filter(f, comments))
+    return filtered
+
+
+def getComments(topic: Topic, viewpoint: Viewpoint = None):
 
     """ Collect an ordered list of comments inside of topic.
 
@@ -153,7 +174,11 @@ def getComments(topic: Topic):
     order => oldest entries will be first in the list.
     Every list element item will be a tuple where the first element is the
     comments string representation and the second is the comment object itself.
+
     If this cannot be done OperationsResult.FAILURE is returned instead.
+
+    If viewpoint is set then the list of comments is filtered for ones
+    referencing viewpoint.
     """
 
     if not isProjectOpen():
@@ -169,6 +194,7 @@ def getComments(topic: Topic):
     comments = [ (str(comment), copy.deepcopy(comment)) for comment in markup.comments ]
 
     comments = sorted(comments, key=lambda cm: cm[1].date)
+    comments = _filterCommentsForViewpoint(comments, viewpoint)
     return comments
 
 
@@ -199,3 +225,5 @@ def getViewpoints(topic: Topic):
             for vpRef in markup.viewpoints ]
 
     return viewpoints
+
+
