@@ -1,4 +1,5 @@
 import sys
+import bcf.util as util
 
 def check_dependencies():
     available = True
@@ -15,12 +16,12 @@ def check_dependencies():
             available = False
 
     if not available:
-        print("Could not find the module `xmlschema`. Install it through"\
+        util.printErr("Could not find the module `xmlschema`. Install it through"\
                 " pip\n\tpip install {}\nYou also might want to"\
                 " install it in a virtual environment. To create and initialise"\
                 " said env execute\n\tpython -m venv <NAME>\n\tsource"\
-                " ./<NAME>/bin/activate".format(pkg), file=sys.stderr)
-        print("If you already have it installed inside a virtual environment" \
+                " ./<NAME>/bin/activate".format(pkg))
+        util.printInfo("If you already have it installed inside a virtual environment" \
                 ", no problem we just need to modify the `sys.path` variable a"\
                 " bit. python inside FreeCAD, unfortunately, is not aware by" \
                 " default, of a virtual environment. To do that you have to " \
@@ -58,22 +59,21 @@ TODO: add documentation on the interfaces part.
     project = plugin.openProject("./bcf/test_data/Issues_BIMcollab_Example.bcf.original")
     topics = plugin.getTopics()
     a = lambda x: x[1].index
-    print([ a(topic) for topic in topics ])
+    util.printInfo([ a(topic) for topic in topics ])
 
     viewpoints = plugin.getViewpoints(topics[0][1])
-    print(viewpoints)
+    util.printInfo(viewpoints)
 
     comments = plugin.getComments(topics[0][1], viewpoints[0][1])
-    print(comments)
+    util.printInfo(comments)
 
     files = list()
     for (topicUUID, topic) in topics:
         files.append(plugin.getRelevantIfcFiles(topic))
-    print(files)
+    util.printInfo(files)
 
 
 # detection if this script is run inside FreeCAD
-# TODO: set util logging to freecad if running in freecad
 try:
     import FreeCAD
 except:
@@ -82,11 +82,10 @@ else:
     if FreeCAD.GuiUp:
         import FreeCADGui as FGui
         from PySide import QtCore, QtGui
+    util.FREECAD = True
 
-if not check_dependencies():
-    exit()
-
-import frontend.programmaticInterface as plugin
+if check_dependencies():
+    import frontend.programmaticInterface as plugin
 
 
 """

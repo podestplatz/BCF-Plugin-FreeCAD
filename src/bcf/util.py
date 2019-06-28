@@ -6,6 +6,17 @@ import shutil
 from enum import Enum
 from urllib.error import URLError
 
+
+FREECAD = False
+""" Set by programmaticInterface when running inside FreeCAD """
+
+errorFile = None
+""" File to print errors to """
+
+errorFilePath = ""
+""" Path of error file """
+
+
 class Schema(Enum):
     EXTENSION = 1
     VISINFO = 2 # viewpoint info
@@ -70,24 +81,30 @@ def printErr(msg):
 
     """ Print msg to stderr """
 
-    print(msg, file=sys.stderr)
+    if FREECAD:
+        import FreeCAD
+        FreeCAD.Console.PrintError("{}\n".format(msg))
+    else:
+        print(msg, file=sys.stderr)
 
 
 def printInfo(msg):
 
     """ Print informative message to the user """
 
-    print(msg)
+    if FREECAD:
+        import FreeCAD
+        FreeCAD.Console.PrintMessage("{}\n".format(msg))
+    else:
+        print(msg)
 
 
-def printErrorList(errors):
+def printErrorList(errors, toFile=False):
 
     """ Print every error message from errors """
 
-    return
-
     for error in errors:
-        printErr(error)
+        printErr(error, toFile)
 
 
 def retrieveWebFile(schema: Schema, storePath: str):
