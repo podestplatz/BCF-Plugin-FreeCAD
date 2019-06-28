@@ -405,7 +405,7 @@ class AddElementTests(unittest.TestCase):
         testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
         p = reader.readBcfFile(testFile)
 
-        docRef = p.topicList[0].topic.refs[0]
+        docRef = p.topicList[0].topic.docRefs[0]
         docRef.guid = "98b5802c-4ca0-4032-9128-b9c606955c4f"
         docRef._guid.state = s.State.States.ADDED
         writer.addElement(docRef._guid)

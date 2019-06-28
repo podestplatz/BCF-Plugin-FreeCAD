@@ -91,7 +91,7 @@ def deleteObject(object):
 
 def openProject(bcfFile):
 
-    """ Reads bcfFile and sets curProject.
+    """ Reads in the given bcfFile and makes it available to the plugin.
 
     bcfFile is read using reader.readBcfFile(), if it returned `None` it is
     assumed that the file is invalid and the user is notified.
@@ -148,6 +148,19 @@ def getTopics():
     return topics
 
 
+def _searchRealTopic(topic: Topic):
+    """ Searches `curProject` for `topic` and returns the result
+
+    If not found then an error message is printed in addition
+    """
+
+    realTopic = curProject.searchObject(topic)
+    if realTopic is None:
+        util.printErr("Topic {} could not be found in the open project."\
+                "Cannot retrieve any comments for it then".format(topic))
+    return realTopic
+
+
 def _filterCommentsForViewpoint(comments: List[Tuple[str, m.Comment]], viewpoint: Viewpoint):
 
     """ Filter comments referencing viewpoint """
@@ -182,10 +195,8 @@ def getComments(topic: Topic, viewpoint: Viewpoint = None):
     if not isProjectOpen():
         return OperationResults.FAILURE
 
-    realTopic = curProject.searchObject(topic)
+    realTopic = _searchRealTopic(topic)
     if realTopic is None:
-        util.printErr("Topic {} could not be found in the open project."\
-                "Cannot retrieve any comments for it then".format(topic))
         return OperationResults.FAILURE
 
     markup = realTopic.containingObject
@@ -212,10 +223,8 @@ def getViewpoints(topic: Topic):
         return OperationResults.FAILURE
 
     # given topic is a copy of the topic contained in curProject
-    realTopic = curProject.searchObject(topic)
+    realTopic = _searchRealTopic(topic)
     if realTopic is None:
-        util.printErr("Topic {} could not be found in the open project."\
-                "Cannot retrieve any comments for it then".format(topic))
         return OperationResults.FAILURE
 
     markup = realTopic.containingObject
@@ -240,10 +249,8 @@ def getRelevantIfcFiles(topic: Topic):
     if not isProjectOpen():
         return OperationResults.FAILURE
 
-    realTopic = curProject.searchObject(topic)
+    realTopic = _searchRealTopic(topic)
     if realTopic is None:
-        util.printErr("Topic {} could not be found in the open project."\
-                "Cannot retrieve any comments for it then".format(topic))
         return OperationResults.FAILURE
 
     markup = realTopic.containingObject
@@ -260,3 +267,21 @@ def getRelevantIfcFiles(topic: Topic):
             "\t plugin.openIfcProject(file)")
 
     return list(files)
+
+
+def getAdditionalDocumentReferences(topic: Topic):
+
+    """ Returns a list of all document references of a topic """
+
+    global curProject
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    realTopic = _searchRealTopic(topic)
+    if realTopic is None:
+        return OperationResults.FAILURE
+
+    docRefs = [ (ref.description, copy.deepcopy(ref))
+                for ref in realTopic.docRefs ]
+    return docRefs

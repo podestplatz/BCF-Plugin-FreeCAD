@@ -16,6 +16,13 @@ errorFile = None
 errorFilePath = ""
 """ Path of error file """
 
+DEBUG = False
+""" Enables debug outputs """
+
+if DEBUG:
+    # used to inspect the stack to get caller function and caller filename
+    import inspect
+
 
 class Schema(Enum):
     EXTENSION = 1
@@ -77,7 +84,7 @@ def getSystemTmp():
     return tempDir
 
 
-def printErr(msg):
+def printErr(msg, toFile=False):
 
     """ Print msg to stderr """
 
@@ -105,6 +112,25 @@ def printErrorList(errors, toFile=False):
 
     for error in errors:
         printErr(error, toFile)
+
+
+def debug(msg):
+
+    """ Prints msg to the default output.
+
+    Default output is determined by FREECAD, if it is set to True then FreeCAD's
+    output system is used, Otherwise all messages are printed to stdout/stderr.
+    In addition to the message the name of the calling file, as well as the
+    functionname of the function that invoked debug is printed, to give context
+    to the message.
+    """
+
+    if DEBUG:
+        callerStackFrame = inspect.stack()[1]
+        callerModule = inspect.getmodule(callerStackFrame[0])
+        callerModuleName = os.path.basename(callerModule.__file__)
+        callerName = inspect.stack()[1].function
+        printInfo("[DEBUG]{}:{}(): {}".format(callerModuleName, callerName, msg))
 
 
 def retrieveWebFile(schema: Schema, storePath: str):

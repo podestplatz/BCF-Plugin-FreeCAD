@@ -10,7 +10,7 @@ from bcf.modification import (ModificationDate, ModificationAuthor,
 from bcf.uri import Uri
 from bcf.project import (Attribute, SimpleElement, SimpleList,
         searchListObject)
-from bcf.project import DEBUG
+from bcf.util import DEBUG, debug
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import XMLIdentifiable, Identifiable
 from interfaces.state import State
@@ -667,7 +667,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             stateList += self.bimSnippet.getStateList()
 
         if DEBUG:
-            print("Topic.getStateList(): returning {}".format(stateList))
+            debug("Topic.getStateList(): returning {}".format(stateList))
         return stateList
 
 

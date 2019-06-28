@@ -5,9 +5,10 @@ from typing import List # used for custom type annotations
 from bcf.uri import Uri
 from bcf.modification import (ModificationDate, ModificationAuthor, ModificationType)
 from bcf.topic import Topic
-from bcf.project import (SimpleElement, Attribute, DEBUG,
-        listSetContainingElement, debug, searchListObject)
+from bcf.project import (SimpleElement, Attribute,
+        listSetContainingElement, searchListObject)
 from bcf.viewpoint import (Viewpoint)
+from bcf.util import debug, DEBUG
 from interfaces.state import State
 from interfaces.hierarchy import Hierarchy
 from interfaces.identifiable import XMLIdentifiable, Identifiable

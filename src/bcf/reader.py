@@ -10,7 +10,8 @@ if __name__ == "__main__":
     sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
     print(sys.path)
 import bcf.util as util
-from bcf.project import (Project, debug, DEBUG)
+from bcf.util import debug, DEBUG
+from bcf.project import Project
 from bcf.uri import Uri as Uri
 from bcf.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
 from bcf.topic import (Topic, BimSnippet, DocumentReference)
@@ -44,7 +45,7 @@ def readFile(path: str):
     try:
         file = ZipFile(path)
     except Exception as e:
-        print("The supplied BCF file ({}) could not be opened.\nError:\
+        util.printErr("The supplied BCF file ({}) could not be opened.\nError:\
                 {}".format(path, str(e)))
         return None
 
@@ -630,7 +631,7 @@ def readBcfFile(bcfFile: str):
             markupSchemaPath is None or
             versionSchemaPath is None or
             visinfoSchemaPath is None):
-        print("One or more schema files could not be downloaded!"\
+        util.printErr("One or more schema files could not be downloaded!"\
                 "Please try again in a few moments")
         return None
 
@@ -642,7 +643,7 @@ def readBcfFile(bcfFile: str):
     ### Check version ###
     versionFilePath = os.path.join(bcfExtractedPath, "bcf.version")
     if not os.path.exists(versionFilePath):
-        print("No bcf.version file found in {}. This file is not optional.",
+        util.printErr("No bcf.version file found in {}. This file is not optional.",
                 file=sys.stderr)
         return None
     error = validateFile(versionFilePath, versionSchemaPath, bcfFile)
@@ -670,8 +671,7 @@ def readBcfFile(bcfFile: str):
 
     ### Iterate over the topic directories ###
     topicDirectories = util.getDirectories(bcfExtractedPath)
-    if DEBUG:
-        pprint.pprint(topicDirectories)
+    debug(topicDirectories)
     for topic in topicDirectories:
         ### Validate all viewpoint files in the directory, and build them ###
         topicDir = os.path.join(bcfExtractedPath, topic)

@@ -1,19 +1,10 @@
 from uuid import UUID
 from bcf.uri import Uri
+from bcf.util import debug
 from interfaces.hierarchy import Hierarchy
 from interfaces.state import State
 from interfaces.xmlname import XMLName
 from interfaces.identifiable import XMLIdentifiable, Identifiable
-
-DEBUG = False
-
-if DEBUG:
-    import inspect
-
-def debug(msg):
-    if DEBUG:
-        callerName = inspect.stack()[1].function
-        print("[DEBUG]{}(): {}".format(callerName, msg))
 
 
 def listSetContainingElement(itemList, containingObject):
