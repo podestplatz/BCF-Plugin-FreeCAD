@@ -12,6 +12,7 @@ import bcf.writer as writer
 import bcf.project as p
 import bcf.util as util
 import bcf.markup as m
+import frontend.viewpointController as vpCtrl
 from bcf.viewpoint import Viewpoint
 from bcf.topic import Topic
 from interfaces.identifiable import Identifiable
@@ -21,10 +22,21 @@ from interfaces.state import State
 
 curProject = None
 
+App = None
+""" Alias for the FreeCAD module """
+
+Gui = None
+""" Alias for the FreeCADGui module """
+
 
 class OperationResults(Enum):
     SUCCESS = 1
     FAILURE = 2
+
+
+class CamType(Enum):
+    ORTHOGONAL = 1
+    PERSPECTIVE = 2
 
 
 def isProjectOpen():
@@ -234,6 +246,31 @@ def getViewpoints(topic: Topic):
     return viewpoints
 
 
+def openIfcFile(path: str):
+
+    """ Opens an IfcFile behind path. IfcOpenShell is required! """
+
+    if not os.path.exists(path):
+        util.printErr("File {} could not be found. Please supply a path that"\
+                "exists")
+        return OperationResults.FAILURE
+
+    if not util.FREECAD:
+        util.printErr("I am not running inside FreeCAD. {} can only be opened"\
+                "inside FreeCAD").
+        return OperationResults.FAILURE
+
+    import importIFC as ifc
+    ifc.open(path.encode("utf-8"))
+    docName = join(os.path.basename(path).split('.')[:-1], '')
+    App.setActiveDocument(docName)
+    App.ActiveDocument = App.getDocument(docName)
+    Gui.ActiveDocument = Gui.getDocument(docName)
+    Gui.sendMsgToActiveView("ViewFit")
+
+    return OperationResults.SUCCESS
+
+
 def getRelevantIfcFiles(topic: Topic):
 
     """ Return a list of Ifc files relevant to this topic.
@@ -285,3 +322,29 @@ def getAdditionalDocumentReferences(topic: Topic):
     docRefs = [ (ref.description, copy.deepcopy(ref))
                 for ref in realTopic.docRefs ]
     return docRefs
+
+
+def activateViewpoint(viewpoint: Viewpoint, camType: CamType):
+
+    """ Sets the camera view the model from the specified viewpoint."""
+
+    if not (util.GUI and util.FREECAD):
+        printErr("Application is running either not inside FreeCAD or without"\
+                " GUI. Thus cannot set camera position")
+        return OperationResults.FAILURE
+
+    camSettings = None
+    if camType == CamType.ORTHOGONAL:
+        camSettings = viewpoint.oCamera
+    elif camType == CamType.PERSPECTIVE:
+        camSettings = viewpont.pCamera
+    else:
+        printErr("Camera type {} does not exist.".format(camType))
+        return OperationResults.FAILURE
+
+    if camSettings is None:
+        printErr("Selected camera is not set in the viewpoint.")
+        return OperationResults.FAILURE
+
+    vpCtrl.setCamera(camSettings.viewPoint, camSettings.direction,
+            camSettings.upVector)

@@ -79,10 +79,11 @@ try:
 except:
     pass
 else:
+    util.FREECAD = True
     if FreeCAD.GuiUp:
         import FreeCADGui as FGui
         from PySide import QtCore, QtGui
-    util.FREECAD = True
+        util.GUI = True
 
 if check_dependencies():
     import frontend.programmaticInterface as plugin

@@ -8,7 +8,10 @@ from urllib.error import URLError
 
 
 FREECAD = False
-""" Set by programmaticInterface when running inside FreeCAD """
+""" Set by BCFPlugin.py when running inside FreeCAD """
+
+GUI = False
+""" Set by BCFPlugin.py when running in Gui mode """
 
 errorFile = None
 """ File to print errors to """
