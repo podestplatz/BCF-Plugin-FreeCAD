@@ -4,10 +4,10 @@ It is a standalone plugin aimed at the BIM Workbench of
 collaboration through the [BCF (BIM Collaboration Format)](https://en.wikipedia.org/wiki/BIM_Collaboration_Format). 
 
 # Download
-Currently this plugin in development, and atm cannot be integrated into FreeCAD. If 
-you want to give it a try you might have to clone it (or download it as archive):
+To use the plugin, in its current state in FreeCAD, clone it to some directory of your liking. To be able to import the modules/packages of the plugin we need to symlink the `src` folder to your FreeCAD Mod directory.
 ```bash
-$> git clone git@github.com:podestplatz/BCF-Plugin-FreeCAD.git
+$> git clone git@github.com:podestplatz/BCF-Plugin-FreeCAD.git /path/to/repo/dir
+$> ln -s /path/to/repo/dir/src "$HOME"/.FreeCAD/Mod/BCFPlugin
 ```
 
 # Dependencies
@@ -27,72 +27,96 @@ $> source ./<NAME>/bin/activate
 
 
 # Usage
-All source code is contained in the directory [./src/](https://github.com/podestplatz/BCF-Plugin-FreeCAD/tree/master/src). There also the main file `bcf-plugin.py` resides. To use the plugin in the terminal 
-just run from inside the src directory: 
+All source code is contained in the directory [./src/](https://github.com/podestplatz/BCF-Plugin-FreeCAD/tree/master/src). This is likely to change in the near future, for reasons of easier usage.
+The main file `BCFPlugin.py` is located right in `./src` and upon inquiry checks whether the dependencies are installed.
+To import it in FreeCAD run the following command in the `Python Console`:
 
-```bash
-$> python3 -i bcf-plugin.py
-```
-
-This will drop you in the interactive mode with the plugin, as it is, loaded. 
-Now, to read in a BCF file execute the following command: 
 ```python
->>> project = reader.readBcfFile("./bcf/test_data/Issues_BIMcollab_Example.bcf")
+>>> import BCFPlugin
 ```
-Note: I am using her the example BCF file I have stored under `./src/bcf/test_data/Issues_BIMcollab_Example.bcf`
-With `project` you have the complete data model (i.e.: contents of the BCF file) at your fingertips. 
 
-Note: currently the contents of a BCF file have to strictly comply with the XSD files provided by [buildingSMART](https://github.com/buildingSMART/BCF-XML/tree/release_2_1/Schemas).
-Unfortunately some BCF files ship with an empty header node, which is prohibited by `markup.xsd`. So at 
-the moment these files have to be modified manually. 
+## Making FreeCAD aware of Virtual Environment
 
-`project` has a member `topicList` which is a list of all topics that were found inside the BCF file. 
-Each element of `topicList` is of type `Markup` which contains the contents of a `markup.bcf` file. In such
-a file a node `Topic` is defined with its properties. 
-In order to access the properties of a topic node of `markup.bcf` run:
+If you have installed the dependencies in a python virtual environment, FreeCAD is likely to not be aware of it. Thus you probably also got some error messages in the `Report View`. To make FreeCAD aware of the packages installed in the python virtual environment you have to execute the following steps: 
+
+  1. Get a path to the directory in which you installed the virtual environment.
+  2. Find out which python version FreeCAD is using, in my case it is `python3.6`.
+  3. Check that the following path exists, relative to the root directory of you virtual environment. If it does not exist, maybe you have installed the packages for a different version of python than FreeCAD is using.
+    
+```
+/path/to/venv/lib/python[VERSION]/site-packages
+```  
+  4. In the `Python console` you have to append to `sys.path` the above mentioned path like this:
+    ```python
+    import sys
+    sys.path.append("VENV/lib/python[VERSION]/site-packages
+    ```
+    
+## Using the nonGui frontend
+To get access to the nonGui-frontend (also called programmatic interface or PI for short) import `frontend.programmaticInterface`
 ```python
->>> # replace N with the index of the topic and PROPERTY with the name of the property you want to access
->>> project.topicList[N].topic.PROPERTY 
->>> # for example print the title of every topic contained
->>> for markup in project.topicList:
-...     print(markup.topic.title)
-...
->>>
+>>> import frontend.programmaticInterface as plugin
 ```
 
-The following commands update the `title` property of the first topic, and write it to file using `writer`: 
+Note that the package `frontend`, as well as all the others located in [./src/](https://github.com/podestplatz/BCF-Plugin-FreeCAD/tree/master/src), are available in the global scope! This is the reason why the structure of the plugin is changing in the near future.
+
+Without a BCF file the plugin is of little value, thus let's open a BCF file: 
 ```python
->>> topic = project.topicList[0].topic
->>> curTitle = topic.title
->>> topic.title = "Hello World"
->>> writer.modifyElement(topic._title, curTitle)
+>>> plugin.openProject("/path/to/bcf/file.bcf")
 ```
-Note how in the last line the member `_title` was passed to `modifyElement()` instead of just `title`. 
-`modifyElement()` expects an object of type `SimpleElement`, `Attribute` or of one defined in `./src/bcf`. 
-Every member prefixed with '\_' accesses a member of type `SimpleElement` or `Attribute`, whereas the same
-member without the prefix accesses directly the value. For more information on this please see the 
-[wiki page](https://github.com/podestplatz/BCF-Plugin-FreeCAD/wiki/BCF-Package#representation-of-simple-slements-and-attributes)
+If you use a file that does not comply with the standard, then you will see many error prints in the `Report view`. These notify you about what xml node exactly is not compliant. If it is a bigger BCF file, it may be that there are quite many nodes. 
 
-If you want to add a whole new element, let's say a label to topic, run the following: 
+But that doesn't have to concern you right now. Every node that does not comply with the standard is simply not read into the internal data model. That means you can't modify it, but still can add/update/delete to/from the model. 
+
+To read all available topics, ordered by index run:
+
 ```python
->>> # assuming you have set the variable topic
->>> topic.labels.append("hello")
->>> topic.labels.append("world!")
->>> writer.addElement(topic.labels[-2])
->>> writer.addElement(topic.labels[-1])
+>>> plugin.getTopics()
 ```
 
-To delete an element again you can just issue: 
+This function returns you a list of tuples. Each tuple does contain the title of the topic as first element, the second element is a reference to the topic object itself. These references are important, so save them in a variable like: 
+
+```python 
+>>> topics = [ topic[1] for topic in plugin.getTopics() ]
+```
+
+You might also want to view all comments in chronological order, related with one topic, say the first one in the list: 
+
 ```python
->>> # delete the last label from file
->>> writer.deleteElement(topic.labels[-1])
+>>> plugin.getComments(topics[0])
 ```
-Be cautious here, the call to `deleteElement()` does **not** delete the element from the data model
-it simply removes it from the file. So a second attempt to delete the same element will result in an 
-error.
 
+As it was the case with the topics, `getComments()` also returns a list of tuples, here the first element is the comment itself with the name of the creator, the date of creation and the date of last modification.
+
+But comments alone would be pretty boring, so you can retrieve a list of viewpoints associated with a given topic with
+
+```python
+>>> plugin.getViewpoints(topics[0])
+```
+
+Again, you receive a list of tuples. Apart from the reference to the viewpoint object, you get the file name of the viewpoint as first element of the tuple. 
+There might be cases where you just want to view comments that are linked to certain viewpoints in a topic. To generate a list like this run:
+
+```python
+>>> viewpoints = [ vp[1] for fp in plugin.getViewpoints(topic[0]) ]
+>>> plugin.getComments(topic[0], viewpoints[0])
+```
+
+In a topic might also be some IFC project files listed that the topic is associated to. You can review a list of these with: 
+```python
+>>> plugin.getRelevantIfcFiles(topics[0])
+```
+
+And to get a list of related documents run the function `getAdditionalDocumentReferences()` is the one for you: 
+
+```python
+>>> plugin.getAdditionalDocumentReferences(topics[0])
+```
+
+You might have noticed by now that the topic is a rather important object, so treat it with care!
+If you stumble upon a member `id` in any object gotten from the plugin, please don't modify it. The BCFPlugin relies upon it!
 
 ## Debugging
 
 If you want to show all debug messages (be warned they are a lot) then you can
-enable debugging by setting the value of `project.DEBUG` to `True`.
+enable debugging by setting the value of `util.DEBUG` to `True`.
