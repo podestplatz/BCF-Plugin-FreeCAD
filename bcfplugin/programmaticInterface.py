@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import copy
 import pytz
@@ -17,7 +18,7 @@ import rdwr.project as p
 import rdwr.markup as m
 from rdwr.viewpoint import Viewpoint
 from rdwr.topic import Topic
-from rdwr.markup import Comment
+from rdwr.markup import Comment, Header, HeaderFile
 from rdwr.interfaces.identifiable import Identifiable
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
@@ -29,7 +30,7 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint",
-        "addComment" ]
+        "addComment", "addFile" ]
 
 utc = pytz.UTC
 """ For localized times """
@@ -309,6 +310,7 @@ def getRelevantIfcFiles(topic: Topic):
         return []
 
     files = copy.deepcopy(markup.header.files)
+    util.debug("files are {}".format(files))
 
     hasIfcProjectId = lambda file: file.ifcProjectId != file._ifcProjectId.defaultValue
     hasReference = lambda file: file.reference != file._reference.defaultValue
@@ -398,3 +400,94 @@ def addComment(topic: Topic, text: str, author: str,
         util.printErr("State is reset to the first errorenous update state.")
         util.printInfo("Please fix comment {}".format(comment))
         curProject = errorenousUpdate[0]
+
+
+def _isIfcGuid(guid: str):
+
+    """ Check whether `guid` is an ifc guid.
+
+    According to `markup.xsd` of version 2.1 an ifcguid is composed of 22 alpha
+    numeric characters + '_' and '$'.
+    Regex: [0-9,A-Z,a-z,_$]
+    """
+
+    if len(guid) != 22:
+        return False
+
+    util.debug("checking {} of type {}".format(guid, type(guid)))
+
+    pattern = re.compile("[0-9,A-Z,a-z,_$]*")
+    if pattern.fullmatch(guid) is None:
+        return False
+    return True
+
+
+def addFile(topic: Topic, ifcProject: str = "",
+        ifcSpatialStructureElement: str = "",
+        isExternal: bool = False,
+        filename: str = "",
+        reference: str = ""):
+
+    """ Add a new IFC file to the project.
+
+    This function assumes that the file already exists and only creates a
+    reference to it inside the data model. It does not copy an external file
+    into the project.
+    """
+
+    global curProject
+
+    if not isExternal:
+        if not util.doesFileExistInProject(reference):
+            util.printErr("{} does not exist inside the project. Please check"\
+                    " the path. Or for copiing a new file to the project use: "\
+                    " plugin.copyFile(topic, fileAbsPath)".format(reference))
+            return OperationResults.FAILURE
+    elif not os.path.exists(reference):
+        util.printErr("{} could not be found. Please check the path for"\
+                " typos".format(reference))
+        return OperationResults.FAILURE
+
+    if not _isIfcGuid(ifcProject) or ifcProject == "":
+        util.printErr("{} is not a valid IfcGuid. An Ifc guid has to be of"\
+                " length 22 and contain alphanumeric characters including '_'"\
+                " and '$'".format(ifcProject))
+
+    if (not _isIfcGuid(ifcSpatialStructureElement) or
+            ifcSpatialStructureElement == ""):
+        util.printErr("{} is not a valid IfcGuid. An Ifc guid has to be of"\
+                " length 22 and contain alphanumeric characters including '_'"\
+                " and '$'".format(ifcProject))
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    realTopic = _searchRealTopic(topic)
+    if realTopic is None:
+        return OperationResults.FAILURE
+
+    realMarkup = realTopic.containingObject
+
+    # create new header file and insert it into the data model
+    creationDate = datetime.datetime.now()
+    localisedDate = utc.localize(creationDate)
+    newFile = HeaderFile(ifcProject, ifcSpatialStructureElement, isExternal,
+            filename, localisedDate, reference, state = State.States.ADDED)
+    # create markup.header if needed
+    if realMarkup.header is None:
+        realMarkup.header = Header([newFile])
+        realMarkup.header.state = State.States.ADDED
+        realMarkup.header.containingObject = realMarkup
+        writer.addProjectUpdate(curProject, realMarkup.header, None)
+    else:
+        realMarkup.header.files.append(newFile)
+    newFile.containingObject = realMarkup.header
+
+    writer.addProjectUpdate(curProject, newFile, None)
+    errorenousUpdate = writer.processProjectUpdates()
+    if errorenousUpdate is not None:
+        util.printErr("File could not be added. Project is reset to last valid"\
+                " state")
+        curProject = errorenousUpdate[0]
+        return OperationResults.FAILURE
+    return OperationResults.SUCCESS
