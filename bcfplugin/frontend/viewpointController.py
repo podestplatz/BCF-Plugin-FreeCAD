@@ -1,8 +1,9 @@
-import bcf.threedvector as vector
+import rdwr.threedvector as vector
 from pivy import coin
-from bcf.util import debug, printErr, printInfo, FREECAD, GUI
+from util import debug, printErr, printInfo, FREECAD, GUI
 
 if GUI and FREECAD:
+    import FreeCADGui
     import FreeCAD
 
 def getRotation(normal: FreeCAD.Vector, up: FreeCAD.Vector):
@@ -45,11 +46,11 @@ def setCamera(camViewpoint: vector.Point,
     does not make any checks in that direction.
     """
 
-    cam = FreeCAD.ActiveDocument.ActiveView.getCameraNode()
+    cam = FreeCADGui.ActiveDocument.ActiveView.getCameraNode()
 
-    fPosition = FreeCAD.Vector(camViewpoint.X, camViewpoint.Y, camViewpoint.Z)
-    fUpVector = FreeCAD.Vector(camUpVector.X, camUpVector.Y, camUpVector.Z)
-    fDirVector = FreeCAD.Vector(camDirection.X, camDirection.Y, camDirection.Z)
+    fPosition = FreeCAD.Vector(camViewpoint.x, camViewpoint.y, camViewpoint.z)
+    fUpVector = FreeCAD.Vector(camUpVector.x, camUpVector.y, camUpVector.z)
+    fDirVector = FreeCAD.Vector(camDirection.x, camDirection.y, camDirection.z)
     rotation = getRotation(fDirVector, fUpVector)
 
     cam.orientation.setValue(rotation.Q)

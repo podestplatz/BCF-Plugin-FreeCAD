@@ -1,24 +1,38 @@
 import os
 import sys
 import copy
+import pytz
+import datetime
 from enum import Enum
 from typing import List, Tuple
+from uuid import uuid4
 
 if __name__ == "__main__":
     sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
     print(sys.path)
-import bcf.reader as reader
-import bcf.writer as writer
-import bcf.project as p
-import bcf.util as util
-import bcf.markup as m
-import frontend.viewpointController as vpCtrl
-from bcf.viewpoint import Viewpoint
-from bcf.topic import Topic
-from interfaces.identifiable import Identifiable
-from interfaces.hierarchy import Hierarchy
-from interfaces.state import State
+import util
+import rdwr.reader as reader
+import rdwr.writer as writer
+import rdwr.project as p
+import rdwr.markup as m
+from rdwr.viewpoint import Viewpoint
+from rdwr.topic import Topic
+from rdwr.markup import Comment
+from rdwr.interfaces.identifiable import Identifiable
+from rdwr.interfaces.hierarchy import Hierarchy
+from rdwr.interfaces.state import State
 
+if util.GUI:
+    import frontend.viewpointController as vpCtrl
+
+__all__ = [ "CamType", "deleteObject", "openProject",
+        "getTopics", "getComments", "getViewpoints", "openIfcFile",
+        "getRelevantIfcFiles", "getAdditionalDocumentReferences",
+        "activateViewpoint",
+        "addComment" ]
+
+utc = pytz.UTC
+""" For localized times """
 
 curProject = None
 
@@ -257,7 +271,7 @@ def openIfcFile(path: str):
 
     if not util.FREECAD:
         util.printErr("I am not running inside FreeCAD. {} can only be opened"\
-                "inside FreeCAD").
+                "inside FreeCAD")
         return OperationResults.FAILURE
 
     import importIFC as ifc
@@ -329,7 +343,7 @@ def activateViewpoint(viewpoint: Viewpoint, camType: CamType):
     """ Sets the camera view the model from the specified viewpoint."""
 
     if not (util.GUI and util.FREECAD):
-        printErr("Application is running either not inside FreeCAD or without"\
+        util.printErr("Application is running either not inside FreeCAD or without"\
                 " GUI. Thus cannot set camera position")
         return OperationResults.FAILURE
 
@@ -337,14 +351,50 @@ def activateViewpoint(viewpoint: Viewpoint, camType: CamType):
     if camType == CamType.ORTHOGONAL:
         camSettings = viewpoint.oCamera
     elif camType == CamType.PERSPECTIVE:
-        camSettings = viewpont.pCamera
+        camSettings = viewpoint.pCamera
     else:
-        printErr("Camera type {} does not exist.".format(camType))
+        util.printErr("Camera type {} does not exist.".format(camType))
         return OperationResults.FAILURE
 
     if camSettings is None:
-        printErr("Selected camera is not set in the viewpoint.")
+        print(dir(util))
+        util.printErr("No camera settings found in viewpoint {}")
         return OperationResults.FAILURE
 
     vpCtrl.setCamera(camSettings.viewPoint, camSettings.direction,
             camSettings.upVector)
+
+
+def addComment(topic: Topic, text: str, author: str,
+        viewpoint: Viewpoint = None):
+
+    """ Add a new comment with content `text` to the topic.
+
+    The date of creation is sampled right at the start of this function.
+    """
+
+    global curProject
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    realTopic = _searchRealTopic(topic)
+    if realTopic is None:
+        return OperationResults.FAILURE
+
+    realMarkup = realTopic.containingObject
+
+    creationDate = datetime.datetime.now()
+    localisedDate = utc.localize(creationDate)
+    guid = uuid4() # generate new random id
+    state = State.States.ADDED
+    comment = Comment(guid, localisedDate, author, text, viewpoint,
+            containingElement = realMarkup, state=state)
+    realMarkup.comments.append(comment)
+
+    writer.addProjectUpdate(curProject, comment, None)
+    errorenousUpdate = writer.processProjectUpdates()
+    if errorenousUpdate is not None:
+        util.printErr("State is reset to the first errorenous update state.")
+        util.printInfo("Please fix comment {}".format(comment))
+        curProject = errorenousUpdate[0]

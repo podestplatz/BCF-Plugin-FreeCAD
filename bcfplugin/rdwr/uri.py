@@ -1,6 +1,6 @@
-from interfaces.hierarchy import Hierarchy
-from interfaces.state import State
-from interfaces.identifiable import Identifiable
+from rdwr.interfaces.hierarchy import Hierarchy
+from rdwr.interfaces.state import State
+from rdwr.interfaces.identifiable import Identifiable
 
 class Uri(Hierarchy, State, Identifiable):
 

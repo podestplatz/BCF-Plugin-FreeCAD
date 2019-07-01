@@ -6,20 +6,20 @@ from uuid import UUID
 from collections import deque
 
 if __name__ == "__main__":
-    sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
+    sys.path.insert(0, "../")
     print(sys.path)
-    import copy as c
+import copy as c
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as MD
-import bcf.reader as reader
-import interfaces.hierarchy as iH
-import interfaces.state as iS
-import interfaces.identifiable as iI
-import bcf.markup as m
-import bcf.project as p
-import bcf.uri as u
-import bcf.util as util
-from bcf.util import DEBUG, debug
+import util as util
+from util import DEBUG, debug
+import rdwr.reader as reader
+import rdwr.interfaces.hierarchy as iH
+import rdwr.interfaces.state as iS
+import rdwr.interfaces.identifiable as iI
+import rdwr.markup as m
+import rdwr.project as p
+import rdwr.uri as u
 
 
 elementOrder = {"Markup": ["Header", "Topic", "Comment", "Viewpoints"],

@@ -1,10 +1,10 @@
 from enum import Enum
 from datetime import datetime
-from interfaces.hierarchy import Hierarchy
-from interfaces.state import State
-from interfaces.identifiable import Identifiable
+from rdwr.interfaces.hierarchy import Hierarchy
+from rdwr.interfaces.state import State
+from rdwr.interfaces.identifiable import Identifiable
 
-import bcf.project as p
+import rdwr.project as p
 
 
 class ModificationType(Enum):

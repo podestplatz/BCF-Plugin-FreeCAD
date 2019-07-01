@@ -1,20 +1,20 @@
 import xml.etree.ElementTree as ET
-import bcf.util
+import util
 from typing import List
 from enum import Enum
 from uuid import UUID
 from datetime import date
 from xmlschema import XMLSchema
-from bcf.modification import (ModificationDate, ModificationAuthor,
+from util import DEBUG, debug
+from rdwr.modification import (ModificationDate, ModificationAuthor,
         ModificationType)
-from bcf.uri import Uri
-from bcf.project import (Attribute, SimpleElement, SimpleList,
+from rdwr.uri import Uri
+from rdwr.project import (Attribute, SimpleElement, SimpleList,
         searchListObject)
-from bcf.util import DEBUG, debug
-from interfaces.hierarchy import Hierarchy
-from interfaces.identifiable import XMLIdentifiable, Identifiable
-from interfaces.state import State
-from interfaces.xmlname import XMLName
+from rdwr.interfaces.hierarchy import Hierarchy
+from rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
+from rdwr.interfaces.state import State
+from rdwr.interfaces.xmlname import XMLName
 
 
 class DocumentReference(Hierarchy, State, XMLName, Identifiable):

@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
-from interfaces.hierarchy import Hierarchy
-from interfaces.state import State
-from interfaces.xmlname import XMLName
+from rdwr.interfaces.hierarchy import Hierarchy
+from rdwr.interfaces.state import State
+from rdwr.interfaces.xmlname import XMLName
 
 
 class ThreeDVector(Hierarchy, State, XMLName):

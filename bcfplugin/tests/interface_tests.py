@@ -14,19 +14,19 @@ from shutil import copyfile
 from xmlschema import XMLSchemaValidationError
 
 sys.path.insert(0, "../")
-import bcf.uri as uri
-import bcf.util as util
-import bcf.topic as topic
-import bcf.reader as reader
-import bcf.writer as writer
-import bcf.markup as markup
-import interfaces.state as s
-import bcf.project as project
-import bcf.threedvector as tdv
-import bcf.viewpoint as viewpoint
-import bcf.modification as modification
-import frontend.programmaticInterface as pI
-import interfaces.hierarchy as hierarchy
+import util as util
+import rdwr.uri as uri
+import rdwr.topic as topic
+import rdwr.reader as reader
+import rdwr.writer as writer
+import rdwr.markup as markup
+import rdwr.interfaces.state as s
+import rdwr.project as project
+import rdwr.threedvector as tdv
+import rdwr.viewpoint as viewpoint
+import rdwr.modification as modification
+import programmaticInterface as pI
+import rdwr.hierarchy as hierarchy
 
 
 def setupBCFFile(testFile, testFileDir, testTopicDir, testBCFName):

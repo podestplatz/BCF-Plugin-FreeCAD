@@ -7,18 +7,18 @@ from uuid import UUID
 from typing import List, Dict
 
 if __name__ == "__main__":
-    sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
+    sys.path.insert(0, "../")
     print(sys.path)
-import bcf.util as util
-from bcf.util import debug, DEBUG
-from bcf.project import Project
-from bcf.uri import Uri as Uri
-from bcf.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
-from bcf.topic import (Topic, BimSnippet, DocumentReference)
-from bcf.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
+import util as util
+from util import debug, DEBUG
+from rdwr.project import Project
+from rdwr.uri import Uri as Uri
+from rdwr.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
+from rdwr.topic import (Topic, BimSnippet, DocumentReference)
+from rdwr.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         ComponentColour, PerspectiveCamera, OrthogonalCamera, BitmapFormat,
         Bitmap)
-from bcf.threedvector import (Point, Line, Direction, ClippingPlane)
+from rdwr.threedvector import (Point, Line, Direction, ClippingPlane)
 
 # BCF standard versions that can be read in
 SUPPORTED_VERSIONS = ["2.1"]

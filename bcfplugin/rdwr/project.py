@@ -1,10 +1,10 @@
 from uuid import UUID
-from bcf.uri import Uri
-from bcf.util import debug
-from interfaces.hierarchy import Hierarchy
-from interfaces.state import State
-from interfaces.xmlname import XMLName
-from interfaces.identifiable import XMLIdentifiable, Identifiable
+from util import debug
+from rdwr.uri import Uri
+from rdwr.interfaces.hierarchy import Hierarchy
+from rdwr.interfaces.state import State
+from rdwr.interfaces.xmlname import XMLName
+from rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
 
 
 def listSetContainingElement(itemList, containingObject):

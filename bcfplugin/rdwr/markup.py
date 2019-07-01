@@ -2,17 +2,17 @@ import xml.etree.ElementTree as ET
 from uuid import UUID
 from datetime import datetime, date
 from typing import List # used for custom type annotations
-from bcf.uri import Uri
-from bcf.modification import (ModificationDate, ModificationAuthor, ModificationType)
-from bcf.topic import Topic
-from bcf.project import (SimpleElement, Attribute,
+from rdwr.uri import Uri
+from rdwr.modification import (ModificationDate, ModificationAuthor, ModificationType)
+from rdwr.topic import Topic
+from rdwr.project import (SimpleElement, Attribute,
         listSetContainingElement, searchListObject)
-from bcf.viewpoint import (Viewpoint)
-from bcf.util import debug, DEBUG
-from interfaces.state import State
-from interfaces.hierarchy import Hierarchy
-from interfaces.identifiable import XMLIdentifiable, Identifiable
-from interfaces.xmlname import XMLName
+from rdwr.viewpoint import (Viewpoint)
+from util import debug, DEBUG
+from rdwr.interfaces.state import State
+from rdwr.interfaces.hierarchy import Hierarchy
+from rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
+from rdwr.interfaces.xmlname import XMLName
 
 
 class HeaderFile(Hierarchy, State, XMLName, Identifiable):

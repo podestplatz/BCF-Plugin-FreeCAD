@@ -1,12 +1,12 @@
 from enum import Enum
 from typing import List, Dict
 from uuid import UUID
-from bcf.threedvector import *
-from bcf.project import listSetContainingElement
-from interfaces.hierarchy import Hierarchy
-from interfaces.state import State
-from interfaces.xmlname import XMLName
-from interfaces.identifiable import Identifiable, XMLIdentifiable
+from rdwr.threedvector import *
+from rdwr.project import listSetContainingElement
+from rdwr.interfaces.hierarchy import Hierarchy
+from rdwr.interfaces.state import State
+from rdwr.interfaces.xmlname import XMLName
+from rdwr.interfaces.identifiable import Identifiable, XMLIdentifiable
 
 
 class BitmapFormat(Enum):
