@@ -6,18 +6,15 @@ import pytz
 import datetime
 from enum import Enum
 from typing import List, Tuple
-from uuid import uuid4
+from uuid import uuid4, UUID
 
-if __name__ == "__main__":
-    sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
-    print(sys.path)
 import util
 import rdwr.reader as reader
 import rdwr.writer as writer
 import rdwr.project as p
 import rdwr.markup as m
 from rdwr.viewpoint import Viewpoint
-from rdwr.topic import Topic
+from rdwr.topic import Topic, DocumentReference
 from rdwr.markup import Comment, Header, HeaderFile
 from rdwr.interfaces.identifiable import Identifiable
 from rdwr.interfaces.hierarchy import Hierarchy
@@ -422,6 +419,18 @@ def _isIfcGuid(guid: str):
     return True
 
 
+def _handleProjectUpdate(errMsg):
+
+    """ Request for all updates to be written, and handle the results. """
+
+    errorenousUpdate = writer.processProjectUpdates()
+    if errorenousUpdate is not None:
+        util.printErr(errMsg)
+        curProject = errorenousUpdate[0]
+        return OperationResults.FAILURE
+    return OperationResults.SUCCESS
+
+
 def addFile(topic: Topic, ifcProject: str = "",
         ifcSpatialStructureElement: str = "",
         isExternal: bool = False,
@@ -484,10 +493,68 @@ def addFile(topic: Topic, ifcProject: str = "",
     newFile.containingObject = realMarkup.header
 
     writer.addProjectUpdate(curProject, newFile, None)
-    errorenousUpdate = writer.processProjectUpdates()
-    if errorenousUpdate is not None:
-        util.printErr("File could not be added. Project is reset to last valid"\
-                " state")
-        curProject = errorenousUpdate[0]
+    return _handleProjectUpdate("File could not be added. Project is reset to"\
+            " last valid state")
+
+
+def addDocumentRefernce(topic: Topic,
+        guid: str = "",
+        isExternal: bool = False,
+        path: str = "",
+        description: str = ""):
+
+    """ Creates a new document reference and adds it to `topic`.
+
+    guid is the guid of the documentreference.
+    isExternal == True => `path` is expected to be an absolute url,
+    isExternal == False => `path` is expected to be a relative url pointing to
+    a file in the project directory.
+    `path` to the file, and `description` is a human readable name of the
+    document.
+    """
+
+    global curProject
+
+    if (path == "" and description == ""):
+        util.printInfo("Not adding an empty document reference")
         return OperationResults.FAILURE
-    return OperationResults.SUCCESS
+
+    if not isExternal:
+        if not util.doesFileExistInProject(path):
+            util.printErr("{} does not exist inside the project. Please check"\
+                    " the path. Or for copiing a new file to the project use: "\
+                    " plugin.copyFile(topic, fileAbsPath)".format(path))
+            return OperationResults.FAILURE
+    elif not os.path.exists(reference):
+        util.printInfo("{} could not be found on the file system. Assuming"\
+                " that it resides somewhere on a network.".format(path))
+
+    # check if `guid` is a valid UUID and create a UUID object
+    guidU = UUID(int=0)
+    if isinstance(guid, UUID):
+        guidU = guid
+    else:
+        try:
+            guidU = UUID(guid)
+        except ValueError as err:
+            util.printErr("The supplied guid is malformed ({}).".format(guid))
+            return OperationResults.FAILURE
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    # get a reference of the tainted, supplied topic reference in the working
+    # copy of the project
+    realTopic = _searchRealTopic(topic)
+    if realTopic is None:
+        return OperationResults.FAILURE
+
+    docRef = DocumentReference(guidU,
+            isExternal, path,
+            description, realTopic,
+            state.States.ADDED)
+    realTopic.docRefs.append(docRef)
+
+    writer.addProjectUpdate(curProject, docRef, None)
+    return _handleProjectUpdate("Document reference could not be added."\
+            " Returning to last valid state...")
