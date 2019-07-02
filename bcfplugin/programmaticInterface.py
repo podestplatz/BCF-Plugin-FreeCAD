@@ -3,21 +3,19 @@ import re
 import sys
 import copy
 import pytz
+import shutil
 import datetime
 from enum import Enum
 from typing import List, Tuple
-from uuid import uuid4
+from uuid import uuid4, UUID
 
-if __name__ == "__main__":
-    sys.path.insert(0, "/home/patrick/projects/freecad/plugin/src")
-    print(sys.path)
 import util
 import rdwr.reader as reader
 import rdwr.writer as writer
 import rdwr.project as p
 import rdwr.markup as m
 from rdwr.viewpoint import Viewpoint
-from rdwr.topic import Topic
+from rdwr.topic import Topic, DocumentReference
 from rdwr.markup import Comment, Header, HeaderFile
 from rdwr.interfaces.identifiable import Identifiable
 from rdwr.interfaces.hierarchy import Hierarchy
@@ -30,7 +28,8 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint",
-        "addComment", "addFile" ]
+        "addComment", "addFile", "addLabel", "addDocumentReference",
+        "copyFileToProject"]
 
 utc = pytz.UTC
 """ For localized times """
@@ -422,6 +421,18 @@ def _isIfcGuid(guid: str):
     return True
 
 
+def _handleProjectUpdate(errMsg):
+
+    """ Request for all updates to be written, and handle the results. """
+
+    errorenousUpdate = writer.processProjectUpdates()
+    if errorenousUpdate is not None:
+        util.printErr(errMsg)
+        curProject = errorenousUpdate[0]
+        return OperationResults.FAILURE
+    return OperationResults.SUCCESS
+
+
 def addFile(topic: Topic, ifcProject: str = "",
         ifcSpatialStructureElement: str = "",
         isExternal: bool = False,
@@ -484,10 +495,147 @@ def addFile(topic: Topic, ifcProject: str = "",
     newFile.containingObject = realMarkup.header
 
     writer.addProjectUpdate(curProject, newFile, None)
-    errorenousUpdate = writer.processProjectUpdates()
-    if errorenousUpdate is not None:
-        util.printErr("File could not be added. Project is reset to last valid"\
-                " state")
-        curProject = errorenousUpdate[0]
+    return _handleProjectUpdate("File could not be added. Project is reset to"\
+            " last valid state")
+
+
+def addDocumentReference(topic: Topic,
+        guid: str = "",
+        isExternal: bool = False,
+        path: str = "",
+        description: str = ""):
+
+    """ Creates a new document reference and adds it to `topic`.
+
+    guid is the guid of the documentreference. If left alone a new random guid
+    is generated using uuid.uuid4().
+    isExternal == True => `path` is expected to be an absolute url,
+    isExternal == False => `path` is expected to be a relative url pointing to
+    a file in the project directory.
+    `path` to the file, and `description` is a human readable name of the
+    document.
+    """
+
+    global curProject
+
+    if (path == "" and description == ""):
+        util.printInfo("Not adding an empty document reference")
         return OperationResults.FAILURE
-    return OperationResults.SUCCESS
+
+    if not isExternal:
+        if not util.doesFileExistInProject(topic, path):
+            util.printErr("{} does not exist inside the project. Please check"\
+                    " the path. Or for copiing a new file to the project use: "\
+                    " plugin.copyFile(topic, fileAbsPath)".format(path))
+            return OperationResults.FAILURE
+    elif not os.path.exists(path):
+        util.printInfo("{} could not be found on the file system. Assuming"\
+                " that it resides somewhere on a network.".format(path))
+
+    # check if `guid` is a valid UUID and create a UUID object
+    guidU = UUID(int=0)
+    if isinstance(guid, UUID):
+        guidU = guid
+    elif guid == "":
+        # just generate a new guid
+        guidU = uuid4()
+    else:
+        try:
+            guidU = UUID(guid)
+        except ValueError as err:
+            util.printErr("The supplied guid is malformed ({}).".format(guid))
+            return OperationResults.FAILURE
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    # get a reference of the tainted, supplied topic reference in the working
+    # copy of the project
+    realTopic = _searchRealTopic(topic)
+    if realTopic is None:
+        return OperationResults.FAILURE
+
+    docRef = DocumentReference(guidU,
+            isExternal, path,
+            description, realTopic,
+            State.States.ADDED)
+    realTopic.docRefs.append(docRef)
+
+    writer.addProjectUpdate(curProject, docRef, None)
+    return _handleProjectUpdate("Document reference could not be added."\
+            " Returning to last valid state...")
+
+
+def addLabel(topic: Topic, label: str):
+
+    """ Add `label` as new label to `topic` """
+
+    global curProject
+
+    if label == "":
+        util.printInfo("Not adding an empty label.")
+        return OperationResults.FAILURE
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    # get a reference of the tainted, supplied topic reference in the working
+    # copy of the project
+    realTopic = _searchRealTopic(topic)
+    if realTopic is None:
+        return OperationResults.FAILURE
+
+    # create and add a new label to curProject
+    realTopic.labels.append(label)
+    addedLabel = realTopic.labels[-1] # get reference to added label
+
+    writer.addProjectUpdate(curProject, addedLabel, None)
+    return _handleProjectUpdate("Label '{}' could not be added. Returning"\
+            " to last valid state...".format(label))
+
+
+def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
+
+    """ Copy the file behind `path` into the working directory.
+
+    If `topic` is not None and references an existing topic in the project then
+    the file behind path is copied into the topic directory. Otherwise it is
+    copied into the root directory of the project.
+    If `destName` is given the resulting filename will be the value of
+    `destName`. Otherwise the original filename is used.
+    """
+
+    if not os.path.exists(path):
+        util.printErr("File `{}` does not exist. Nothing is beeing copied.")
+        return OperationResults.FAILURE
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    srcFileName = os.path.basename(path)
+    dstFileName = srcFileName if destName == "" else destName
+    destPath = reader.bcfDir
+    if topic is not None:
+        realTopic = _searchRealTopic(topic)
+        if realTopic is None:
+            return OperationResults.FAILURE
+
+        destPath = os.path.join(destPath, str(realTopic.xmlId))
+    destPath = os.path.join(destPath, dstFileName)
+
+    i = 1
+    while os.path.exists(destPath):
+        if i == 1:
+            util.printInfo("{} already exists.".format(destPath))
+
+        dir, file = os.path.split(destPath)
+        splitFN = dstFileName.split(".")
+        splitFN[0] += "({})".format(i)
+        file = ".".join(splitFN)
+        destPath = os.path.join(dir, file)
+        i += 1
+
+    if i != 1:
+        util.printInfo("Changed filename to {}.".format(destPath))
+
+    shutil.copyfile(path, destPath)

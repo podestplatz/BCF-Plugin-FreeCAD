@@ -14,3 +14,5 @@ schemas/
 bcf-examples/clippingPlane_bernd/bcfFreeCADPart/
 
 bcf-examples/clippingPlane_bernd/bcfexample1/
+
+test\.py
