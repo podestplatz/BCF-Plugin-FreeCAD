@@ -10,16 +10,16 @@ from uuid import UUID
 from xmlschema import XMLSchemaValidationError
 
 sys.path.insert(0, "../")
-import bcf.reader as reader
-import bcf.project as project
-import bcf.modification as modification
-import bcf.topic as topic
-import bcf.uri as uri
-import bcf.util as util
-import bcf.markup as markup
-import bcf.viewpoint as viewpoint
-import bcf.threedvector as tdv
-import interfaces.hierarchy as hierarchy
+import util as util
+import rdwr.reader as reader
+import rdwr.project as project
+import rdwr.modification as modification
+import rdwr.topic as topic
+import rdwr.uri as uri
+import rdwr.markup as markup
+import rdwr.viewpoint as viewpoint
+import rdwr.threedvector as tdv
+import rdwr.interfaces.hierarchy as hierarchy
 
 
 class BuildProjectTest(unittest.TestCase):
@@ -596,7 +596,7 @@ class buildViewpointTest(unittest.TestCase):
 class HierarchyTest(unittest.TestCase):
 
     def setUp(self):
-        self.testFile = "../bcf/test_data/Issues_BIMcollab_Example.bcf"
+        self.testFile = "../rdwr/test_data/Issues_BIMcollab_Example.bcf"
         self.proj = reader.readBcfFile(self.testFile)
 
     def test_comment_hierarchy(self):
@@ -614,7 +614,7 @@ class HierarchyTest(unittest.TestCase):
 class readBcfFileTest(unittest.TestCase):
 
     def setUp(self):
-        self.testFile = "../bcf/test_data/Issues_BIMcollab_Example.bcf"
+        self.testFile = "../rdwr/test_data/Issues_BIMcollab_Example.bcf"
         self.proj = reader.readBcfFile(self.testFile)
 
     def test_viewpointreference(self):
