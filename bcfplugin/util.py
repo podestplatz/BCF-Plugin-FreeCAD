@@ -254,7 +254,7 @@ def copySchemas(dstDir: str):
     """
 
     rootPath = os.path.realpath(__file__)
-    rootPath = rootPath.replace("bcf/util.py", "")
+    rootPath = rootPath.replace("util.py", "")
     schemaDirPath = os.path.join(rootPath, schemaDir)
     if not os.path.exists(schemaDirPath):
         updateSchemas(rootPath)

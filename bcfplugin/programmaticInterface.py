@@ -27,7 +27,7 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint",
-        "addComment", "addFile" ]
+        "addComment", "addFile", "addLabel", "addDocumentReference" ]
 
 utc = pytz.UTC
 """ For localized times """
@@ -497,7 +497,7 @@ def addFile(topic: Topic, ifcProject: str = "",
             " last valid state")
 
 
-def addDocumentRefernce(topic: Topic,
+def addDocumentReference(topic: Topic,
         guid: str = "",
         isExternal: bool = False,
         path: str = "",
@@ -558,3 +558,31 @@ def addDocumentRefernce(topic: Topic,
     writer.addProjectUpdate(curProject, docRef, None)
     return _handleProjectUpdate("Document reference could not be added."\
             " Returning to last valid state...")
+
+
+def addLabel(topic: Topic, label: str):
+
+    """ Add `label` as new label to `topic` """
+
+    global curProject
+
+    if label == "":
+        util.printInfo("Not adding an empty label.")
+        return OperationResults.FAILURE
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    # get a reference of the tainted, supplied topic reference in the working
+    # copy of the project
+    realTopic = _searchRealTopic(topic)
+    if realTopic is None:
+        return OperationResults.FAILURE
+
+    # create and add a new label to curProject
+    realTopic.labels.append(label)
+    addedLabel = realTopic.labels[-1] # get reference to added label
+
+    writer.addProjectUpdate(curProject, addedLabel, None)
+    return _handleProjectUpdate("Label '{}' could not be added. Returning"\
+            " to last valid state...".format(label))
