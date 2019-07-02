@@ -22,7 +22,16 @@ errorFilePath = ""
 DEBUG = False
 """ Enables debug outputs """
 
-if DEBUG:
+
+
+class Verbosity(Enum):
+    EVERYTHING = 1
+    NODEBUG = 2
+    IMPORTANTERRORS = 3
+    INFODEBUG = 4
+
+verbosity = Verbosity.INFODEBUG
+if (verbosity == Verbosity.EVERYTHING or verbosity == Verbosity.INFODEBUG):
     # used to inspect the stack to get caller function and caller filename
     import inspect
 
@@ -79,17 +88,23 @@ def getSystemTmp():
     """
 
     global tempDir
-    if tempDir is None:
-        #tempDir = tempfile.TemporaryDirectory()
-        tempDir = tempfile.mkdtemp()
 
-    #return tempDir.name
-    return tempDir
+    if tempDir is None:
+        tempDir = tempfile.TemporaryDirectory()
+        #tempDir = tempfile.mkdtemp()
+
+    return tempDir.name
+    #return tempDir
 
 
 def printErr(msg, toFile=False):
 
     """ Print msg to stderr """
+
+    if not (verbosity == Verbosity.EVERYTHING or
+            verbosity == Verbosity.NODEBUG or
+            verbosity == Verbosity.IMPORTANTERRORS):
+        return
 
     if FREECAD:
         import FreeCAD
@@ -128,12 +143,15 @@ def debug(msg):
     to the message.
     """
 
-    if DEBUG:
-        callerStackFrame = inspect.stack()[1]
-        callerModule = inspect.getmodule(callerStackFrame[0])
-        callerModuleName = os.path.basename(callerModule.__file__)
-        callerName = inspect.stack()[1].function
-        printInfo("[DEBUG]{}:{}(): {}".format(callerModuleName, callerName, msg))
+    if not (verbosity == Verbosity.EVERYTHING or
+            verbosity == Verbosity.INFODEBUG):
+        return
+
+    callerStackFrame = inspect.stack()[1]
+    callerModule = inspect.getmodule(callerStackFrame[0])
+    callerModuleName = os.path.basename(callerModule.__file__)
+    callerName = inspect.stack()[1].function
+    printInfo("[DEBUG]{}:{}(): {}".format(callerModuleName, callerName, msg))
 
 
 def retrieveWebFile(schema: Schema, storePath: str):
@@ -254,7 +272,7 @@ def copySchemas(dstDir: str):
     """
 
     rootPath = os.path.realpath(__file__)
-    rootPath = rootPath.replace("bcf/util.py", "")
+    rootPath = rootPath.replace("util.py", "")
     schemaDirPath = os.path.join(rootPath, schemaDir)
     if not os.path.exists(schemaDirPath):
         updateSchemas(rootPath)
@@ -269,6 +287,20 @@ def copySchemas(dstDir: str):
     return (dstSchemaPaths[Schema.PROJECT], dstSchemaPaths[Schema.EXTENSION],
         dstSchemaPaths[Schema.MARKUP], dstSchemaPaths[Schema.VERSION],
         dstSchemaPaths[Schema.VISINFO])
+
+
+def doesFileExistInProject(file: str):
+
+    """ Check whether the `file` exists in the currently opened project.
+
+    `file` is assumed to be a relative path, starting from the root of the
+    BCFFile. Thus having a maximum depth of 2.
+    """
+
+    global tempdir
+
+    fileAbsPath = os.path.join(tempdir, file)
+    return os.path.exists(fileAbsPath)
 
 
 class cd:
