@@ -3,6 +3,7 @@ import re
 import sys
 import copy
 import pytz
+import shutil
 import datetime
 from enum import Enum
 from typing import List, Tuple
@@ -27,7 +28,8 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint",
-        "addComment", "addFile", "addLabel", "addDocumentReference" ]
+        "addComment", "addFile", "addLabel", "addDocumentReference",
+        "copyFileToProject"]
 
 utc = pytz.UTC
 """ For localized times """
@@ -505,7 +507,8 @@ def addDocumentReference(topic: Topic,
 
     """ Creates a new document reference and adds it to `topic`.
 
-    guid is the guid of the documentreference.
+    guid is the guid of the documentreference. If left alone a new random guid
+    is generated using uuid.uuid4().
     isExternal == True => `path` is expected to be an absolute url,
     isExternal == False => `path` is expected to be a relative url pointing to
     a file in the project directory.
@@ -520,12 +523,12 @@ def addDocumentReference(topic: Topic,
         return OperationResults.FAILURE
 
     if not isExternal:
-        if not util.doesFileExistInProject(path):
+        if not util.doesFileExistInProject(topic, path):
             util.printErr("{} does not exist inside the project. Please check"\
                     " the path. Or for copiing a new file to the project use: "\
                     " plugin.copyFile(topic, fileAbsPath)".format(path))
             return OperationResults.FAILURE
-    elif not os.path.exists(reference):
+    elif not os.path.exists(path):
         util.printInfo("{} could not be found on the file system. Assuming"\
                 " that it resides somewhere on a network.".format(path))
 
@@ -533,6 +536,9 @@ def addDocumentReference(topic: Topic,
     guidU = UUID(int=0)
     if isinstance(guid, UUID):
         guidU = guid
+    elif guid == "":
+        # just generate a new guid
+        guidU = uuid4()
     else:
         try:
             guidU = UUID(guid)
@@ -552,7 +558,7 @@ def addDocumentReference(topic: Topic,
     docRef = DocumentReference(guidU,
             isExternal, path,
             description, realTopic,
-            state.States.ADDED)
+            State.States.ADDED)
     realTopic.docRefs.append(docRef)
 
     writer.addProjectUpdate(curProject, docRef, None)
@@ -586,3 +592,50 @@ def addLabel(topic: Topic, label: str):
     writer.addProjectUpdate(curProject, addedLabel, None)
     return _handleProjectUpdate("Label '{}' could not be added. Returning"\
             " to last valid state...".format(label))
+
+
+def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
+
+    """ Copy the file behind `path` into the working directory.
+
+    If `topic` is not None and references an existing topic in the project then
+    the file behind path is copied into the topic directory. Otherwise it is
+    copied into the root directory of the project.
+    If `destName` is given the resulting filename will be the value of
+    `destName`. Otherwise the original filename is used.
+    """
+
+    if not os.path.exists(path):
+        util.printErr("File `{}` does not exist. Nothing is beeing copied.")
+        return OperationResults.FAILURE
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    srcFileName = os.path.basename(path)
+    dstFileName = srcFileName if destName == "" else destName
+    destPath = reader.bcfDir
+    if topic is not None:
+        realTopic = _searchRealTopic(topic)
+        if realTopic is None:
+            return OperationResults.FAILURE
+
+        destPath = os.path.join(destPath, str(realTopic.xmlId))
+    destPath = os.path.join(destPath, dstFileName)
+
+    i = 1
+    while os.path.exists(destPath):
+        if i == 1:
+            util.printInfo("{} already exists.".format(destPath))
+
+        dir, file = os.path.split(destPath)
+        splitFN = dstFileName.split(".")
+        splitFN[0] += "({})".format(i)
+        file = ".".join(splitFN)
+        destPath = os.path.join(dir, file)
+        i += 1
+
+    if i != 1:
+        util.printInfo("Changed filename to {}.".format(destPath))
+
+    shutil.copyfile(path, destPath)
