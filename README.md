@@ -4,10 +4,10 @@ It is a standalone plugin aimed at the BIM Workbench of
 collaboration through the [BCF (BIM Collaboration Format)](https://en.wikipedia.org/wiki/BIM_Collaboration_Format). 
 
 # Download
-To use the plugin, in its current state in FreeCAD, clone it to some directory of your liking. To be able to import the modules/packages of the plugin we need to symlink the `src` folder to your FreeCAD Mod directory.
+To use the plugin, in its current state in FreeCAD, clone it to some directory of your liking. To be able to import the modules/packages of the plugin we need to symlink the source folder (`bcfplugin`) to your FreeCAD Mod directory.
 ```bash
 $> git clone git@github.com:podestplatz/BCF-Plugin-FreeCAD.git /path/to/repo/dir
-$> ln -s /path/to/repo/dir/src "$HOME"/.FreeCAD/Mod/BCFPlugin
+$> ln -s /path/to/repo/dir/bcfplugin "$HOME"/.FreeCAD/Mod/BCFPlugin
 ```
 
 # Dependencies
@@ -16,6 +16,7 @@ manually:
 
 - [python-dateutil](https://pypi.org/project/python-dateutil/)
 - [xmlschema](https://pypi.org/project/xmlschema/)
+- [pytz](https://pypi.org/project/pytz/)
 
 I reccommend installing these packages inside a [python virtual environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/). To 
 create one in the current directory, and subsequently activate it, execute:
@@ -27,13 +28,14 @@ $> source ./<NAME>/bin/activate
 
 
 # Usage
-All source code is contained in the directory [./src/](https://github.com/podestplatz/BCF-Plugin-FreeCAD/tree/master/src). This is likely to change in the near future, for reasons of easier usage.
-The main file `BCFPlugin.py` is located right in `./src` and upon inquiry checks whether the dependencies are installed.
+All source code is contained in the directory [./bcfplugin/](https://github.com/podestplatz/BCF-Plugin-FreeCAD/tree/feature/PI_retrieval/bcfplugin). 
 To import it in FreeCAD run the following command in the `Python Console`:
 
 ```python
->>> import BCFPlugin
+>>> import bcfplugin
 ```
+
+`bcfpluin/` contains a `__init__.py` which, upon import, checks whether the dependencies are satisfied. 
 
 ## Making FreeCAD aware of Virtual Environment
 
@@ -53,14 +55,13 @@ If you have installed the dependencies in a python virtual environment, FreeCAD 
     ```
     
 ## Using the nonGui frontend
-To get access to the nonGui-frontend (also called programmatic interface or PI for short) import `frontend.programmaticInterface`
+To get access to the nonGui-frontend (also called programmatic interface or PI for short) the import of `bcfplugin` suffices. 
 ```python
->>> import frontend.programmaticInterface as plugin
+>>> import bcfplugin as plugin
 ```
+This imports all necessary functions into the plugin global namespace from `programmaticInterface.py`, thereby making them easily accessible.
 
-Note that the package `frontend`, as well as all the others located in [./src/](https://github.com/podestplatz/BCF-Plugin-FreeCAD/tree/master/src), are available in the global scope! This is the reason why the structure of the plugin is changing in the near future.
-
-Without a BCF file the plugin is of little value, thus let's open a BCF file: 
+Without a BCF file, however, the plugin is of little value, thus let's open a BCF file: 
 ```python
 >>> plugin.openProject("/path/to/bcf/file.bcf")
 ```
@@ -119,4 +120,4 @@ If you stumble upon a member `id` in any object gotten from the plugin, please d
 ## Debugging
 
 If you want to show all debug messages (be warned they are a lot) then you can
-enable debugging by setting the value of `util.DEBUG` to `True`.
+enable debugging by setting the value of `util.verbosity` to `Verbosity.EVERYTHING` (to get every message the plugin wants to print or `Verbosity.INFODEBUG` to just get info and debug messages, but no error messages.
