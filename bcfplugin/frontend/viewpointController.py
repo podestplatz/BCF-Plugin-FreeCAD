@@ -1,5 +1,7 @@
 import rdwr.threedvector as vector
+
 from pivy import coin
+from rdwr.viewpoint import OrthogonalCamera, PerspectiveCamera
 from util import debug, printErr, printInfo, FREECAD, GUI
 
 if GUI and FREECAD:
@@ -56,3 +58,44 @@ def setCamera(camViewpoint: vector.Point,
     cam.orientation.setValue(rotation.Q)
     cam.position.setValue(fPosition)
 
+    return cam
+
+
+def setPCamera(camSettings: PerspectiveCamera):
+
+    """ Sets the camera's position, orientation and fieldOfView to `camSettings`.
+
+    If the camera in the current view is not a Perspective camera, it is changed
+    by calling View3DInventorPy.setCameraType("Perspective").
+    The field of view is set by setting the value `heightAngle` in
+    SoPerspectiveCamera.
+    """
+
+    view = FreeCADGui.ActiveDocument.ActiveView
+    cam = view.getCameraNode()
+
+    if cam.getClassTypeId() != coin.SoPerspectiveCamera_getClassTypeId():
+        view.setCameraType("Perspective")
+
+    setCamera(camSettings.viewPoint, camSettings.direction, camSettings.upVector)
+    cam.heightAngle.setValue(camSettings.fieldOfView)
+
+
+def setOCamera(camSettings: OrthogonalCamera):
+
+    """ Sets the camera's position, orientation and viewToWorldScale to `camSettings`.
+
+    If the camera in the current view is not a Orthographic camera, it is changed
+    by calling View3DInventorPy.setCameraType("Orthographic").
+    The field of view is set by setting the value `height` in
+    SoOrthographicCamera.
+    """
+
+    view = FreeCADGui.ActiveDocument.ActiveView
+    cam = view.getCameraNode()
+
+    if cam.getClassTypeId() != coin.SoOrthographicCamera_getClassTypeId:
+        view.setCameraType("Orthographic")
+
+    setCamera(camSettings.viewPoint, camSettings.direction, camSettings.upVector)
+    cam.height.setValue(camSettings.viewWorldScale)

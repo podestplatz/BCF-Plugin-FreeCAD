@@ -225,7 +225,7 @@ class OrthogonalCamera(Camera, XMLName):
             viewPoint: Point,
             direction: Direction,
             upVector: Direction,
-            viewWorldScale: int,
+            viewWorldScale: float,
             containingElement = None,
             state: State.States = State.States.ORIGINAL):
 

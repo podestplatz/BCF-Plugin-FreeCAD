@@ -339,7 +339,8 @@ def getAdditionalDocumentReferences(topic: Topic):
     return docRefs
 
 
-def activateViewpoint(viewpoint: Viewpoint, camType: CamType):
+def activateViewpoint(viewpoint: Viewpoint,
+        camType: CamType = CamType.PERSPECTIVE):
 
     """ Sets the camera view the model from the specified viewpoint."""
 
@@ -358,12 +359,14 @@ def activateViewpoint(viewpoint: Viewpoint, camType: CamType):
         return OperationResults.FAILURE
 
     if camSettings is None:
-        print(dir(util))
-        util.printErr("No camera settings found in viewpoint {}")
+        util.printErr("No camera settings found in viewpoint"\
+                " {}".format(viewpoint))
         return OperationResults.FAILURE
 
-    vpCtrl.setCamera(camSettings.viewPoint, camSettings.direction,
-            camSettings.upVector)
+    if camType == CamType.ORTHOGONAL:
+        vpCtrl.setOCamera(camSettings)
+    elif camType == CamType.PERSPECTIVE:
+        vpCtrl.setPCamera(camSettings)
 
 
 def addComment(topic: Topic, text: str, author: str,
