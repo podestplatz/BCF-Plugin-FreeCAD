@@ -187,13 +187,14 @@ class Project(Hierarchy, State, XMLName, XMLIdentifiable, Identifiable):
             uuid: UUID,
             name: str = "",
             extSchemaSrc: Uri = None,
+            xmlName: str = "Project",
             state: State.States = State.States.ORIGINAL):
 
         """ Initialisation function of Project """
 
         Hierarchy.__init__(self, None) # Project is the topmost element
         State.__init__(self, state)
-        XMLName.__init__(self)
+        XMLName.__init__(self, xmlName)
         XMLIdentifiable.__init__(self, uuid)
         Identifiable.__init__(self)
         self._name = SimpleElement(name, "Name", "", self)

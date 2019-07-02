@@ -29,7 +29,9 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint",
         "addComment", "addFile", "addLabel", "addDocumentReference",
-        "copyFileToProject"]
+        "copyFileToProject", "modifyComment",
+        "curProject" #only for debugging
+        ]
 
 utc = pytz.UTC
 """ For localized times """
@@ -608,6 +610,8 @@ def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
     `destName`. Otherwise the original filename is used.
     """
 
+    global curProject
+
     if not os.path.exists(path):
         util.printErr("File `{}` does not exist. Nothing is beeing copied.")
         return OperationResults.FAILURE
@@ -642,3 +646,53 @@ def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
         util.printInfo("Changed filename to {}.".format(destPath))
 
     shutil.copyfile(path, destPath)
+
+
+def modifyComment(comment: Comment, newText: str, author: str):
+
+    """ Change the text of `comment` to `newText` in the data model.
+
+    Alongside with the text, the modAuthor and modDate fields get overwritten
+    with `author` and the current datetime respectively.
+    If `newText` was left empty then the comment is going to be deleted.
+    """
+
+    global curProject
+
+    if newText == "":
+        util.printInfo("newText is empty. Deleting comment now.")
+        deleteObject(comment)
+        return OperationResults.SUCCESS
+
+    if author == "":
+        util.printInfo("Author is not set. Won't update a comment without an"\
+                " author")
+        return OperationResults.FAILURE
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    realComment = curProject.searchObject(comment)
+    if realComment is None:
+        util.printErr("Comment {} could not be found in the data model. Not"\
+                "modifying anything".format(comment))
+        return OperationResulsts.FAILURE
+
+    modDate = utc.localize(datetime.datetime.now())
+
+    oldVal = realComment.comment
+    realComment.comment = newText
+    realComment._comment.state = State.States.MODIFIED
+    writer.addProjectUpdate(curProject, realComment._comment, oldVal)
+
+    oldVal = realComment.modDate
+    realComment.modDate = modDate
+    realComment._modDate.state = State.States.MODIFIED
+    writer.addProjectUpdate(curProject, realComment._modDate, oldVal)
+
+    oldVal = realComment.modAuthor
+    realComment.modAuthor = author
+    realComment._modAuthor.state = State.States.MODIFIED
+    writer.addProjectUpdate(curProject, realComment._modAuthor, oldVal)
+
+    return _handleProjectUpdate("Could not modify comment.")

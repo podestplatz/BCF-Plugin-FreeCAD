@@ -10,9 +10,9 @@ class XMLName:
 
     def __init__(self, name = ""):
         if name == "":
-            self._name = self.__class__.__name__
+            self._xmlname = self.__class__.__name__
         else:
-            self._name = name
+            self._xmlname = name
 
     def __eq__(self, other):
         if other is None:
@@ -21,12 +21,12 @@ class XMLName:
         if type(self) != type(other):
             return False
 
-        return self._name == other.xmlName
+        return self._xmlname == other.xmlName
 
 
     @property
     def xmlName(self):
-        return self._name
+        return self._xmlname
 
     @xmlName.setter
     def xmlName(self, newVal):

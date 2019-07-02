@@ -330,11 +330,30 @@ def getInsertionIndex(element, etParent):
     return insertionIndex
 
 
+def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
+
+    debug("searching {} for {}".format(rootElem, wantedElement))
+    elementHierarchy = wantedElement.getHierarchyList()
+    xmlHierarchy = [ element.xmlName for element in elementHierarchy ]
+    debug("xmlHierarchy of {} is {}".format(wantedElement, xmlHierarchy))
+    if not "Markup" in xmlHierarchy:
+        return []
+
+    xmlHierarchy.remove("Project")
+    xmlHierarchy.remove("Markup")
+    xmlHierarchy.reverse()
+    xmlPathExpression = "/".join(xmlHierarchy)
+    xmlPathExpression = "./" + xmlPathExpression
+    debug("searching with XMLPath expression {}".format(xmlPathExpression))
+
+    return rootElem.findall(xmlPathExpression)
+
+
 def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
 
     """
     This function searches `rootElem` for all occurences for
-    containingElement.xmlName. This set of elements is then searched for the
+    wantedElement.xmlName. This set of elements is then searched for the
     best match against `wantedElement`. `wantedElement` is expected to be an
     instance of a class of the data model not one of ET.Element.
     The first strategy that is attempted is matching on the child elements.
@@ -351,8 +370,7 @@ def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
         rootElem))
     # candidates are the set of elements that have the same tag as
     # containingElement
-    debug("Searching with XMLPath: .//{}".format(wantedElement.xmlName))
-    candidates = rootElem.findall(".//{}".format(wantedElement.xmlName))
+    candidates = getXMLNodeCandidates(rootElem, wantedElement)
     debug("Got possible list of candidates: {}".format(candidates))
     parentEt = wantedElement.getEtElement(ET.Element("", {}))
     parentEtChildren = list(parentEt)
@@ -774,12 +792,12 @@ def modifyElement(element, previousValue):
     if issubclass(type(element), p.SimpleElement):
         parentElem = element.containingObject
         etElem = getEtElementFromFile(xmlroot, element, [])
-        etElem.text = newValue
+        etElem.text = str(newValue)
 
     elif issubclass(type(element), p.Attribute):
         parentElem = element.containingObject
         parentEtElem = getEtElementFromFile(xmlroot, parentElem, [])
-        parentEtElem.attrib[element.xmlName] = newValue
+        parentEtElem.attrib[element.xmlName] = str(newValue)
 
     writeXMLFile(xmlroot, filePath)
 
@@ -806,8 +824,8 @@ def writeHandlerErrMsg(msg, err):
     """
 
     debug(msg)
-    util.printErr(str(err), file=sys.stderr)
-    util.printErr(msg, file=sys.stderr)
+    util.printErr(str(err))
+    util.printErr(msg)
 
 
 def handleAddElement(element, oldVal):
