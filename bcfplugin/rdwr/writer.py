@@ -829,8 +829,14 @@ def addProjectUpdate(project: p.Project, element, prevVal):
     """
 
     global projectUpdates
+    projectCpy = c.deepcopy(project)
+    elementCpy = c.deepcopy(element)
+    prevValCpy = None
+    if prevVal is not None:
+        prevValCpy = copy.deepcopy(prevVal)
+
     if element.state != iS.State.States.ORIGINAL:
-        projectUpdates.append((project, element, prevVal))
+        projectUpdates.append((projectCpy, elementCpy, prevValCpy))
     else:
         raise ValueError("Element is in its original state. Cannot be added as"\
                 " update")
@@ -843,6 +849,7 @@ def writeHandlerErrMsg(msg, err):
     """
 
     debug(msg)
+    debug(str(err))
     util.printErr(str(err))
     util.printErr(msg)
 
@@ -946,6 +953,8 @@ def updateProjectUpdates(successfullyProcessed):
     """
     Remove all elements in `successfullyProcessed` from `projectUpdates`
     """
+
+    global projectUpdates
 
     for success in successfullyProcessed:
         projectUpdates.remove(success)

@@ -16,10 +16,11 @@ import rdwr.project as p
 import rdwr.markup as m
 from rdwr.viewpoint import Viewpoint
 from rdwr.topic import Topic, DocumentReference
-from rdwr.markup import Comment, Header, HeaderFile, ViewpointReference
+from rdwr.markup import Comment, Header, HeaderFile, ViewpointReference, Markup
 from rdwr.interfaces.identifiable import Identifiable
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
+from rdwr.interfaces.xmlname import XMLName
 
 if util.GUI:
     import frontend.viewpointController as vpCtrl
@@ -30,7 +31,7 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "activateViewpoint",
         "addComment", "addFile", "addLabel", "addDocumentReference",
         "copyFileToProject", "modifyComment", "modifyDocumentReference",
-        "curProject" #only for debugging
+        "modifyElement"
         ]
 
 utc = pytz.UTC
@@ -726,6 +727,68 @@ def modifyComment(comment: Comment, newText: str, author: str):
     writer.addProjectUpdate(curProject, realComment._modAuthor, oldVal)
 
     return _handleProjectUpdate("Could not modify comment.", projectBackup)
+
+
+def getTopic(element):
+
+    elemHierarchy = element.getHierarchyList()
+
+    topic = None
+    for element in elemHierarchy:
+        if isinstance(element, Markup):
+            topic = element.topic
+            break
+        elif isinstance(element, Topic):
+            topic = element
+            break
+        else:
+            continue
+
+    return topic
+
+
+def modifyElement(element):
+
+    global curProject
+
+    projectBackup = copy.deepcopy(curProject)
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    if not (issubclass(type(element), Identifiable) and
+            issubclass(type(element), State) and
+            issubclass(type(element), XMLName)):
+        util.printErr("Element is not an object from the data model. Cannot"\
+                " update it")
+        return OperationResults.FAILURE
+
+    realElement = curProject.searchObject(element)
+    if realElement is None:
+        util.printErr("{} object, that shall be changed, could not be"\
+                " found in the current project.".format(element.xmlName))
+        return OperationResults.FAILURE
+
+    util.debug("found {}".format(str(realElement)))
+
+    realTopic = getTopic(realElement)
+    if realTopic is None:
+        util.printErr("{} currently it is only possible to modify values of"\
+                " markup.bcf.")
+        return OperationResults.FAILURE
+
+    realElement.state = State.States.DELETED
+    writer.addProjectUpdate(curProject, realElement, None)
+
+    # copy the state of the given element to the real element
+    for property, value in vars(element).items():
+        setattr(realElement, property, copy.deepcopy(value))
+
+    realElement.state = State.States.ADDED
+    writer.addProjectUpdate(curProject, realElement, None)
+    return _handleProjectUpdate("Could not modify element {}".format(element.xmlName),
+            projectBackup)
+
 
 
 def modifyDocumentReference(newDocRef: DocumentReference):

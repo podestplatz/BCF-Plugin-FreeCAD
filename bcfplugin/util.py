@@ -30,7 +30,7 @@ class Verbosity(Enum):
     IMPORTANTERRORS = 3
     INFODEBUG = 4
 
-verbosity = Verbosity.INFODEBUG
+verbosity = Verbosity.EVERYTHING
 if (verbosity == Verbosity.EVERYTHING or verbosity == Verbosity.INFODEBUG):
     # used to inspect the stack to get caller function and caller filename
     import inspect
@@ -106,22 +106,24 @@ def printErr(msg, toFile=False):
             verbosity == Verbosity.IMPORTANTERRORS):
         return
 
+    errmsg = "[ERROR] {}".format(msg)
     if FREECAD:
         import FreeCAD
-        FreeCAD.Console.PrintError("{}\n".format(msg))
+        FreeCAD.Console.PrintError("{}\n".format(errmsg))
     else:
-        print(msg, file=sys.stderr)
+        print(errmsg, file=sys.stderr)
 
 
 def printInfo(msg):
 
     """ Print informative message to the user """
 
+    infomsg = "[INFO] {}".format(msg)
     if FREECAD:
         import FreeCAD
-        FreeCAD.Console.PrintMessage("{}\n".format(msg))
+        FreeCAD.Console.PrintMessage("{}\n".format(infomsg))
     else:
-        print(msg)
+        print(infomsg)
 
 
 def printErrorList(errors, toFile=False):
@@ -151,7 +153,12 @@ def debug(msg):
     callerModule = inspect.getmodule(callerStackFrame[0])
     callerModuleName = os.path.basename(callerModule.__file__)
     callerName = inspect.stack()[1].function
-    printInfo("[DEBUG]{}:{}(): {}".format(callerModuleName, callerName, msg))
+    debugmsg = "[DEBUG]{}:{}(): {}".format(callerModuleName, callerName, msg)
+    if FREECAD:
+        import FreeCAD
+        FreeCAD.Console.PrintMessage("{}\n".format(debugmsg))
+    else:
+        print(debugmsg)
 
 
 def retrieveWebFile(schema: Schema, storePath: str):
