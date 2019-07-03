@@ -16,7 +16,7 @@ import rdwr.project as p
 import rdwr.markup as m
 from rdwr.viewpoint import Viewpoint
 from rdwr.topic import Topic, DocumentReference
-from rdwr.markup import Comment, Header, HeaderFile
+from rdwr.markup import Comment, Header, HeaderFile, ViewpointReference
 from rdwr.interfaces.identifiable import Identifiable
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
@@ -29,7 +29,7 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint",
         "addComment", "addFile", "addLabel", "addDocumentReference",
-        "copyFileToProject", "modifyComment",
+        "copyFileToProject", "modifyComment", "modifyDocumentReference",
         "curProject" #only for debugging
         ]
 
@@ -695,4 +695,91 @@ def modifyComment(comment: Comment, newText: str, author: str):
     realComment._modAuthor.state = State.States.MODIFIED
     writer.addProjectUpdate(curProject, realComment._modAuthor, oldVal)
 
-    return _handleProjectUpdate("Could not modify comment.")
+    return _handleProjectUpdate("Could not modify comment.", projectBackup)
+
+
+def modifyDocumentReference(newDocRef: DocumentReference):
+
+    """ Replaces the old document reference with `newDocRef`.
+
+    From the currently open project the matching document reference is searched
+    for. Then the complete element is deleted from file and added again.
+    Before everything takes place, a backup of the current project is made. If
+    an error occurs, the current project will be rolled back to the backup.
+    """
+
+    global curProject
+
+    projectBackup = copy.deepcopy(curProject)
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    realDocRef = curProject.searchObject(newDocRef)
+    if realDocRef == None:
+        util.printErr("Document reference, that shall be changed, could not be"\
+                " found in the current project.")
+        return OperationResults.FAILURE
+
+    realTopic = realDocRef.containingObject
+
+    realDocRef.state = State.States.DELETED
+    writer.addProjectUpdate(curProject, realDocRef, None)
+
+    return addDocumentReference(realTopic, newDocRef.guid, newDocRef.external,
+            newDocRef.reference, newDocRef.description)
+
+
+def addViewpointToComment(comment: Comment, viewpoint: ViewpointReference, author: str):
+
+    """ Add a reference to `viewpoint` inside `comment`.
+
+    If `comment` already referenced a viewpoint then it is updated. If no
+    viewpoint was refrerenced before then a new xml node is created. In both
+    cases `ModifiedAuthor` (`modAuthor`) and `ModifiedDate` (`modDate`) are
+    updated/set.
+    Before everything takes place, a backup of the current project is made. If
+    an error occurs, the current project will be rolled back to the backup.
+    """
+
+    global curProject
+
+    projectBackup = copy.deepcopy(curProject)
+
+    if author == "":
+        util.printInfo("`author` is empty. Cannot update without an author.")
+        return OperationResults.FAILURE
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    realComment = curProject.searchObject(comment)
+    realViewpoint = curProject.searchObject(viewpoint)
+    if realComment == None:
+        util.printErr("No matching comment was found in the current project.")
+        return OperationResults.FAILURE
+
+    if realViewpoint == None:
+        util.printErr("No matching viewpoint was found in the current project.")
+        return OperationResults.FAILURE
+
+    modDate = utc.localize(datetime.datetime.now())
+
+    realComment.state = State.States.DELETED
+    writer.addProjectUpdate(curProject, realComment, None)
+
+    realComment.viewpoint = viewpoint
+    realComment.state = State.States.ADDED
+    writer.addProjectUpdate(curProject, realComment, None)
+
+    oldDate = realComment.modDate
+    realComment.modDate = modDate
+    realComment._modDate.state = State.States.MODIFIED
+    writer.addProjectUpdate(curProject, realComment._modDate, oldDate)
+
+    oldAuthor = realComment.modAuthor
+    realComment.modAuthor = author
+    realComment._modAuthor.state = State.States.MODIFIED
+    writer.addProjectUpdate(curProject, realComment._modAuthor, oldAuthor)
+
+    return _handleProjectUpdate("Could not assign viewpoint.", projectBackup)
