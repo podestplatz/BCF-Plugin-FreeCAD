@@ -332,18 +332,37 @@ def getInsertionIndex(element, etParent):
 
 def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
 
+    """ Return a list of XML nodes that could match `wantedElement`.
+
+    This function searches `rootElem` for elements that have the same name as
+    `wantedElement` as well as the same hierarchy.
+    The hierarchy of `wantedElement` is retrieved by
+    `XMLName.getHierarchyList()` and is then trimmed at the front till the first
+    element is a first order child of rootElem.
+    Out of this hierarchy list a XML path expression is generated that is used
+    for searching `rootElem` for the list of possible candidates.
+    """
+
     debug("searching {} for {}".format(rootElem, wantedElement))
     elementHierarchy = wantedElement.getHierarchyList()
-    xmlHierarchy = [ element.xmlName for element in elementHierarchy ]
-    debug("xmlHierarchy of {} is {}".format(wantedElement, xmlHierarchy))
-    if not "Markup" in xmlHierarchy:
+    elementHierarchy.reverse()
+
+    # delete all elements in the hierarchy before rootElem
+    i = len(elementHierarchy) -1
+    while (i > 0 and rootElem.tag != elementHierarchy[i].xmlName):
+        i -= 1
+    elementHierarchy = elementHierarchy[i+1:] # also delete rootElem
+
+    # rootElem is not contained in hierarchy => cannot search for element then
+    if elementHierarchy == []:
         return []
 
-    xmlHierarchy.remove("Project")
-    xmlHierarchy.remove("Markup")
-    xmlHierarchy.reverse()
-    xmlPathExpression = "/".join(xmlHierarchy)
-    xmlPathExpression = "./" + xmlPathExpression
+    xmlPathExpression = "./"
+    for element in elementHierarchy:
+        xmlPathExpression += "/" + element.xmlName
+        if issubclass(type(element), iI.XMLIdentifiable):
+            # add guid for deterministicness
+            xmlPathExpression += "[@Guid='{}']".format(element.xmlId)
     debug("searching with XMLPath expression {}".format(xmlPathExpression))
 
     return rootElem.findall(xmlPathExpression)
