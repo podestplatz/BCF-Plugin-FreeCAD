@@ -377,9 +377,13 @@ def addComment(topic: Topic, text: str, author: str,
     """ Add a new comment with content `text` to the topic.
 
     The date of creation is sampled right at the start of this function.
+    Before everything takes place, a backup of the current project is made. If
+    an error occurs, the current project will be rolled back to the backup.
     """
 
     global curProject
+
+    projectBackup = copy.deepcopy(curProject)
 
     if not isProjectOpen():
         return OperationResults.FAILURE
@@ -401,9 +405,14 @@ def addComment(topic: Topic, text: str, author: str,
     writer.addProjectUpdate(curProject, comment, None)
     errorenousUpdate = writer.processProjectUpdates()
     if errorenousUpdate is not None:
-        util.printErr("State is reset to the first errorenous update state.")
+        util.printErr("Error while adding {}".format(errorenousUpdate[1]))
+        util.printErr("Project is reset to before the addition.")
         util.printInfo("Please fix comment {}".format(comment))
-        curProject = errorenousUpdate[0]
+        curProject = projectBackup
+
+        return OperationResults.FAILURE
+
+    return OperationResults.SUCCESS
 
 
 def _isIfcGuid(guid: str):
@@ -426,14 +435,15 @@ def _isIfcGuid(guid: str):
     return True
 
 
-def _handleProjectUpdate(errMsg):
+def _handleProjectUpdate(errMsg, backup):
 
     """ Request for all updates to be written, and handle the results. """
 
     errorenousUpdate = writer.processProjectUpdates()
     if errorenousUpdate is not None:
         util.printErr(errMsg)
-        curProject = errorenousUpdate[0]
+        util.printInfo("Project state is reset to before the update.")
+        curProject = backup
         return OperationResults.FAILURE
     return OperationResults.SUCCESS
 
@@ -449,9 +459,13 @@ def addFile(topic: Topic, ifcProject: str = "",
     This function assumes that the file already exists and only creates a
     reference to it inside the data model. It does not copy an external file
     into the project.
+    Before everything takes place, a backup of the current project is made. If
+    an error occurs, the current project will be rolled back to the backup.
     """
 
     global curProject
+
+    projectBackup = copy.deepcopy(curProject)
 
     if not isExternal:
         if not util.doesFileExistInProject(reference):
@@ -501,7 +515,7 @@ def addFile(topic: Topic, ifcProject: str = "",
 
     writer.addProjectUpdate(curProject, newFile, None)
     return _handleProjectUpdate("File could not be added. Project is reset to"\
-            " last valid state")
+            " last valid state", projectBackup)
 
 
 def addDocumentReference(topic: Topic,
@@ -519,9 +533,13 @@ def addDocumentReference(topic: Topic,
     a file in the project directory.
     `path` to the file, and `description` is a human readable name of the
     document.
+    Before everything takes place, a backup of the current project is made. If
+    an error occurs, the current project will be rolled back to the backup.
     """
 
     global curProject
+
+    projectBackup = copy.deepcopy(curProject)
 
     if (path == "" and description == ""):
         util.printInfo("Not adding an empty document reference")
@@ -568,14 +586,20 @@ def addDocumentReference(topic: Topic,
 
     writer.addProjectUpdate(curProject, docRef, None)
     return _handleProjectUpdate("Document reference could not be added."\
-            " Returning to last valid state...")
+            " Returning to last valid state...", projectBackup)
 
 
 def addLabel(topic: Topic, label: str):
 
-    """ Add `label` as new label to `topic` """
+    """ Add `label` as new label to `topic`
+
+    Before everything takes place, a backup of the current project is made. If
+    an error occurs, the current project will be rolled back to the backup.
+    """
 
     global curProject
+
+    projectBackup = copy.deepcopy(curProject)
 
     if label == "":
         util.printInfo("Not adding an empty label.")
@@ -596,7 +620,7 @@ def addLabel(topic: Topic, label: str):
 
     writer.addProjectUpdate(curProject, addedLabel, None)
     return _handleProjectUpdate("Label '{}' could not be added. Returning"\
-            " to last valid state...".format(label))
+            " to last valid state...".format(label), projectBackup)
 
 
 def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
@@ -608,6 +632,8 @@ def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
     copied into the root directory of the project.
     If `destName` is given the resulting filename will be the value of
     `destName`. Otherwise the original filename is used.
+    Before everything takes place, a backup of the current project is made. If
+    an error occurs, the current project will be rolled back to the backup.
     """
 
     global curProject
@@ -655,9 +681,13 @@ def modifyComment(comment: Comment, newText: str, author: str):
     Alongside with the text, the modAuthor and modDate fields get overwritten
     with `author` and the current datetime respectively.
     If `newText` was left empty then the comment is going to be deleted.
+    Before everything takes place, a backup of the current project is made. If
+    an error occurs, the current project will be rolled back to the backup.
     """
 
     global curProject
+
+    projectBackup = copy.deepcopy(curProject)
 
     if newText == "":
         util.printInfo("newText is empty. Deleting comment now.")
