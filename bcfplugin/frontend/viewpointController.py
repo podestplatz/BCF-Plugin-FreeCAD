@@ -2,11 +2,17 @@ import rdwr.threedvector as vector
 
 from pivy import coin
 from rdwr.viewpoint import OrthogonalCamera, PerspectiveCamera
+from rdwr.threedvector import Point, Direction
 from util import debug, printErr, printInfo, FREECAD, GUI
 
 if GUI and FREECAD:
     import FreeCADGui
     import FreeCAD
+
+
+pCamClassTypeId = coin.SoPerspectiveCamera_getClassTypeId
+oCamClassTypeId = coin.SoOrthographicCamera_getClassTypeId
+
 
 def getRotation(normal: FreeCAD.Vector, up: FreeCAD.Vector):
 
@@ -74,7 +80,7 @@ def setPCamera(camSettings: PerspectiveCamera):
     view = FreeCADGui.ActiveDocument.ActiveView
     cam = view.getCameraNode()
 
-    if cam.getClassTypeId() != coin.SoPerspectiveCamera_getClassTypeId():
+    if cam.getClassTypeId() != pCamClassTypeId():
         view.setCameraType("Perspective")
 
     setCamera(camSettings.viewPoint, camSettings.direction, camSettings.upVector)
@@ -87,15 +93,59 @@ def setOCamera(camSettings: OrthogonalCamera):
 
     If the camera in the current view is not a Orthographic camera, it is changed
     by calling View3DInventorPy.setCameraType("Orthographic").
-    The field of view is set by setting the value `height` in
+    The view to world scale is set by setting the value `height` in
     SoOrthographicCamera.
     """
 
     view = FreeCADGui.ActiveDocument.ActiveView
     cam = view.getCameraNode()
 
-    if cam.getClassTypeId() != coin.SoOrthographicCamera_getClassTypeId:
+    if cam.getClassTypeId() != oCamClassTypeId():
         view.setCameraType("Orthographic")
 
     setCamera(camSettings.viewPoint, camSettings.direction, camSettings.upVector)
     cam.height.setValue(camSettings.viewWorldScale)
+
+
+def readCamera():
+
+    """ Read the current settings of the camera and return a Camera object.
+
+    The camera object returned will be an instance of either OrthogonalCamera or
+    PerspectiveCamera, depending on the camera node in the view. For the
+    perspective camera the property `heightAngle` is read from the view camera
+    and interpreted as `fieldOfView`. For the orthogonal camera the property
+    `height` is read and interpreted as view to world scale.
+    If reading of the camera settings was unsuccessful then `None` is returned
+    and a descriptive error message is printed.
+    """
+
+    view = FreeCADGui.ActiveDocument.ActiveView
+    cam = view.getCameraNode()
+
+    # translate freecads vector to a vector in the plugin
+    fPosVec = cam.position.getValue()
+    pPosVec = Point(fPosVec[0], fPosVec[1], fPosVec[2])
+
+    fOrientMat = cam.orientation.getValue().getMatrix().getValue()
+    fUpVec = fOrientMat[1][0:3]
+    fDirVec = fOrientMat[2][0:3]
+    pUpVec = Direction(fUpVec[0], fUpVec[1], fUpVec[2])
+    pDirVec = Direction(fDirVec[0], fDirVec[1], fDirVec[2])
+
+    vpCam = None # viewpoint camera settings
+    classTypeId = cam.getClassTypeId
+    if classTypeId() == pCamClassTypeId():
+        fieldOfView = cam.heightAngle.getValue()
+        vpCam = PerspectiveCamera(pPosVec, pDirVec, pUpVec, fieldOfView)
+
+    elif classTypeId() == oCamClassTypeId():
+        viewToWorldScale = cam.height.getValue()
+        vpCam = OrthogonalCamera(pPosVec, pDirVec, pUpVec, viewToWorldScale)
+
+    else:
+        util.printErr("The current camera type is not known. Supported camera"\
+                " types are: 'Perspective' and 'Orthographic'. Current type:"\
+                " {}".format(type(pCam)))
+
+    return vpCam

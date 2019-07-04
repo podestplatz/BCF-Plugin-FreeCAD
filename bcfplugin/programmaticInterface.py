@@ -14,9 +14,10 @@ import rdwr.reader as reader
 import rdwr.writer as writer
 import rdwr.project as p
 import rdwr.markup as m
-from rdwr.viewpoint import Viewpoint
-from rdwr.topic import Topic, DocumentReference
+from rdwr.viewpoint import Viewpoint, OrthogonalCamera, PerspectiveCamera
+from rdwr.topic import Topic, DocumentReference, BimSnippet
 from rdwr.markup import Comment, Header, HeaderFile, ViewpointReference, Markup
+from rdwr.uri import Uri
 from rdwr.interfaces.identifiable import Identifiable
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
@@ -28,7 +29,7 @@ if util.GUI:
 __all__ = [ "CamType", "deleteObject", "openProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
-        "activateViewpoint",
+        "activateViewpoint", "addCurrentViewpoint",
         "addComment", "addFile", "addLabel", "addDocumentReference",
         "copyFileToProject", "modifyComment", "modifyDocumentReference",
         "modifyElement"
@@ -370,6 +371,67 @@ def activateViewpoint(viewpoint: Viewpoint,
         vpCtrl.setOCamera(camSettings)
     elif camType == CamType.PERSPECTIVE:
         vpCtrl.setPCamera(camSettings)
+
+
+def addCurrentViewpoint(topic: Topic):
+
+    """ """
+    global curProject
+    projectBackup = copy.deepcopy(curProject)
+
+    if not (util.GUI and util.FREECAD):
+        util.printErr("Application is running either not inside FreeCAD or without"\
+                " GUI. Thus cannot set camera position")
+        return OperationResults.FAILURE
+
+    doNotAdd = False
+    if not isProjectOpen():
+        util.printInfo("Project is not open. Viewpoint cannot be added to any"\
+                " topic")
+        doNotAdd = True
+
+    realTopic = _searchRealTopic(topic)
+    if realTopic is None:
+        util.printInfo("Viewpoint will not be added.")
+        doNotAdd = True
+
+    camSettings = None
+    try:
+        camSettings = vpCtrl.readCamera()
+    except AttributeError as err:
+        util.printErr("Camera settings could not be read. Make sure the 3D"\
+                " view is active.")
+        util.printErr(str(err))
+        return OperationResults.FAILURE
+    else:
+        if camSettings is None:
+            return OperationResults.FAILURE
+
+    if not doNotAdd:
+        realMarkup = realTopic.containingObject
+        vpGuid = uuid4()
+        oCamera = None
+        pCamera = None
+        if isinstance(camSettings, OrthogonalCamera):
+            oCamera = camSettings
+        elif isinstance(camSettings, PerspectiveCamera):
+            pCamera = camSettings
+
+        util.printInfo(str(camSettings))
+        vp = Viewpoint(vpGuid, None, oCamera, pCamera)
+        vp.state = State.States.ADDED
+        vpFileName = writer.generateViewpointFileName(realMarkup)
+        vpRef = ViewpointReference(vpGuid, Uri(vpFileName), None, -1, realMarkup,
+                State.States.ADDED)
+        vpRef.viewpoint = vp
+        realMarkup.viewpoints.append(vpRef)
+
+        writer.addProjectUpdate(curProject, vpRef, None)
+        return _handleProjectUpdate("Viewpoint could not be added. Rolling"\
+                " back to previous state", projectBackup)
+
+    print(camSettings)
+    return OperationResults.SUCCESS
 
 
 def addComment(topic: Topic, text: str, author: str,

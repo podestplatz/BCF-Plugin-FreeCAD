@@ -461,9 +461,9 @@ def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
 
 def generateViewpointFileName(markup: m.Markup):
 
-    """
-    Generates a new viewpoint file name. It will have the name:
-        `viewpointX.bcfv`
+    """ Generates a new viewpoint file name.
+
+    It will have the name: `viewpointX.bcfv`
     where `X` is an arbitrary number. Initially X is set to one and incremented
     until an X is reached that does not yield an existing filename (in
     combination with `base_name`. The first hit is returned.

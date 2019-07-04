@@ -177,7 +177,7 @@ class PerspectiveCamera(Camera, XMLName):
             viewPoint: Point,
             direction: Direction,
             upVector: Direction,
-            fieldOfView: int,
+            fieldOfView: float,
             containingElement = None,
             state: State.States = State.States.ORIGINAL):
         Camera.__init__(self,
