@@ -30,7 +30,7 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint", "addCurrentViewpoint",
-        "addComment", "addFile", "addLabel", "addDocumentReference",
+        "addComment", "addFile", "addLabel", "addDocumentReference", "addTopic",
         "copyFileToProject", "modifyComment", "modifyDocumentReference",
         "modifyElement"
         ]
@@ -432,6 +432,48 @@ def addCurrentViewpoint(topic: Topic):
 
     print(camSettings)
     return OperationResults.SUCCESS
+
+
+def addTopic(title: str, author: str, type: str = "", description = "",
+        status: str = "", priority: str = "", index: int = -1,
+        labels: List[str] = list(), dueDate: datetime = None, assignee: str = "",
+        stage: str = "", relatedTopics: List[UUID] = list(),
+        referenceLinks: List[str] = list(), bimSnippet: BimSnippet = None):
+
+    """ Adds a new topic to the project.
+
+    That entails that a new topic folder is created in the bcf file as well as
+    a new markup file created, with nothing set but the topic.
+    """
+
+    global curProject
+    projectBackup = copy.deepcopy(curProject)
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    # new guid for topic
+    guid = uuid4()
+
+    # create and add new markup to curProject, bot nto write yet
+    newMarkup = Markup(None, state = State.States.ADDED,
+            containingElement = curProject)
+    curProject.topicList.append(newMarkup)
+
+    # create new topic and assign it to newMarkup
+    creationDate = utc.localize(datetime.datetime.now())
+    newTopic = Topic(guid, title, creationDate, author, type, status,
+            referenceLinks, list(), priority, index, labels, None, "",
+            dueDate, assignee, description, stage, relatedTopics, bimSnippet,
+            newMarkup)
+    # state does not have to be set. Topic will be automatically added when
+    # adding the markup
+
+    newMarkup.topic = newTopic
+    writer.addProjectUpdate(curProject, newMarkup, None)
+
+    return _handleProjectUpdate("Could not add topic {} to"\
+            " project.".format(title), projectBackup)
 
 
 def addComment(topic: Topic, text: str, author: str,
