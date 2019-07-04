@@ -14,11 +14,19 @@ def check_dependencies():
     except:
         pkg = "dateutil"
         available = False
-    else:
+
+    if available:
         try:
             import xmlschema
         except:
             pkg = "xmlschema"
+            available = False
+
+    if availabe:
+        try:
+            import pytz
+        except:
+            pkg = "pytz"
             available = False
 
     if not available:
