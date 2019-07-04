@@ -486,7 +486,6 @@ def addComment(topic: Topic, text: str, author: str,
     """
 
     global curProject
-
     projectBackup = copy.deepcopy(curProject)
 
     if not isProjectOpen():
@@ -568,7 +567,6 @@ def addFile(topic: Topic, ifcProject: str = "",
     """
 
     global curProject
-
     projectBackup = copy.deepcopy(curProject)
 
     if not isExternal:
@@ -642,7 +640,6 @@ def addDocumentReference(topic: Topic,
     """
 
     global curProject
-
     projectBackup = copy.deepcopy(curProject)
 
     if (path == "" and description == ""):
@@ -702,7 +699,6 @@ def addLabel(topic: Topic, label: str):
     """
 
     global curProject
-
     projectBackup = copy.deepcopy(curProject)
 
     if label == "":
@@ -810,7 +806,6 @@ def modifyComment(comment: Comment, newText: str, author: str):
     """
 
     global curProject
-
     projectBackup = copy.deepcopy(curProject)
 
     if newText == "":
@@ -949,7 +944,6 @@ def addViewpointToComment(comment: Comment, viewpoint: ViewpointReference, autho
     """
 
     global curProject
-
     projectBackup = copy.deepcopy(curProject)
 
     if author == "":
