@@ -30,7 +30,7 @@ class Verbosity(Enum):
     IMPORTANTERRORS = 3
     INFODEBUG = 4
 
-verbosity = Verbosity.EVERYTHING
+verbosity = Verbosity.IMPORTANTERRORS
 if (verbosity == Verbosity.EVERYTHING or verbosity == Verbosity.INFODEBUG):
     # used to inspect the stack to get caller function and caller filename
     import inspect
@@ -129,6 +129,10 @@ def printInfo(msg):
 def printErrorList(errors, toFile=False):
 
     """ Print every error message from errors """
+
+    if (verbosity == Verbosity.IMPORTANTERRORS or
+            verbosity == Verbosity.INFODEBUG):
+        return
 
     for error in errors:
         printErr(error, toFile)

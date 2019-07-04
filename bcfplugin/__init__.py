@@ -22,7 +22,7 @@ def check_dependencies():
             pkg = "xmlschema"
             available = False
 
-    if availabe:
+    if available:
         try:
             import pytz
         except:

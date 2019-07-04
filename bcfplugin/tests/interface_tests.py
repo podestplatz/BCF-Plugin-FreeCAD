@@ -13,7 +13,8 @@ from shutil import rmtree
 from shutil import copyfile
 from xmlschema import XMLSchemaValidationError
 
-sys.path.insert(0, "../")
+sys.path.insert(0, "../../") # plugin root
+sys.path.insert(0, "../") # source root
 import util as util
 import rdwr.uri as uri
 import rdwr.topic as topic
@@ -26,7 +27,7 @@ import rdwr.threedvector as tdv
 import rdwr.viewpoint as viewpoint
 import rdwr.modification as modification
 import programmaticInterface as pI
-import rdwr.hierarchy as hierarchy
+import rdwr.interfaces.hierarchy as hierarchy
 
 
 def setupBCFFile(testFile, testFileDir, testTopicDir, testBCFName):
@@ -267,6 +268,174 @@ class GetTopicsTest(unittest.TestCase):
         """
 
         pass
+
+
+class ModifyElementTests(unittest.TestCase):
+
+    def retrieveTopics(self):
+        return [ topic[1] for topic in self.plugin.getTopics() ]
+
+
+    def retrieveComments(self, topic):
+        return [ comment[1] for comment in self.plugin.getComments(topic) ]
+
+
+    def setUp(self):
+        import bcfplugin as p
+        self.plugin = p
+        self.plugin.openProject("./interface_tests/Issues_BIMcollab_Example.bcf.original")
+        self.topics = self.retrieveTopics()
+
+
+    def tearDown(self):
+        del self.plugin
+
+
+    def test_modifiedCommentState(self):
+
+        """ Test whether the state of the modified element is set back to
+        ORIGINAL"""
+
+        comments = self.retrieveComments(self.topics[0])
+        commentToModify = comments[0]
+
+        commentToModify.comment = "Hello my name is... Slim Shaaaaadyyyy"
+        self.plugin.modifyElement(commentToModify, author="hello@bye.com")
+
+        newTopics = self.retrieveTopics()
+        newComments = self.retrieveComments(newTopics[0])
+        updatedComment = newComments[0]
+
+        self.assertTrue(updatedComment.state == s.State.States.ORIGINAL)
+
+
+    def test_modifyComment(self):
+
+        """ Test whether a comment text gets updated in the data model """
+
+        comments = self.retrieveComments(self.topics[0])
+        commentToModify = comments[0]
+
+        newText = "Hello my name is... Slim Shaaaaadyyyy"
+        commentToModify.comment = newText
+        self.plugin.modifyElement(commentToModify, author="a@b.c")
+
+        newTopics = self.retrieveTopics()
+        newComments = self.retrieveComments(newTopics[0])
+        updatedComment = newComments[0]
+
+        self.assertTrue(updatedComment.comment == newText)
+
+
+    def test_modifyCommentWithoutAuthor(self):
+
+        """ Test whether the author check for comments and topics works
+
+        Expected: comment does not get updated.
+        """
+
+        comments = self.retrieveComments(self.topics[0])
+        commentToModify = comments[0]
+
+        oldText = commentToModify.comment
+        commentToModify.comment = "Hello my name is... Slim Shaaaaadyyyy"
+        self.plugin.modifyElement(commentToModify) # Note: no author is given
+
+        newTopics = self.retrieveTopics()
+        newComments = self.retrieveComments(newTopics[0])
+        updatedComment = newComments[0]
+
+        self.assertTrue(updatedComment.comment == oldText,
+                "Comment text is {} != {}".format(updatedComment.comment,
+                    oldText))
+
+
+    def test_unsuccessfulUpdateProjectUpdates(self):
+
+        """ Tests whether writer.projectUpdates is properly reset for an
+        unsuccessful update. """
+
+        updatesLength = len(writer.projectUpdates)
+
+        comments = self.retrieveComments(self.topics[0])
+        commentToModify = comments[0]
+
+        oldText = commentToModify.comment
+        commentToModify.comment = "Hello my name is... Slim Shaaaaadyyyy"
+        self.plugin.modifyElement(commentToModify) # Note: no author is given
+
+        equalInLength = (len(writer.projectUpdates) == updatesLength)
+        self.assertTrue(equalInLength,
+                "projectUpdates has some residues")
+
+
+    def test_modifyCommentAuthor(self):
+
+        """ Test the modification of the original author of a topic """
+
+        testAuthor = "hello@kurt.com"
+        topicToUpdate = self.topics[0]
+        topicToUpdate.author = testAuthor
+
+        self.plugin.modifyElement(topicToUpdate, "a@b.c")
+        self.retrieveTopics()
+
+        updatedTopic = self.topics[0]
+        self.assertTrue(updatedTopic.author == testAuthor)
+
+
+    def test_modifyLabel(self):
+
+        """ Test the modification of a simple label """
+
+        newLabelText = "hello my label"
+        labelToUpdate = self.topics[0].labels[0]
+        labelToUpdate.value = newLabelText
+
+        self.plugin.modifyElement(labelToUpdate)
+        self.retrieveTopics()
+
+        updatedLabel = self.topics[0].labels[0]
+
+        self.assertTrue(updatedLabel.value == newLabelText)
+
+
+    def test_modifyDocumentReferenceAttribute(self):
+
+        """ Test the modification of isExternal attribute """
+
+        # search for a topic with at least one document reference
+        i = 0
+        while i < len(self.topics) and len(self.topics[i].docRefs) == 0:
+            i += 1
+
+        if i == len(self.topics):
+            self.assertTrue(False, "No topic contains a document reference!")
+
+        docRefToUpdate = self.topics[i].docRefs[0]
+        external = not docRefToUpdate.external
+        docRefToUpdate.external = external
+
+        self.plugin.modifyElement(docRefToUpdate)
+        self.retrieveTopics()
+
+        updatedDocRef = self.topics[i].docRefs[0]
+        self.assertTrue(updatedDocRef.external == external, "`isExternal` was"\
+                " not updated properly")
+
+
+    def test_modifyTopicStatus(self):
+
+        topicIdx = 0
+        topicToUpdate = self.topics[topicIdx]
+
+        newStatus = "nearly done"
+        topicToUpdate.status = newStatus
+        self.plugin.modifyElement(topicToUpdate, "a@b.c")
+
+        self.retrieveTopics()
+        self.assertTrue(self.topics[topicIdx].status == newStatus,
+                "Status of topic does not get updated properly.")
 
 if __name__ == "__main__":
     unittest.main()
