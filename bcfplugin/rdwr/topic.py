@@ -302,7 +302,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             referenceLinks: List[str] = list(),
             docRefs: List[DocumentReference] = list(),
             priority: str = "",
-            index: int = 0,
+            index: int = -1,
             labels: List[str] = list(),
             modDate: ModificationDate = None,
             modAuthor: ModificationAuthor = "",

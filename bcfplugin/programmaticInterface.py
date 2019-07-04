@@ -31,8 +31,7 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint", "addCurrentViewpoint",
         "addComment", "addFile", "addLabel", "addDocumentReference", "addTopic",
-        "copyFileToProject", "modifyComment", "modifyDocumentReference",
-        "modifyElement"
+        "copyFileToProject", "modifyComment", "modifyElement"
         ]
 
 utc = pytz.UTC
@@ -779,6 +778,26 @@ def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
     shutil.copyfile(path, destPath)
 
 
+def setModDateAuthor(element, author="", addUpdate=True):
+
+    """ Update the modAuthor and modDate members of element """
+
+    modDate = utc.localize(datetime.datetime.now())
+
+    oldDate = element.modDate
+    element.modDate = modDate
+
+    oldAuthor = element.modAuthor
+    element.modAuthor = author
+
+    if addUpdate:
+        element._modDate.state = State.States.MODIFIED
+        writer.addProjectUpdate(curProject, element._modDate, oldDate)
+
+        element._modAuthor.state = State.States.MODIFIED
+        writer.addProjectUpdate(curProject, element._modAuthor, oldDate)
+
+
 def modifyComment(comment: Comment, newText: str, author: str):
 
     """ Change the text of `comment` to `newText` in the data model.
@@ -813,27 +832,25 @@ def modifyComment(comment: Comment, newText: str, author: str):
                 "modifying anything".format(comment))
         return OperationResulsts.FAILURE
 
-    modDate = utc.localize(datetime.datetime.now())
-
     oldVal = realComment.comment
     realComment.comment = newText
     realComment._comment.state = State.States.MODIFIED
     writer.addProjectUpdate(curProject, realComment._comment, oldVal)
 
-    oldVal = realComment.modDate
-    realComment.modDate = modDate
-    realComment._modDate.state = State.States.MODIFIED
-    writer.addProjectUpdate(curProject, realComment._modDate, oldVal)
-
-    oldVal = realComment.modAuthor
-    realComment.modAuthor = author
-    realComment._modAuthor.state = State.States.MODIFIED
-    writer.addProjectUpdate(curProject, realComment._modAuthor, oldVal)
+    # update `modDate` and `modAuthor`
+    setModDateAuthor(realComment, author)
 
     return _handleProjectUpdate("Could not modify comment.", projectBackup)
 
 
 def getTopic(element):
+
+    """ If element is below topic in hierarchy then the corresponding topic
+    object is returned.
+
+    If the element is of type Markup then the associated topic object is
+    returned.
+    """
 
     elemHierarchy = element.getHierarchyList()
 
@@ -851,15 +868,27 @@ def getTopic(element):
     return topic
 
 
-def modifyElement(element):
+def modifyElement(element, author=""):
+
+    """ Replace the old element in the data model with element.
+
+    A reference to the old element in the data model is acquired via the `id`
+    member of `element`. This old element is updated with the new values. The
+    corresponding XML element is first deleted from file and then added again
+    with the new values.
+
+    If `element` is of type Topic or Comment then `author` must be set, and then
+    `modAuthor` and `modDate` are updated.
+    """
 
     global curProject
-
     projectBackup = copy.deepcopy(curProject)
 
+    # ---- Checks ---- #
     if not isProjectOpen():
         return OperationResults.FAILURE
 
+    # is element of the right type
     if not (issubclass(type(element), Identifiable) and
             issubclass(type(element), State) and
             issubclass(type(element), XMLName)):
@@ -867,14 +896,15 @@ def modifyElement(element):
                 " update it")
         return OperationResults.FAILURE
 
+    # ---- Operation ---- #
+    # get a reference to the real element in the data model
     realElement = curProject.searchObject(element)
     if realElement is None:
         util.printErr("{} object, that shall be changed, could not be"\
                 " found in the current project.".format(element.xmlName))
         return OperationResults.FAILURE
 
-    util.debug("found {}".format(str(realElement)))
-
+    # get the associated topic
     realTopic = getTopic(realElement)
     if realTopic is None:
         util.printErr("{} currently it is only possible to modify values of"\
@@ -888,43 +918,22 @@ def modifyElement(element):
     for property, value in vars(element).items():
         setattr(realElement, property, copy.deepcopy(value))
 
+    # if topic was modified update `modDate` and `modAuthor`
+    if isinstance(realElement, Topic) or isinstance(realElement, Comment):
+        if author == "":
+            # Rollback and delete the latest update
+            util.printErr("Author is not set, but {} is updated. For a"\
+                    " proper update supply an author!")
+            curProject = projectBackup
+            writer.projectUpdates.pop(len(writer.projectUpdates)-1)
+            return OperationResults.FAILURE
+
+        setModDateAuthor(realElement, author, False)
+
     realElement.state = State.States.ADDED
     writer.addProjectUpdate(curProject, realElement, None)
     return _handleProjectUpdate("Could not modify element {}".format(element.xmlName),
             projectBackup)
-
-
-
-def modifyDocumentReference(newDocRef: DocumentReference):
-
-    """ Replaces the old document reference with `newDocRef`.
-
-    From the currently open project the matching document reference is searched
-    for. Then the complete element is deleted from file and added again.
-    Before everything takes place, a backup of the current project is made. If
-    an error occurs, the current project will be rolled back to the backup.
-    """
-
-    global curProject
-
-    projectBackup = copy.deepcopy(curProject)
-
-    if not isProjectOpen():
-        return OperationResults.FAILURE
-
-    realDocRef = curProject.searchObject(newDocRef)
-    if realDocRef == None:
-        util.printErr("Document reference, that shall be changed, could not be"\
-                " found in the current project.")
-        return OperationResults.FAILURE
-
-    realTopic = realDocRef.containingObject
-
-    realDocRef.state = State.States.DELETED
-    writer.addProjectUpdate(curProject, realDocRef, None)
-
-    return addDocumentReference(realTopic, newDocRef.guid, newDocRef.external,
-            newDocRef.reference, newDocRef.description)
 
 
 def addViewpointToComment(comment: Comment, viewpoint: ViewpointReference, author: str):
