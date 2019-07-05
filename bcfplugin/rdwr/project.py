@@ -1,3 +1,5 @@
+import xml.etree.ElementTree as ET
+
 from uuid import UUID
 from util import debug
 from rdwr.uri import Uri
