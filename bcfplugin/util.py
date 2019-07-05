@@ -79,17 +79,16 @@ schemaPaths = {} # during runtime this will be a map like __schemaUrls
 
 """ Working directory, here the extracted BCF file is stored """
 tempDir = None
-def getSystemTmp():
+def getSystemTmp(createNew: bool = False):
 
-    """
-    On first call creates a new temporary directory and returns the absolute
-    path to it. On every subsequent call, during the runtime of the
-    application, only the once created absolute path is returned.
+    """ Creates a temporary directory on first call or if `createNew` is set.
+
+    On subsequent calls the temp dir that was created latest is returned
     """
 
     global tempDir
 
-    if tempDir is None:
+    if createNew or tempDir is None:
         tempDir = tempfile.TemporaryDirectory()
         #tempDir = tempfile.mkdtemp()
 

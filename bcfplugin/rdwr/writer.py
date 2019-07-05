@@ -2,7 +2,7 @@ import os
 import io # used for writing files in utf8
 import sys
 import zipfile
-from uuid import UUID
+from uuid import UUID, uuid4
 from collections import deque
 
 if __name__ == "__main__":
@@ -21,6 +21,10 @@ import rdwr.markup as m
 import rdwr.project as p
 import rdwr.uri as u
 
+
+projectFileName = "project.bcfp"
+markupFileName = "markup.bcf"
+versionFilename = "bcf.version"
 
 elementOrder = {"Markup": ["Header", "Topic", "Comment", "Viewpoints"],
         "Topic": ["ReferenceLink", "Title", "Priority", "Index", "Labels",
@@ -152,17 +156,16 @@ def getFileOfElement(element):
         try:
             vpRefIndex = strHierarchy.index("ViewpointReference")
         except Exception as e:
-            print("ViewpointReference is not in Hierarchy of Viewpoint",
-                    file=sys.stderr)
+            util.printErr("ViewpointReference is not in Hierarchy of Viewpoint")
             raise e
         else:
             viewpointFile = elementHierarchy[vpRefIndex].file
             return viewpointFile
 
     elif "Markup" in strHierarchy:
-        return "markup.bcf"
-    elif "Project" in strHierarchy: # it should not come to this point actually
-        return "project.bcfp"
+        return markupFileName
+    elif "Project" in strHierarchy:
+        return projectFileName
     else: # This can only happen if someone wants to change the version file, which is not editable in the plugin
         return None
 
@@ -498,7 +501,7 @@ def xmlPrettify(element: ET.Element):
     return prettyXML.encode("UTF-8") # just to be sure to use utf8
 
 
-def getTopicPath(element):
+def getTopicDir(element):
 
     """
     Retrieves the xmlID of the topic that contains `element` and returns the
@@ -510,8 +513,7 @@ def getTopicPath(element):
         return None
 
     topicDir = str(topic.xmlId)
-    bcfDir = reader.bcfDir
-    return os.path.join(bcfDir, topicDir)
+    return topicDir
 
 
 def writeXMLFile(xmlroot, filePath):
@@ -610,7 +612,7 @@ def _createMarkup(element, topicPath):
     debug("Creating new markup {}".format(topicPath))
 
     os.mkdir(topicPath)
-    markupPath = os.path.join(topicPath, "markup.bcf")
+    markupPath = os.path.join(topicPath, markupFileName)
     # just create the markup file
     with open(markupPath, 'w') as markupFile: pass
 
@@ -620,6 +622,23 @@ def _createMarkup(element, topicPath):
 
     for viewpoint in element.viewpoints:
         _createViewpoint(viewpoint, topicPath)
+
+
+def _createProject(element, filePath):
+
+    """ Create a project file inside `bcfPath` with the contents of `element`
+    """
+
+
+    if os.path.exists(filePath):
+        raise RuntimeError("The working directory already contains a project"\
+                " file ({})".format(filePath))
+    # jsut create the project file
+    with open(filePath, "w") as projectFile: pass
+
+    projectXMLRoot = ET.Element(element.xmlName, {})
+    projectXMLRoot = element.getEtElement(projectXMLRoot)
+    writeXMLFile(projectXMLRoot, filePath)
 
 
 def addElement(element):
@@ -642,29 +661,45 @@ def addElement(element):
     conform anymore.
     """
 
+    addToProject = False
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
     if not fileName:
         raise ValueError("{} is not applicable to be added to anyone"\
             "file".format(element.xmlName))
+    elif fileName == projectFileName:
+        addToProject = True
 
-    if not (".bcfv" in fileName or ".bcf" in fileName):
-        raise NotImplementedError("Writing of project.bcfp or bcf.version"\
-                " is not yet supported")
+    if fileName is None:
+        raise NotImplementedError("Writing of bcf.version"\
+                " is not supported")
 
-    topicPath = getTopicPath(element)
-    if not topicPath:
-        raise RuntimeError("Element {} could not be associated to any topic."\
-            "This may be the case if properties in project.bcfp should be"\
-            "modified, which is currently not implemented!".format(str(element)))
+    bcfPath = reader.bcfDir
+    topicPath = ""
+    if not addToProject:
+        topicDir = getTopicDir(element)
+        if not topicPath and addToProject:
+            raise RuntimeError("Element {} could not be associated to any topic."\
+                "This may be the case if properties in project.bcfp should be"\
+                "modified, which is currently not implemented!".format(str(element)))
+
+        topicPath = os.path.join(bcfPath, topicDir)
+
+    filePath = ""
+    if not addToProject:
+        filePath = os.path.join(topicPath, fileName)
+    else:
+        filePath = os.path.join(bcfPath, fileName)
 
     debug("adding new element {}".format(element))
+    if isinstance(element, p.Project):
+        _createProject(element, filePath)
+        return
     # adds a complete new topic folder to the zip file
     if isinstance(element, m.Markup):
         _createMarkup(element, topicPath)
         return
 
-    filePath = os.path.join(topicPath, fileName)
     xmltree = ET.parse(filePath)
     xmlroot = xmltree.getroot()
 
@@ -719,8 +754,9 @@ def deleteElement(element):
         raise ValueError("For {} no file can be found to delete from"\
             "".format(element.__class__.__name__))
 
+    bcfPath = reader.bcfDir
     # path of the topic `element` is contained in
-    topicPath = getTopicPath(element)
+    topicPath = os.path.join(bcfPath, getTopicDir(element))
     # filepath of the file `element` is contained in
     filePath = os.path.join(topicPath, fileName)
     # parsed version of the file
@@ -797,8 +833,9 @@ def modifyElement(element, previousValue):
         raise ValueError("For {} no file can be found that contains it."\
             "file".format(element))
 
+    bcfPath = reader.bcfDir
     # path of the topic `element` is contained in
-    topicPath = getTopicPath(element)
+    topicPath = os.path.join(bcfPath, getTopicDir(element))
     # filepath of the file `element` is contained in
     filePath = os.path.join(topicPath, fileName)
     # parsed version of the file
@@ -1037,7 +1074,7 @@ def recursiveZipping(curDir, zipFile):
     return zipFile
 
 
-def createBcfFile(bcfRootPath, dstFile):
+def zipToBcfFile(bcfRootPath, dstFile):
 
     """ Packs the contents of `bcfRootPath` into a single archive `dstFile`.
 
@@ -1052,6 +1089,25 @@ def createBcfFile(bcfRootPath, dstFile):
             recursiveZipping("./", zipFile)
 
     return dstFile
+
+
+def createNewBcfFile(name):
+
+    """ Create a new working directory called `name`.
+
+    This working directory contains everything the resulting BCF file will be
+    comprised of. To generate the actual BCF file call zipToBcfFile
+    """
+
+    project = p.Project(uuid4(), name)
+    newTmpDir = util.getSystemTmp(createNew = True)
+
+    newBcfDir = os.path.join(newTmpDir, name)
+    reader.bcfDir = newBcfDir
+    os.mkdir(newBcfDir)
+    addElement(project)
+
+    return project
 
 
 ################## UNUSED ##################

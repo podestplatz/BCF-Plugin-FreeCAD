@@ -955,6 +955,37 @@ class ModifyElementTests(unittest.TestCase):
                 "".format(ifcProjectAttribute))
 
 
+class ProjectTests(unittest.TestCase):
+
+    def setUp(self):
+
+        self.testFileDir = "./writer_tests"
+        self.testTopicDir = "2e92784b-80fc-4e0e-ac02-b424dfd8e664"
+        self.testBCFName = "Issues-Example.bcf"
+        self.markupDestDir = os.path.join(util.getSystemTmp(), self.testBCFName,
+                self.testTopicDir)
+        self.testFiles = [ "markup_modify_comment_test.bcf" ]
+        self.checkFiles = [ "markup_modify_comment_check.bcf" ]
+
+
+    def test_projectCreation(self):
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
+        p = reader.readBcfFile(testFile)
+
+        projectPath = os.path.join(reader.bcfDir, writer.projectFileName)
+        os.remove(projectPath)
+        writer.addElement(p)
+
+        self.assertTrue(os.path.exists(projectPath))
+
+
+    def test_bcfFileCreation(self):
+
+        project = writer.createNewBcfFile("hello")
+        self.assertTrue(project.name == "hello")
+
 
 if __name__ == "__main__":
     unittest.main()
