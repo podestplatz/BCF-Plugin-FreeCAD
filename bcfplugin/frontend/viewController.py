@@ -1,13 +1,15 @@
-import rdwr.threedvector as vector
-
+import re
 from pivy import coin
-from rdwr.viewpoint import OrthogonalCamera, PerspectiveCamera
+from rdwr.viewpoint import OrthogonalCamera, PerspectiveCamera, Component
 from rdwr.threedvector import Point, Direction
-from util import debug, printErr, printInfo, FREECAD, GUI
 
-if GUI and FREECAD:
-    import FreeCADGui
-    import FreeCAD
+import rdwr.threedvector as vector
+import util
+
+# it is assumed that this file is only imported iff the plugin is running inside
+# FreeCAD in Gui mode.
+import FreeCADGui
+import FreeCAD
 
 
 pCamClassTypeId = coin.SoPerspectiveCamera_getClassTypeId
@@ -149,3 +151,100 @@ def readCamera():
                 " {}".format(type(pCam)))
 
     return vpCam
+
+
+def getIfcObjects():
+
+    """ Scans all objects in FreeCAD and returns a dictionary of Ifc objects.
+
+    The criterion for an object to be an Ifc Object is to have the attribute
+    `IfcData`, which is a dictionary; and this dictionary must have key value
+    pair with the key "IfcUID".
+    The dictionary returned will have keys corresponding to the IfcUIDs and the
+    values will be the objects themselves.
+    """
+
+    doc = FreeCAD.ActiveDocument
+    if doc is None:
+        util.printErr("Compiling of a list of IfcObjects failed! No document"\
+                " is currently open.")
+        return None
+
+    ifcObjects = dict()
+    isIfcObject = lambda obj: hasattr(obj, "IfcData") and "IfcUID" in obj.IfcData
+    # walk through all freecad objects and check if they are ifc objects
+    for fObj in doc.Objects:
+        if isIfcObject(fObj):
+            ifcObjects[fObj.IfcData["IfcUID"]] = fObj
+
+    return ifcObjects
+
+
+def colourToTuple(colour: str):
+
+    colourPattern = re.compile("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
+    if not colourPattern.fullmatch(colour):
+        return None
+
+    maxColVal = 255.0 if len(colour) == 7 else 16.0
+
+    rgbStr = colour[1:]
+    rgbVal = []
+    iterationStep = len(rgbStr)/2 # integer division
+    i = 0
+    while i < len(rgbStr):
+        startColVal = i*iterationStep
+        endColVal = startColVal + iterationStep
+        col = rgbStr[startColVal : endColVal]
+
+    rgbInt = [ int(rgbStr[0], 16),
+            int(rgbStr[1], 16),
+            int(rgbStr[2], 16) ]
+
+    return (rgbInt[0]/maxColVal, rgbInt[1]/maxColVal, rgbInt[2]/maxColVal)
+
+
+
+def colourComponents(colourings: List[ComponentColour], ifcObjects = None):
+
+    """ Set the colour of every object with a matching IfcUID.
+
+    Returns the number of objects whose colours could be set (i.e.: the number
+    of objects that were found with a IfcUID that matched an entry of
+    `colourings`.
+    """
+
+    if ifcObjects is None:
+        ifcObjects = getIfcObjects()
+
+    colouringCnt = 0
+    for colouring in colourings:
+        colour = colouring.colour
+
+
+def selectComponents(components: List[Component], ifcObjects = None):
+
+    """ Selects every object that the same IfcUID as a component in `components`
+
+    The current selection, if set, will be cleared before the components will be
+    added to the selection.
+    Returns the number of objects that are in the selection.
+    """
+
+    if ifcObjects is None:
+        ifcObjects = getIfcObjects()
+
+    selectionCnt = 0
+    FreeCADGui.Selection.clearSelection()
+    for component in components:
+        ifcUID = component.ifcId
+
+        if ifcUID in ifcObjects:
+            FreeCADGui.Selection.addSelection(ifcObjects[ifcUID])
+            selectionCnt += 1
+
+    return selectionCnt
+
+
+
+

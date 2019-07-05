@@ -24,7 +24,7 @@ from rdwr.interfaces.state import State
 from rdwr.interfaces.xmlname import XMLName
 
 if util.GUI:
-    import frontend.viewpointController as vpCtrl
+    import frontend.viewController as vCtrl
 
 __all__ = [ "CamType", "deleteObject", "openProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
@@ -367,9 +367,9 @@ def activateViewpoint(viewpoint: Viewpoint,
         return OperationResults.FAILURE
 
     if camType == CamType.ORTHOGONAL:
-        vpCtrl.setOCamera(camSettings)
+        vCtrl.setOCamera(camSettings)
     elif camType == CamType.PERSPECTIVE:
-        vpCtrl.setPCamera(camSettings)
+        vCtrl.setPCamera(camSettings)
 
 
 def addCurrentViewpoint(topic: Topic):
@@ -396,7 +396,7 @@ def addCurrentViewpoint(topic: Topic):
 
     camSettings = None
     try:
-        camSettings = vpCtrl.readCamera()
+        camSettings = vCtrl.readCamera()
     except AttributeError as err:
         util.printErr("Camera settings could not be read. Make sure the 3D"\
                 " view is active.")
