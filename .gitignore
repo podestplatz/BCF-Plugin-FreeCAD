@@ -10,3 +10,9 @@ Issues_BIMcollab_Example.bcf.original
 /**/writer_tests/error_files/
 /**/writer_tests/tests/
 schemas/
+
+bcf-examples/clippingPlane_bernd/bcfFreeCADPart/
+
+bcf-examples/clippingPlane_bernd/bcfexample1/
+
+test\.py
