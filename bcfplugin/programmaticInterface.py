@@ -142,6 +142,13 @@ def openProject(bcfFile):
     return OperationResults.SUCCESS
 
 
+def getProjectName():
+
+    """ Return the name of the open project """
+
+    return curProject.name
+
+
 def getTopics():
 
     """ Retrieves ordered list of topics from the currently open project.
