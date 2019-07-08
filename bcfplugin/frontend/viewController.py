@@ -1,6 +1,8 @@
 import re
+from typing import List
 from pivy import coin
-from rdwr.viewpoint import OrthogonalCamera, PerspectiveCamera, Component
+from rdwr.viewpoint import (OrthogonalCamera, PerspectiveCamera, Component,
+        ComponentColour)
 from rdwr.threedvector import Point, Direction
 
 import rdwr.threedvector as vector
@@ -182,27 +184,31 @@ def getIfcObjects():
 
 def colourToTuple(colour: str):
 
+    """ Convert a html colour value to a tuple of three elements.
+
+    A colour value is represented as floating point number between 1 and 0.
+    It is assumed that the colour string is either 7 or 4 elements long,
+    including the '#' character.
+    """
+
     colourPattern = re.compile("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
     if not colourPattern.fullmatch(colour):
         return None
 
-    maxColVal = 255.0 if len(colour) == 7 else 16.0
+    maxColVal = 0xFF if len(colour) == 7 else 0xF
 
     rgbStr = colour[1:]
     rgbVal = []
-    iterationStep = len(rgbStr)/2 # integer division
+    iterationStep = int(len(rgbStr) / 3)
     i = 0
-    while i < len(rgbStr):
+    while i < (len(rgbStr) / iterationStep):
         startColVal = i*iterationStep
         endColVal = startColVal + iterationStep
         col = rgbStr[startColVal : endColVal]
+        rgbVal.append(int(col, 16))
+        i += 1
 
-    rgbInt = [ int(rgbStr[0], 16),
-            int(rgbStr[1], 16),
-            int(rgbStr[2], 16) ]
-
-    return (rgbInt[0]/maxColVal, rgbInt[1]/maxColVal, rgbInt[2]/maxColVal)
-
+    return (rgbVal[0]/maxColVal, rgbVal[1]/maxColVal, rgbVal[2]/maxColVal)
 
 
 def colourComponents(colourings: List[ComponentColour], ifcObjects = None):
@@ -220,6 +226,17 @@ def colourComponents(colourings: List[ComponentColour], ifcObjects = None):
     colouringCnt = 0
     for colouring in colourings:
         colour = colouring.colour
+        colTuple = colourToTuple(colour)
+
+        for component in colouring.components:
+            cIfcId = component.ifcId
+
+            if cIfcId in ifcObjects:
+                obj = ifcObjects[cIfcId]
+                # view object
+                vObj = obj.Document.getObject(obj.Name).ViewObject
+                if hasattr(vObj, "ShapeColor"):
+                    vObj.ShapeColor = colTuple
 
 
 def selectComponents(components: List[Component], ifcObjects = None):
