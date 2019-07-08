@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>272</width>
+    <width>303</width>
     <height>436</height>
    </rect>
   </property>
@@ -23,11 +23,52 @@
    <item>
     <layout class="QVBoxLayout" name="mainLayout">
      <item>
+      <widget class="QGroupBox" name="projectGroup">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <layout class="QHBoxLayout" name="projectLayout">
+        <property name="spacing">
+         <number>1</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="projectLabel">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Open a BCF File</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="projectButton">
+          <property name="text">
+           <string>Open</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
       <layout class="QFormLayout" name="topicLayout">
        <property name="sizeConstraint">
         <enum>QLayout::SetMinimumSize</enum>
        </property>
-       <item row="0" column="0">
+       <item row="1" column="0">
         <widget class="QLabel" name="topicLbl">
          <property name="font">
           <font>
@@ -39,7 +80,7 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
+       <item row="1" column="1">
         <widget class="QComboBox" name="topicCBox">
          <property name="font">
           <font>
@@ -68,7 +109,7 @@
      <item>
       <layout class="QVBoxLayout" name="commentLayout">
        <item>
-        <widget class="QListWidget" name="commentList">
+        <widget class="QListView" name="commentList">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
@@ -90,16 +131,6 @@
          <property name="wordWrap">
           <bool>true</bool>
          </property>
-         <item>
-          <property name="text">
-           <string>Greg: I noticed that the left wall is too short by a few milimeters. </string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Anthony: Changed it! Matches all the other walls now.</string>
-          </property>
-         </item>
         </widget>
        </item>
        <item>
@@ -230,32 +261,13 @@ image: url(:/resources/snapshot1.jpg);
        </item>
       </layout>
      </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QVBoxLayout" name="viewpointsLayout">
      <item>
-      <widget class="QListWidget" name="viewpointsList">
-       <item>
-        <property name="text">
-         <string>viewpoint #1</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>viewpoint #2</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>viewpoint #3</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>viewpoint #4</string>
-        </property>
-       </item>
+      <widget class="QGroupBox" name="viewpointsGroup">
+       <layout class="QVBoxLayout" name="viewpointsLayout">
+        <item>
+         <widget class="QListView" name="viewpointsList"/>
+        </item>
+       </layout>
       </widget>
      </item>
     </layout>
@@ -265,22 +277,5 @@ image: url(:/resources/snapshot1.jpg);
  <resources>
   <include location="resources.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>showBtn</sender>
-   <signal>clicked()</signal>
-   <receiver>viewpointsList</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>200</x>
-     <y>274</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>135</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
