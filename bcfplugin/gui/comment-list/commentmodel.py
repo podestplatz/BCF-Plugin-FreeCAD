@@ -10,7 +10,7 @@ class CommentModel(QAbstractListModel):
 
         QAbstractListModel.__init__(self, parent)
         self.items = [("This is a comment", "a@b.c", "2019-07-09T09:23:10", "",
-            "")]
+            "")]*2
 
 
     @Slot()
@@ -46,15 +46,23 @@ class CommentModel(QAbstractListModel):
         return comment
 
 
+    def flags(self, index):
+
+        fl = Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
+        return fl
+
+
     def setData(self, index, value, role=Qt.EditRole):
         # https://doc.qt.io/qtforpython/PySide2/QtCore/QAbstractItemModel.html#PySide2.QtCore.PySide2.QtCore.QAbstractItemModel.roleNames
 
-        if not index.isValid() or role == Qt.EditRole:
+        if not index.isValid() or role != Qt.EditRole:
             return False
 
         commentToEdit = self.items[index.row()]
-        commentToEdit[0] = value[0] # set comment text
-        commentToEdit[3] = value[1] # set comment modified author
+        newComment = (value[0], commentToEdit[1], commentToEdit[2], value[1],
+                commentToEdit[4])
 
+        self.items.pop(index.row())
+        self.items.insert(index.row(), newComment)
         return True
 

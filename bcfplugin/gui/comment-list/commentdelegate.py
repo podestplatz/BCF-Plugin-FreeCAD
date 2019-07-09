@@ -2,15 +2,20 @@ from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import QModelIndex, Slot, QSize, QRect, QPoint, QRectF
 
+from copy import copy
 
-class CommentDelegate(QAbstractItemDelegate):
+
+class CommentDelegate(QStyledItemDelegate):
 
     def __init__(self, parent = None):
 
-        QAbstractItemDelegate.__init__(self, parent)
+        QStyledItemDelegate.__init__(self, parent)
         self.commentFont = QFont("times", 12)
         self.authorFont = self.commentFont
         self.authorFont.setPixelSize(self.authorFont.pixelSize() - 2)
+
+        self.lastBottomY = 0
+        self.commentYOffset = 10
 
 
     def paint(self, painter, option, index):
@@ -19,19 +24,21 @@ class CommentDelegate(QAbstractItemDelegate):
             painter.fillRect(option.rect, option.palette.highlight())
 
 
+        comment = index.model().data(index, Qt.DisplayRole)
+        topY = self.lastBottomY * index.row() + self.commentYOffset
+
         painter.save()
 
         boundingRect = painter.viewport()
         pen = painter.pen()
-        self.commentFont = painter.font()
+        self.updateFonts(painter.font())
         fontMetric = painter.fontMetrics()
         painter.setBrush(option.palette.text())
 
         # draw comment
-        comment = index.model().data(index, Qt.DisplayRole)
         commentTextHeight = fontMetric.height()
         commentTextWidth = fontMetric.width(comment[0])
-        commentStart = QPoint(10, fontMetric.height())
+        commentStart = QPoint(10, topY + fontMetric.height())
 
         painter.drawText(commentStart, comment[0])
 
@@ -44,31 +51,88 @@ class CommentDelegate(QAbstractItemDelegate):
                 lineStart.y())
         painter.drawLine(lineStart, lineEnd)
 
-        #TODO: draw author and date
+        # draw author
+        fontMetric = QFontMetrics(self.authorFont)
         pen.setColor(QColor("blue"))
         painter.setPen(pen)
-        #authorStart = QPoint(lineStart.x(), lineStart.y() +
+        painter.setFont(self.authorFont)
+        authorStart = QPoint(lineStart.x(),
+                lineStart.y() + fontMetric.height())
+        authorWidth = fontMetric.width(comment[1])
+        authorEnd = QPoint(authorStart.x() + authorWidth,
+                authorStart.y())
+        painter.drawText(authorStart, comment[1])
 
-        print("Drew text: {}".format(comment[0]))
+        dateStart = QPoint(authorEnd.x() + 10, authorEnd.y())
+        painter.drawText(dateStart, comment[2])
 
         painter.restore()
+        self.lastBottomY = dateStart.y()
 
 
-    def calcCommentSize(self, comment):
+    def createEditor(self, parent, option, index):
 
-        fontMetric = QFontMetrics(self.commentFont)
+        comment = index.model().data(index, Qt.EditRole)
+        startText = comment[0] + " -- " + comment[1]
 
-        textWidth = fontMetric.width(comment[0])
-        textHeight = fontMetric.height()
+        editor = QLineEdit(startText, parent)
+        editor.setFrame(True)
 
-        size = QSize(textWidth, textHeight)
-        print("Size reported: {}".format(size))
+        return editor
+
+
+    def setEditorData(self, editor, index):
+
+        comment = index.model().data(index, Qt.EditRole)
+        editorText = comment[0] + " -- " + comment[1]
+        editor.setText(editorText)
+
+
+    def setModelData(self, editor, model, index):
+
+        text = editor.text()
+        splitText = [ textItem.strip() for textItem in text.split("--") ]
+        if len(splitText) != 2:
+            #TODO raise/display an exception
+            print("Here we have an invalid string")
+            return
+
+        success = model.setData(index, (splitText[0], splitText[1]))
+        if not success:
+            print("Well that did not work")
+
+
+    def updateFonts(self, baseFont):
+
+        baseSize = 14
+
+        self.commentFont = copy(baseFont)
+        self.commentFont.setBold(True)
+        self.commentFont.setPixelSize(baseSize)
+
+        self.authorFont = copy(baseFont)
+        self.authorFont.setPixelSize(baseSize - 2)
+
+
+    def calcCommentSize(self, comment, option):
+
+        commentFontMetric = QFontMetrics(self.commentFont)
+        authorFontMetric = QFontMetrics(self.authorFont)
+
+        commentTextHeight = commentFontMetric.height()
+        authorTextHeight = authorFontMetric.height()
+
+        height = (commentTextHeight + authorTextHeight +
+                commentTextHeight / 2 + self.commentYOffset)
+        width = option.rect.width()
+
+        size = QSize(width, height)
         return size
 
 
     def sizeHint(self, option, index):
 
         comment = index.model().data(index, Qt.DisplayRole)
-        size = self.calcCommentSize(comment)
+        size = self.calcCommentSize(comment, option)
 
         return size

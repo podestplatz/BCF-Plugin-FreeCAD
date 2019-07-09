@@ -20,12 +20,17 @@ class MainWindow(QWidget):
 
         commentDelegate = CommentDelegate()
         self.commentList.setItemDelegate(commentDelegate)
+        self.commentList.doubleClicked.connect(self.editEvent)
 
         commentModel = CommentModel()
         self.commentList.setModel(commentModel)
 
         vboxLayout.addWidget(self.commentList)
 
+
+    def editEvent(self, index):
+
+        self.commentList.edit(index)
 
 
 if __name__ == "__main__":
