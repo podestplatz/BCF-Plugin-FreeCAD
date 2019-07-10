@@ -1,4 +1,9 @@
 import sys
+if __name__ == "__main__":
+    sys.path.insert(0, "../../..")
+    import bcfplugin.programmaticInterface as pI
+    import bcfplugin.util as util
+
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot
@@ -22,7 +27,9 @@ class MainWindow(QWidget):
         self.commentList.setItemDelegate(commentDelegate)
         self.commentList.doubleClicked.connect(self.editEvent)
 
+        topic = pI.getTopics()[0]
         commentModel = CommentModel()
+        commentModel.resetItems(topic[1])
         self.commentList.setModel(commentModel)
 
         vboxLayout.addWidget(self.commentList)
@@ -35,6 +42,8 @@ class MainWindow(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    pI.openProject("../../rdwr/test_data/Issues_BIMcollab_Example.bcf")
 
     widget = MainWindow()
     widget.show()

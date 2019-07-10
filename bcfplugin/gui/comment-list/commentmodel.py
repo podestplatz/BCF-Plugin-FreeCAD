@@ -2,6 +2,8 @@ from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot
 
+import bcfplugin.programmaticInterface as pI
+
 
 class CommentModel(QAbstractListModel):
 
@@ -9,16 +11,30 @@ class CommentModel(QAbstractListModel):
     def __init__(self, parent = None):
 
         QAbstractListModel.__init__(self, parent)
-        self.items = [("This is a comment", "a@b.c", "2019-07-09T09:23:10", "",
-            "")]*2
+        self.items = []
 
 
     @Slot()
-    def resetItems(self):
-        beginResetModel()
-        self.items = [("This is a comment", "a@b.c", "2019-07-09T09:23:10", "",
-            "")]
-        endResetModel()
+    def resetItems(self, topic):
+
+        """ Load comments from `topic` """
+
+        self.beginResetModel()
+
+        if not pI.isProjectOpen():
+            #TODO: display error
+            self.endResetModel()
+            return
+
+        comments = pI.getComments(topic)
+        if comments == pI.OperationResults.FAILURE:
+            #TODO: display error
+            self.endResetModel()
+            return
+
+        self.items = [ comment[1] for comment in comments ]
+
+        self.endResetModel()
 
 
     def rowCount(self, parent = QModelIndex()):
@@ -33,15 +49,22 @@ class CommentModel(QAbstractListModel):
             return None
 
         comment = None
-        commentItem = self.items[index.row()]
+        item = self.items[index.row()]
+        commentText = ""
+        commentAuthor = ""
+        commentDate = ""
+        dateFormat = "%Y-%m-%d %X"
         if role == Qt.DisplayRole:
-            comment = (commentItem[0],
-                    commentItem[1] if commentItem[3] == "" else commentItem[3],
-                    commentItem[2] if commentItem[4] == "" else commentItem[4])
+            commentText = item.comment
+            commentAuthor = item.author if item.modAuthor == "" else item.modAuthor
+            commentDate = (item.date if item.modDate == "" else item.modDate)
+            commentDate = commentDate.strftime(dateFormat)
+            comment = (commentText, commentAuthor, commentDate)
 
         elif role == Qt.EditRole: # date is automatically set when editing
-            comment = (commentItem[0],
-                    commentItem[1] if commentItem[3] == "" else commentItem[3])
+            commentText = item.comment
+            commentAuthor = item.author if item.modAuthor == "" else item.modAuthor
+            comment = (commentText, commentAuthor)
 
         return comment
 
@@ -59,10 +82,12 @@ class CommentModel(QAbstractListModel):
             return False
 
         commentToEdit = self.items[index.row()]
-        newComment = (value[0], commentToEdit[1], commentToEdit[2], value[1],
-                commentToEdit[4])
+        commentToEdit.comment = value[0]
+        commentToEdit.modAuthor = value[1]
 
-        self.items.pop(index.row())
-        self.items.insert(index.row(), newComment)
+        pI.modifyElement(commentToEdit, value[1])
+        topic = pI.getTopic(commentToEdit)
+        self.resetItems(topic)
+
         return True
 
