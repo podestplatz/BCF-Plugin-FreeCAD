@@ -86,8 +86,11 @@ def setPCamera(camSettings: PerspectiveCamera):
 
     if cam.getClassTypeId() != pCamClassTypeId():
         view.setCameraType("Perspective")
+        util.printInfo("Set camera type to Perspective.")
+        cam = view.getCameraNode()
 
     setCamera(camSettings.viewPoint, camSettings.direction, camSettings.upVector)
+    util.printInfo("Camera type {}".format(view.getCameraType()))
     cam.heightAngle.setValue(camSettings.fieldOfView)
 
 
@@ -106,8 +109,11 @@ def setOCamera(camSettings: OrthogonalCamera):
 
     if cam.getClassTypeId() != oCamClassTypeId():
         view.setCameraType("Orthographic")
+        util.printInfo("Set camera type to Orthographic.")
+        cam = view.getCameraNode()
 
     setCamera(camSettings.viewPoint, camSettings.direction, camSettings.upVector)
+    util.printInfo("Camera type {}".format(view.getCameraType()))
     cam.height.setValue(camSettings.viewWorldScale)
 
 
@@ -237,6 +243,37 @@ def colourComponents(colourings: List[ComponentColour], ifcObjects = None):
                 vObj = obj.Document.getObject(obj.Name).ViewObject
                 if hasattr(vObj, "ShapeColor"):
                     vObj.ShapeColor = colTuple
+
+
+def applyVisibilitySettings(defaultVisibility: bool,
+        exceptions: List[Component], ifcObjects = None):
+
+    """ Set every object's visibility to `defaultVisibility` except for
+    `exceptions`.
+
+    All components listed in `exceptions` will be assigned the complement of
+    `defaultVisibility`.
+    """
+
+    if ifcObjects is None:
+        ifcObjects = getIfcObjects()
+
+    if len(ifcObjects) == 0:
+        return False
+
+    # set visibility of all objects to `defaultVisibility`
+    for obj in FreeCAD.ActiveDocument.Objects:
+        obj.ViewObject.Visibility = defaultVisibility
+
+    # set visibility of exceptions, if they are found by their ifcId, to the
+    # complement of `defaultVisibility`
+    for exception in exceptions:
+        excId = exception.ifcId
+
+        if excId in ifcObjects:
+            ifcObjects[excId].ViewObject.Visibility = not defaultVisibility
+
+    return True
 
 
 def selectComponents(components: List[Component], ifcObjects = None):

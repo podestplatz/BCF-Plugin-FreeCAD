@@ -401,6 +401,11 @@ def activateViewpoint(viewpoint: Viewpoint,
     elif camType == CamType.PERSPECTIVE:
         vCtrl.setPCamera(camSettings)
 
+    if viewpoint.components is not None:
+        components = viewpoint.components
+        vCtrl.applyVisibilitySettings(components.visibilityDefault,
+                components.visibilityExceptions)
+
 
 def addCurrentViewpoint(topic: Topic):
 
