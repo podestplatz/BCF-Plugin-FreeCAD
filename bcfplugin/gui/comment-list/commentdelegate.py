@@ -10,11 +10,10 @@ class CommentDelegate(QStyledItemDelegate):
     def __init__(self, parent = None):
 
         QStyledItemDelegate.__init__(self, parent)
-        self.commentFont = QFont("times", 12)
-        self.authorFont = self.commentFont
-        self.authorFont.setPixelSize(self.authorFont.pixelSize() - 2)
+        self.baseFontSize = 12
+        self.commentFont = QFont("times")
+        self.updateFonts(self.commentFont)
 
-        self.lastBottomY = 0
         self.commentYOffset = 10
 
 
@@ -22,24 +21,27 @@ class CommentDelegate(QStyledItemDelegate):
 
         if option.state & QStyle.State_Selected:
             painter.fillRect(option.rect, option.palette.highlight())
-
+        idx = index.row()
 
         comment = index.model().data(index, Qt.DisplayRole)
-        topY = self.lastBottomY * index.row() + self.commentYOffset
+        # top y coordinate at which drawing will begin downwards
+        topY = option.rect.y()
 
+        # save painter state, since color and font are changed
         painter.save()
 
+        # whole area that can be drawn onto
         boundingRect = painter.viewport()
+
+        # extract pen and font from painter
         pen = painter.pen()
         self.updateFonts(painter.font())
         fontMetric = painter.fontMetrics()
-        painter.setBrush(option.palette.text())
 
         # draw comment
         commentTextHeight = fontMetric.height()
         commentTextWidth = fontMetric.width(comment[0])
         commentStart = QPoint(10, topY + fontMetric.height())
-
         painter.drawText(commentStart, comment[0])
 
         # draw separation line
@@ -67,10 +69,11 @@ class CommentDelegate(QStyledItemDelegate):
         painter.drawText(dateStart, comment[2])
 
         painter.restore()
-        self.lastBottomY = dateStart.y()
 
 
     def createEditor(self, parent, option, index):
+
+        """ Makes the comment and the author available in a QLineEdit """
 
         comment = index.model().data(index, Qt.EditRole)
         startText = comment[0] + " -- " + comment[1]
@@ -83,12 +86,16 @@ class CommentDelegate(QStyledItemDelegate):
 
     def setEditorData(self, editor, index):
 
+        """ Updates the editor data with the data at `index` in the model """
+
         comment = index.model().data(index, Qt.EditRole)
         editorText = comment[0] + " -- " + comment[1]
         editor.setText(editorText)
 
 
     def setModelData(self, editor, model, index):
+
+        """ Updates the model at `index` with the current text of the editor """
 
         text = editor.text()
         splitText = [ textItem.strip() for textItem in text.split("--") ]
@@ -104,17 +111,19 @@ class CommentDelegate(QStyledItemDelegate):
 
     def updateFonts(self, baseFont):
 
-        baseSize = 14
+        """ Set the internal fonts to baseFont and update their sizes """
 
         self.commentFont = copy(baseFont)
         self.commentFont.setBold(True)
-        self.commentFont.setPixelSize(baseSize)
+        self.commentFont.setPointSize(self.baseFontSize)
 
         self.authorFont = copy(baseFont)
-        self.authorFont.setPixelSize(baseSize - 2)
+        self.authorFont.setPointSize(self.baseFontSize - 4)
 
 
     def calcCommentSize(self, comment, option):
+
+        """ Calculate the size of a comment element """
 
         commentFontMetric = QFontMetrics(self.commentFont)
         authorFontMetric = QFontMetrics(self.authorFont)
@@ -122,8 +131,11 @@ class CommentDelegate(QStyledItemDelegate):
         commentTextHeight = commentFontMetric.height()
         authorTextHeight = authorFontMetric.height()
 
+        # +1 is the separation line that is drawn
+        # commentTextHeight / 2 is the offset from the comment text towards the
+        # separation line
         height = (commentTextHeight + authorTextHeight +
-                commentTextHeight / 2 + self.commentYOffset)
+                commentTextHeight / 2 + self.commentYOffset + 1)
         width = option.rect.width()
 
         size = QSize(width, height)
@@ -131,6 +143,8 @@ class CommentDelegate(QStyledItemDelegate):
 
 
     def sizeHint(self, option, index):
+
+        """ Return the size of a comment element. """
 
         comment = index.model().data(index, Qt.DisplayRole)
         size = self.calcCommentSize(comment, option)
