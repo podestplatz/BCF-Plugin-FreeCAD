@@ -4,6 +4,7 @@ import sys
 import copy
 import pytz
 import shutil
+import inspect
 import datetime
 from enum import Enum
 from typing import List, Tuple
@@ -54,6 +55,28 @@ class OperationResults(Enum):
 class CamType(Enum):
     ORTHOGONAL = 1
     PERSPECTIVE = 2
+
+
+def _getCallerFileName():
+
+    """ Return the file name of the second to last function on the stack.
+
+    This function assumes that it is called from another function inside this
+    module.
+    For every method a new stack frame is pushed onto the stack, thus the
+    previous stack frame (gotten via `inspect.stack()[1]`) will be of the
+    function inside this module. `_getCallerFileName` now returns the file name
+    of the function that called the former.
+
+    For example:
+        a() -> b() -> _getCallerFileName()
+        Returns module(a).__file__
+    """
+
+    frame = inspect.stack()[2]
+    module = inspect.getmodule(frame[0])
+
+    return module.__file__
 
 
 def isProjectOpen():
@@ -847,27 +870,40 @@ def modifyComment(comment: Comment, newText: str, author: str):
 
 def getTopic(element):
 
-    """ If element is below topic in hierarchy then the corresponding topic
-    object is returned.
+    """ Returns the topic to which `element` is associated.
 
-    If the element is of type Markup then the associated topic object is
+    If `element` could not be found inside the current project `None` is
+    returned. If `element` could not be associated to any existing topic `None`
+    is returned. In the case that this function is called from outside this
+    module (`programmaticInterface.py`), a deep copy of the found topic is
     returned.
     """
 
-    elemHierarchy = element.getHierarchyList()
+    realElement = curProject.searchObject(element)
+    if realElement is None:
+        util.printError("Element {} could not be found in the current project.")
+        return None
+
+    elemHierarchy = realElement.getHierarchyList()
 
     topic = None
-    for element in elemHierarchy:
-        if isinstance(element, Markup):
-            topic = element.topic
+    for elem in elemHierarchy:
+        if isinstance(elem, Markup):
+            topic = elem.topic
             break
-        elif isinstance(element, Topic):
-            topic = element
+        elif isinstance(elem, Topic):
+            topic = elem
             break
         else:
             continue
 
-    return topic
+    if _getCallerFileName() == __file__:
+        return topic
+    elif topic is not None:
+        topicCpy = copy.deepcopy(topic)
+        return topicCpy
+    else:
+        return None
 
 
 def modifyElement(element, author=""):
