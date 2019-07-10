@@ -6,6 +6,7 @@ from PySide2.QtGui import *
 from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot, QDir
 
 import plugin_model as model
+import plugin_delegate as delegate
 import bcfplugin.util as util
 
 
@@ -42,6 +43,10 @@ class MyMainWindow(QWidget):
         self.topicGroup.hide()
         self.mainLayout.addWidget(self.topicGroup)
 
+        self.commentGroup = self.createCommentGroup()
+        self.commentGroup.hide()
+        self.mainLayout.addWidget(self.commentGroup)
+
         self.setLayout(self.mainLayout)
 
 
@@ -55,6 +60,7 @@ class MyMainWindow(QWidget):
         self.topicCb = QComboBox()
         self.topicCbModel = model.TopicCBModel()
         self.topicCb.setModel(self.topicCbModel)
+        self.topicCb.currentIndexChanged.connect(self.topicCbModel.newSelection)
 
         self.topicHLayout = QHBoxLayout(topicGroup)
         self.topicHLayout.addWidget(self.topicLabel)
@@ -64,8 +70,26 @@ class MyMainWindow(QWidget):
 
 
     def createCommentGroup(self):
-        #TODO: implement
-        pass
+
+        commentGroup = QGroupBox()
+        commentGroup.setObjectName("commentGroup")
+
+        self.commentLayout = QVBoxLayout(commentGroup)
+        self.commentList = QListView()
+
+        self.commentModel = model.CommentModel()
+        self.commentList.setModel(self.commentModel)
+
+        self.commentDelegate = delegate.CommentDelegate()
+        self.commentList.setItemDelegate(self.commentDelegate)
+
+        self.commentList.doubleClicked.connect(
+                lambda idx: self.commentList.edit(idx))
+        self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
+
+        self.commentLayout.addWidget(self.commentList)
+
+        return commentGroup
 
 
     def createViewpointGroup(self):
@@ -75,11 +99,10 @@ class MyMainWindow(QWidget):
 
     @Slot()
     def openProjectBtnHandler(self):
-        #dflPath = QDir.homePath()
-        dflPath = "/home/patrick/projects/freecad/plugin/bcf-examples"
+
+        dflPath = QDir.homePath()
         filename = QFileDialog.getOpenFileName(self, self.tr("Open BCF File"),
                 dflPath,  self.tr("BCF Files (*.bcf *.bcfzip)"))
-        #TODO: call open project function
         if filename[0] != "":
             model.openProjectBtnHandler(filename[0])
             self.projectGroup.hide()
@@ -87,7 +110,13 @@ class MyMainWindow(QWidget):
             self.projectNameLbl.show()
             self.topicCbModel.projectOpened()
             self.topicGroup.show()
-            util.printInfo("Project name: '{}'".format(model.getProjectName()))
+            self.commentGroup.show()
+
+
+    @Slot()
+    def topicCBCurrentIndexChanged(self, index):
+        pass
+
 
 
 if __name__ == "__main__":
