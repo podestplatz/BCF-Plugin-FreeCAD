@@ -82,6 +82,7 @@ class MyMainWindow(QWidget):
 
         self.commentDelegate = delegate.CommentDelegate()
         self.commentList.setItemDelegate(self.commentDelegate)
+        self.commentDelegate.invalidInput.connect(self.commentList.edit)
 
         self.commentList.doubleClicked.connect(
                 lambda idx: self.commentList.edit(idx))

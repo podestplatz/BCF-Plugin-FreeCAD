@@ -6,6 +6,8 @@ import shutil
 from enum import Enum
 from urllib.error import URLError
 
+from PySide2.QtWidgets import QMessageBox
+
 
 FREECAD = False
 """ Set by BCFPlugin.py when running inside FreeCAD """
@@ -136,6 +138,12 @@ def printErrorList(errors, toFile=False):
 
     for error in errors:
         printErr(error, toFile)
+
+
+def showError(msg):
+
+    msgBox = QMessageBox()
+    msgBox.critical(0, msg)
 
 
 def debug(msg):

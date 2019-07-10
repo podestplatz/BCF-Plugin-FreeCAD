@@ -1,11 +1,13 @@
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import QModelIndex, Slot, QSize, QRect, QPoint, QRectF
+from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal)
 
 from copy import copy
 
 
 class CommentDelegate(QStyledItemDelegate):
+
+    invalidInput = Signal((QModelIndex,))
 
     def __init__(self, parent = None):
 
@@ -78,7 +80,10 @@ class CommentDelegate(QStyledItemDelegate):
         comment = index.model().data(index, Qt.EditRole)
         startText = comment[0] + " -- " + comment[1]
 
+        validator = QRegExpValidator()
+        validator.setRegExp("[a-zA-Z0-9.,\-\/ ]* -- .*@.*")
         editor = QLineEdit(startText, parent)
+        editor.setValidator(validator)
         editor.setFrame(True)
 
         return editor
@@ -100,8 +105,9 @@ class CommentDelegate(QStyledItemDelegate):
         text = editor.text()
         splitText = [ textItem.strip() for textItem in text.split("--") ]
         if len(splitText) != 2:
-            #TODO raise/display an exception
-            print("Here we have an invalid string")
+            util.showError("The comment hast to be separated by '--' from the" \
+                    " email address!")
+            util.printError("Here we have an invalid string")
             return
 
         success = model.setData(index, (splitText[0], splitText[1]))

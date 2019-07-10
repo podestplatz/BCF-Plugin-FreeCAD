@@ -75,7 +75,6 @@ class TopicCBModel(QAbstractListModel):
 
 class CommentModel(QAbstractListModel):
 
-
     def __init__(self, parent = None):
 
         QAbstractListModel.__init__(self, parent)
@@ -90,13 +89,14 @@ class CommentModel(QAbstractListModel):
         self.beginResetModel()
 
         if not pI.isProjectOpen():
-            #TODO: display error
+            util.showError("First you have to open a project.")
             self.endResetModel()
             return
 
         comments = pI.getComments(topic)
         if comments == pI.OperationResults.FAILURE:
-            #TODO: display error
+            util.showError("Could not get any comments for topic" \
+                    " {}".format(str(topic)))
             self.endResetModel()
             return
 
