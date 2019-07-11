@@ -5,8 +5,8 @@ from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot, QDir
 
-import plugin_model as model
-import plugin_delegate as delegate
+import bcfplugin.gui.plugin_model as model
+import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
 
 

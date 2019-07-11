@@ -1,6 +1,6 @@
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot
+from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot, Qt
 
 import bcfplugin.programmaticInterface as pI
 
