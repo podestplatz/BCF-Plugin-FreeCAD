@@ -1,6 +1,6 @@
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal)
+from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt)
 
 from copy import copy
 

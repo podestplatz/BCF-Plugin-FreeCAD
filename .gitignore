@@ -22,3 +22,7 @@ bcf-examples/AC-20-Smiley-West-10-Bldg\.ifc
 bcf-examples/AC20-FZK-Haus\.ifc
 
 bcf-examples/AC20-Institute-Var-2\.ifc
+
+*.swp
+
+*.pyc

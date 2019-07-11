@@ -3,6 +3,7 @@ from PySide2.QtGui import *
 from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot, Signal, Qt
 
 import bcfplugin.programmaticInterface as pI
+import bcfplugin.util as util
 from bcfplugin.rdwr.topic import Topic
 
 
@@ -90,12 +91,15 @@ class CommentModel(QAbstractListModel):
 
         if not pI.isProjectOpen():
             util.showError("First you have to open a project.")
+            util.printError("First you have to open a project.")
             self.endResetModel()
             return
 
         comments = pI.getComments(topic)
         if comments == pI.OperationResults.FAILURE:
             util.showError("Could not get any comments for topic" \
+                    " {}".format(str(topic)))
+            util.printError("Could not get any comments for topic" \
                     " {}".format(str(topic)))
             self.endResetModel()
             return
