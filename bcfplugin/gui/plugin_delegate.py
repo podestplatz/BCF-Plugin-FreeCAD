@@ -29,6 +29,8 @@ class CommentDelegate(QStyledItemDelegate):
 
         comment = index.model().data(index, Qt.DisplayRole)
         # top y coordinate at which drawing will begin downwards
+        drawingRect = super().initStyleOption(option, index)
+        leftX = option.rect.x()
         topY = option.rect.y()
 
         # save painter state, since color and font are changed
@@ -45,7 +47,7 @@ class CommentDelegate(QStyledItemDelegate):
         # draw comment
         commentTextHeight = fontMetric.height()
         commentTextWidth = fontMetric.width(comment[0])
-        commentStart = QPoint(10, topY + fontMetric.height())
+        commentStart = QPoint(leftX + 10, topY + fontMetric.height())
         painter.drawText(commentStart, comment[0])
 
         # draw separation line
@@ -134,12 +136,14 @@ class CommentDelegate(QStyledItemDelegate):
         commentTextHeight = commentFontMetric.height()
         authorTextHeight = authorFontMetric.height()
 
+        commentWidth = commentFontMetric.width(comment[0])
+        authorDateWidth = authorFontMetric.width(comment[1] + comment[2]) + 10
         # +1 is the separation line that is drawn
         # commentTextHeight / 2 is the offset from the comment text towards the
         # separation line
         height = (commentTextHeight + authorTextHeight +
                 commentTextHeight / 2 + self.commentYOffset + 1)
-        width = option.rect.width()
+        width = commentWidth if commentWidth > authorDateWidth else authorDateWidth
 
         size = QSize(width, height)
         return size

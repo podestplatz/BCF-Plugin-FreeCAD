@@ -93,11 +93,10 @@ class MyMainWindow(QWidget):
         self.commentLayout.addWidget(self.commentList)
 
         self.commentPlaceholder = "comment -- author email"
-        self.newCommentEdit = QLineEdit()
-        self.newCommentEdit.returnPressed.connect(self.checkAndAddComment)
         self.commentValidator = QRegExpValidator()
         self.commentValidator.setRegExp(delegate.commentRegex)
-        #self.newCommentEdit.setValidator(validator)
+        self.newCommentEdit = QLineEdit()
+        self.newCommentEdit.returnPressed.connect(self.checkAndAddComment)
         self.newCommentEdit.setPlaceholderText(self.commentPlaceholder)
         self.commentLayout.addWidget(self.newCommentEdit)
 
@@ -130,7 +129,7 @@ class MyMainWindow(QWidget):
         util.debug("Pressed enter on the input")
         editor = self.newCommentEdit
         text = editor.text()
-        if not self.commentValidator.validate(text, 0) == QValidator.Acceptable:
+        if self.commentValidator.validate(text, 0) == QValidator.Invalid:
             QToolTip.showText(editor.mapToGlobal(QPoint()), "Invalid Input."\
                     " Template for a comment is: <comment text> -- <email address>")
             return
