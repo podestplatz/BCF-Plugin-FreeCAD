@@ -3,7 +3,7 @@ if __name__ == "__main__":
     sys.path.append("../../")
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot, QDir
+from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot, QDir, QPoint
 
 import bcfplugin.gui.plugin_model as model
 import bcfplugin.gui.plugin_delegate as delegate
@@ -18,10 +18,26 @@ class MyMainWindow(QWidget):
         self.mainLayout = QVBoxLayout()
         self.mainLayout.setObjectName("mainLayout")
 
-        self.projectGroup = QGroupBox()
-        self.projectGroup.setObjectName("projectGroup")
+        self.projectGroup = self.createProjectGroup()
+        self.mainLayout.addWidget(self.projectGroup)
 
-        self.projectLayout = QHBoxLayout(self.projectGroup)
+        self.topicGroup = self.createTopicGroup()
+        self.topicGroup.hide()
+        self.mainLayout.addWidget(self.topicGroup)
+
+        self.commentGroup = self.createCommentGroup()
+        self.commentGroup.hide()
+        self.mainLayout.addWidget(self.commentGroup)
+
+        self.setLayout(self.mainLayout)
+
+
+    def createProjectGroup(self):
+
+        projectGroup = QGroupBox()
+        projectGroup.setObjectName("projectGroup")
+
+        self.projectLayout = QHBoxLayout(projectGroup)
         self.projectLayout.setObjectName("projectLayout")
 
         self.projectLabel = QLabel("Open Project")
@@ -33,21 +49,7 @@ class MyMainWindow(QWidget):
         self.projectButton.clicked.connect(self.openProjectBtnHandler)
         self.projectLayout.addWidget(self.projectButton)
 
-        self.mainLayout.addWidget(self.projectGroup)
-
-        self.projectNameLbl = QLabel("")
-        self.projectNameLbl.hide()
-        self.mainLayout.addWidget(self.projectNameLbl)
-
-        self.topicGroup = self.createTopicGroup()
-        self.topicGroup.hide()
-        self.mainLayout.addWidget(self.topicGroup)
-
-        self.commentGroup = self.createCommentGroup()
-        self.commentGroup.hide()
-        self.mainLayout.addWidget(self.commentGroup)
-
-        self.setLayout(self.mainLayout)
+        return projectGroup
 
 
     def createTopicGroup(self):
@@ -90,6 +92,15 @@ class MyMainWindow(QWidget):
 
         self.commentLayout.addWidget(self.commentList)
 
+        self.commentPlaceholder = "comment -- author email"
+        self.newCommentEdit = QLineEdit()
+        self.newCommentEdit.returnPressed.connect(self.checkAndAddComment)
+        self.commentValidator = QRegExpValidator()
+        self.commentValidator.setRegExp(delegate.commentRegex)
+        #self.newCommentEdit.setValidator(validator)
+        self.newCommentEdit.setPlaceholderText(self.commentPlaceholder)
+        self.commentLayout.addWidget(self.newCommentEdit)
+
         return commentGroup
 
 
@@ -106,18 +117,37 @@ class MyMainWindow(QWidget):
                 dflPath,  self.tr("BCF Files (*.bcf *.bcfzip)"))
         if filename[0] != "":
             model.openProjectBtnHandler(filename[0])
-            self.projectGroup.hide()
-            self.projectNameLbl.setText(model.getProjectName())
-            self.projectNameLbl.show()
+            self.projectLabel.setText(model.getProjectName())
+            self.projectButton.setText("Open other")
             self.topicCbModel.projectOpened()
             self.topicGroup.show()
             self.commentGroup.show()
 
 
     @Slot()
-    def topicCBCurrentIndexChanged(self, index):
-        pass
+    def checkAndAddComment(self):
 
+        util.debug("Pressed enter on the input")
+        editor = self.newCommentEdit
+        text = editor.text()
+        if not self.commentValidator.validate(text, 0) == QValidator.Acceptable:
+            QToolTip.showText(editor.mapToGlobal(QPoint()), "Invalid Input."\
+                    " Template for a comment is: <comment text> -- <email address>")
+            return
+        self.addComment()
+
+
+    @Slot()
+    def addComment(self):
+
+        text = self.newCommentEdit.text()
+        success = self.commentModel.addComment(text)
+        if not success:
+            util.showError("Could not add a new comment")
+            return
+
+        # delete comment on successful addition
+        self.newCommentEdit.setText("")
 
 
 if __name__ == "__main__":

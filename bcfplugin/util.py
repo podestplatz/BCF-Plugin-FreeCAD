@@ -32,7 +32,7 @@ class Verbosity(Enum):
     IMPORTANTERRORS = 3
     INFODEBUG = 4
 
-verbosity = Verbosity.IMPORTANTERRORS
+verbosity = Verbosity.EVERYTHING
 if (verbosity == Verbosity.EVERYTHING or verbosity == Verbosity.INFODEBUG):
     # used to inspect the stack to get caller function and caller filename
     import inspect
@@ -143,7 +143,7 @@ def printErrorList(errors, toFile=False):
 def showError(msg):
 
     msgBox = QMessageBox()
-    msgBox.critical(0, msg)
+    msgBox.critical(None, "ERROR", msg)
 
 
 def debug(msg):

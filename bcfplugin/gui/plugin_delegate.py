@@ -5,6 +5,8 @@ from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt)
 from copy import copy
 
 
+commentRegex = "[a-zA-Z0-9.,\-\/ ]* -- .*@.*"
+
 class CommentDelegate(QStyledItemDelegate):
 
     invalidInput = Signal((QModelIndex,))
@@ -81,7 +83,7 @@ class CommentDelegate(QStyledItemDelegate):
         startText = comment[0] + " -- " + comment[1]
 
         validator = QRegExpValidator()
-        validator.setRegExp("[a-zA-Z0-9.,\-\/ ]* -- .*@.*")
+        validator.setRegExp(commentRegex)
         editor = QLineEdit(startText, parent)
         editor.setValidator(validator)
         editor.setFrame(True)
@@ -103,16 +105,11 @@ class CommentDelegate(QStyledItemDelegate):
         """ Updates the model at `index` with the current text of the editor """
 
         text = editor.text()
-        splitText = [ textItem.strip() for textItem in text.split("--") ]
-        if len(splitText) != 2:
+        success = model.setData(index, text)
+        if not success:
             util.showError("The comment hast to be separated by '--' from the" \
                     " email address!")
             util.printError("Here we have an invalid string")
-            return
-
-        success = model.setData(index, (splitText[0], splitText[1]))
-        if not success:
-            print("Well that did not work")
 
 
     def updateFonts(self, baseFont):

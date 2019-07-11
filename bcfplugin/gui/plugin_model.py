@@ -4,7 +4,10 @@ from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot, Signal, Qt
 
 import bcfplugin.programmaticInterface as pI
 import bcfplugin.util as util
+
+from uuid import uuid4
 from bcfplugin.rdwr.topic import Topic
+from bcfplugin.rdwr.markup import Comment
 
 
 def openProjectBtnHandler(file):
@@ -80,6 +83,7 @@ class CommentModel(QAbstractListModel):
 
         QAbstractListModel.__init__(self, parent)
         self.items = []
+        self.currentTopic = None
 
 
     @Slot(Topic)
@@ -105,6 +109,7 @@ class CommentModel(QAbstractListModel):
             return
 
         self.items = [ comment[1] for comment in comments ]
+        self.currentTopic = topic
 
         self.endResetModel()
 
@@ -129,7 +134,7 @@ class CommentModel(QAbstractListModel):
         if role == Qt.DisplayRole:
             commentText = item.comment
             commentAuthor = item.author if item.modAuthor == "" else item.modAuthor
-            commentDate = (item.date if item.modDate == "" else item.modDate)
+            commentDate = (item.date if item.modDate == item._modDate.defaultValue else item.modDate)
             commentDate = commentDate.strftime(dateFormat)
             comment = (commentText, commentAuthor, commentDate)
 
@@ -147,19 +152,59 @@ class CommentModel(QAbstractListModel):
         return fl
 
 
+    def checkValue(self, text):
+
+        splitText = [ textItem.strip() for textItem in text.split("--") ]
+        if len(splitText) != 2:
+            return None
+
+        return splitText
+
+
     def setData(self, index, value, role=Qt.EditRole):
         # https://doc.qt.io/qtforpython/PySide2/QtCore/QAbstractItemModel.html#PySide2.QtCore.PySide2.QtCore.QAbstractItemModel.roleNames
 
         if not index.isValid() or role != Qt.EditRole:
             return False
 
-        commentToEdit = self.items[index.row()]
-        commentToEdit.comment = value[0]
-        commentToEdit.modAuthor = value[1]
+        splitText = self.checkValue(value)
+        if not splitText:
+            return False
 
-        pI.modifyElement(commentToEdit, value[1])
+        commentToEdit = self.items[index.row()]
+        commentToEdit.comment = splitText[0]
+        commentToEdit.modAuthor = splitText[1]
+
+        pI.modifyElement(commentToEdit, splitText[1])
         topic = pI.getTopic(commentToEdit)
         self.resetItems(topic)
 
         return True
+
+
+    def addComment(self, value):
+
+        """ Add a new comment to the items list.
+
+        For the addition the programmatic Interface is used. It creates a unique
+        UUID for the comment, as well as it takes the current time stamp
+        """
+
+        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
+        splitText = self.checkValue(value)
+        if not splitText:
+            self.endInsertRows()
+            return False
+
+        success = pI.addComment(self.currentTopic, splitText[0], splitText[1], None)
+        if success == pI.OperationResults.FAILURE:
+            self.endInsertRows()
+            return False
+
+        self.endInsertRows()
+        # load comments anew
+        self.resetItems(self.currentTopic)
+
+        return True
+
 
