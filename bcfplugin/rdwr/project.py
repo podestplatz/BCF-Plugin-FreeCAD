@@ -293,6 +293,7 @@ topicList='{}')""".format(str(self.xmlId),
         are assigned their default value and complex objects are set to None.
         """
 
+        debug("My id is {}".format(id(self)))
         parent = object.containingObject
 
         memberName = ""
@@ -302,7 +303,6 @@ topicList='{}')""".format(str(self.xmlId),
         # if `object` is part of a list then its name will be referenced by
         # `memberName`
         for (mName, mValue) in vars(parent).items():
-            debug("checking member {}".format(mName))
             if issubclass(type(mValue), list):
                 if object in mValue:
                     memberName = mName
@@ -320,19 +320,15 @@ topicList='{}')""".format(str(self.xmlId),
             msg = ("The name referencing {} in its parent {} could"\
                     " not be found").format(object, parent)
             debug(msg)
-            print(msg, file=sys.stderr)
+            util.printErr(msg)
             return False
 
         # remove the object fom the list
         if isList:
             l = getattr(parent, memberName)
+            debug("Object to delete has id {}".format(id(object)))
             objIdx = l.index(object)
-            debug("Removing element at {}:  {}".format(objIdx, str(l[objIdx])))
             l.remove(object)
-            debug("_____Items still in List_____")
-            for item in l:
-                debug("\t{}".format(str(item)))
-            del object
 
         # set the object back to its default state
         else:
@@ -345,7 +341,7 @@ topicList='{}')""".format(str(self.xmlId),
             else:
                 setattr(parent, memberName, None)
 
-        return True
+        return self
 
 
     def getEtElement(self, elem):
