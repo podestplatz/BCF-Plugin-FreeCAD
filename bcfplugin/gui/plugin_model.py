@@ -13,8 +13,13 @@ from bcfplugin.rdwr.markup import Comment
 def openProjectBtnHandler(file):
     pI.openProject(file)
 
+
 def getProjectName():
     return pI.getProjectName()
+
+
+def saveProject(dstFile):
+    pI.saveProject(dstFile)
 
 
 class TopicCBModel(QAbstractListModel):

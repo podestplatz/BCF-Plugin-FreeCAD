@@ -3,7 +3,7 @@ if __name__ == "__main__":
     sys.path.append("../../")
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot, QDir, QPoint
+from PySide2.QtCore import QAbstractListModel, QModelIndex, Signal, Slot, QDir, QPoint
 
 import bcfplugin.gui.plugin_model as model
 import bcfplugin.gui.plugin_delegate as delegate
@@ -11,6 +11,8 @@ import bcfplugin.util as util
 
 
 class MyMainWindow(QWidget):
+
+    projectOpened = Signal()
 
     def __init__(self):
         QWidget.__init__(self, None)
@@ -29,7 +31,12 @@ class MyMainWindow(QWidget):
         self.commentGroup.hide()
         self.mainLayout.addWidget(self.commentGroup)
 
+        self.projectOpened.connect(self.topicCbModel.projectOpened)
+        self.projectOpened.connect(self.openedProjectUiHandler)
+
         self.setLayout(self.mainLayout)
+
+        self.openFilePath = ""
 
 
     def createProjectGroup(self):
@@ -44,10 +51,18 @@ class MyMainWindow(QWidget):
         self.projectLabel.setObjectName("projectLabel")
         self.projectLayout.addWidget(self.projectLabel)
 
+        self.projectSaveButton = QPushButton("Save")
+        self.projectSaveButton.setObjectName("projectSaveButton")
+        self.projectSaveButton.clicked.connect(self.saveProjectHandler)
+        self.projectSaveButton.hide()
+
         self.projectButton = QPushButton("Open")
         self.projectButton.setObjectName("projectButton")
         self.projectButton.clicked.connect(self.openProjectBtnHandler)
+        self.projectButton.clicked.connect(self.projectSaveButton.show)
+
         self.projectLayout.addWidget(self.projectButton)
+        self.projectLayout.addWidget(self.projectSaveButton)
 
         return projectGroup
 
@@ -109,18 +124,26 @@ class MyMainWindow(QWidget):
 
 
     @Slot()
+    def openedProjectUiHandler(self):
+
+        self.projectLabel.setText(model.getProjectName())
+        self.projectButton.setText("Open other")
+        self.topicGroup.show()
+        self.commentGroup.show()
+
+
+    @Slot()
     def openProjectBtnHandler(self):
 
-        dflPath = QDir.homePath()
+        lastPath = self.openFilePath
+        dflPath = lastPath if lastPath != "" else QDir.homePath()
+
         filename = QFileDialog.getOpenFileName(self, self.tr("Open BCF File"),
                 dflPath,  self.tr("BCF Files (*.bcf *.bcfzip)"))
         if filename[0] != "":
             model.openProjectBtnHandler(filename[0])
-            self.projectLabel.setText(model.getProjectName())
-            self.projectButton.setText("Open other")
-            self.topicCbModel.projectOpened()
-            self.topicGroup.show()
-            self.commentGroup.show()
+            self.openFilePath = filename[0]
+            self.projectOpened.emit()
 
 
     @Slot()
@@ -147,6 +170,18 @@ class MyMainWindow(QWidget):
 
         # delete comment on successful addition
         self.newCommentEdit.setText("")
+
+
+    @Slot()
+    def saveProjectHandler(self):
+
+        dflPath = self.openFilePath
+        filename = QFileDialog.getSaveFileName(self, self.tr("Save BCF File"),
+                dflPath,  self.tr("BCF Files (*.bcf *.bcfzip)"))
+        if filename != "":
+            util.debug("Got a file to write to: {}.".format(filename))
+            model.saveProject(filename[0])
+
 
 
 if __name__ == "__main__":

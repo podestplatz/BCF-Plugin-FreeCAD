@@ -32,7 +32,7 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint", "addCurrentViewpoint",
         "addComment", "addFile", "addLabel", "addDocumentReference", "addTopic",
-        "copyFileToProject", "modifyComment", "modifyElement"
+        "copyFileToProject", "modifyComment", "modifyElement", "saveProject"
         ]
 
 utc = pytz.UTC
@@ -1031,3 +1031,11 @@ def addViewpointToComment(comment: Comment, viewpoint: ViewpointReference, autho
     writer.addProjectUpdate(curProject, realComment._modAuthor, oldAuthor)
 
     return _handleProjectUpdate("Could not assign viewpoint.", projectBackup)
+
+
+def saveProject(dstFile):
+
+    """ Save the current state of the working directory to `dstfile` """
+
+    bcfRootPath = reader.bcfDir
+    writer.createBcfFile(bcfRootPath, dstFile)
