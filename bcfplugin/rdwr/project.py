@@ -325,8 +325,14 @@ topicList='{}')""".format(str(self.xmlId),
 
         # remove the object fom the list
         if isList:
-            debug("Removing {} from list member {}".format(object, memberName))
-            getattr(parent, memberName).remove(object)
+            l = getattr(parent, memberName)
+            objIdx = l.index(object)
+            debug("Removing element at {}:  {}".format(objIdx, str(l[objIdx])))
+            l.remove(object)
+            debug("_____Items still in List_____")
+            for item in l:
+                debug("\t{}".format(str(item)))
+            del object
 
         # set the object back to its default state
         else:

@@ -3,11 +3,71 @@ if __name__ == "__main__":
     sys.path.append("../../")
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot, QDir, QPoint
+from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, QDir,
+        QPoint, QSize)
+
 
 import bcfplugin.gui.plugin_model as model
 import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
+
+
+class CommentView(QListView):
+
+    def __init__(self, parent = None):
+
+        QListView.__init__(self, parent)
+        self.setMouseTracking(True)
+        self.lastEnteredIndex = None
+        self.entered.connect(self.mouseEntered)
+        self.delBtn = None
+
+
+    @Slot()
+    def mouseEntered(self, index):
+
+        if self.delBtn is not None:
+            self.deleteDelBtn()
+
+        options = QStyleOptionViewItem()
+        options.initFrom(self)
+
+        btnText = "Delete"
+        deleteButton = QPushButton(self)
+        deleteButton.setText(btnText)
+        deleteButton.clicked.connect(lambda: self.deleteElement(index))
+
+        buttonFont = deleteButton.font()
+        fontMetric = QFontMetrics(buttonFont)
+        minWidth = fontMetric.width(btnText)
+        minHeight = fontMetric.height()
+        btnMinSize = QSize(minWidth, minHeight)
+        deleteButton.setMinimumSize(btnMinSize)
+
+        itemRect = self.rectForIndex(index)
+        x = itemRect.width() - deleteButton.geometry().width()
+        y = itemRect.y() + (itemRect.height() -
+                deleteButton.geometry().height()) / 2
+        deleteButton.move(x, y)
+
+        deleteButton.show()
+        self.delBtn = deleteButton
+
+
+    def deleteDelBtn(self):
+
+        self.delBtn.deleteLater()
+        self.delBtn = None
+
+
+    def deleteElement(self, index):
+
+        util.debug("Deleting element at index {}".format(index.row()))
+        success = index.model().removeRow(index)
+        if success:
+            self.deleteDelBtn()
+        else:
+            util.showError("Could not delete comment.")
 
 
 class MyMainWindow(QWidget):
@@ -77,7 +137,7 @@ class MyMainWindow(QWidget):
         commentGroup.setObjectName("commentGroup")
 
         self.commentLayout = QVBoxLayout(commentGroup)
-        self.commentList = QListView()
+        self.commentList = CommentView()
 
         self.commentModel = model.CommentModel()
         self.commentList.setModel(self.commentModel)
