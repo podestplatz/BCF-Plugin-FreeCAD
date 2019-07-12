@@ -575,14 +575,22 @@ def _isIfcGuid(guid: str):
 
 def _handleProjectUpdate(errMsg, backup):
 
-    """ Request for all updates to be written, and handle the results. """
+    """ Request for all updates to be written, and handle the results.
+
+    If the update went through successful then the backup is deleted. Otherwise
+    the current state is rolled back.
+    """
 
     errorenousUpdate = writer.processProjectUpdates()
     if errorenousUpdate is not None:
         util.printErr(errMsg)
         util.printInfo("Project state is reset to before the update.")
+        oldProject = curProject
         curProject = backup
+        del oldProject
         return OperationResults.FAILURE
+
+    del backup
     return OperationResults.SUCCESS
 
 
