@@ -128,6 +128,26 @@ class CommentModel(QAbstractListModel):
         self.endResetModel()
 
 
+    def removeRow(self, index):
+
+        if not index.isValid():
+            return False
+
+        self.beginRemoveRows(index, index.row(), index.row())
+        idx = index.row()
+        commentToRemove = self.items[idx]
+        result = pI.deleteObject(commentToRemove)
+        if result == pI.OperationResults.FAILURE:
+            return False
+
+        self.items.pop(idx)
+        self.endRemoveRows()
+
+        # load comments of the topic anew
+        self.resetItems(self.currentTopic)
+        return True
+
+
     def rowCount(self, parent = QModelIndex()):
 
         return len(self.items)

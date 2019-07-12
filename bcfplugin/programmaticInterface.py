@@ -57,6 +57,27 @@ class CamType(Enum):
     PERSPECTIVE = 2
 
 
+def _handleProjectUpdate(errMsg, backup):
+
+    """ Request for all updates to be written, and handle the results. 
+    
+    If the update went through successful then the backup is deleted. Otherwise
+    the current state is rolled back.
+    """
+
+    errorenousUpdate = writer.processProjectUpdates()
+    if errorenousUpdate is not None:
+        util.printErr(errMsg)
+        util.printInfo("Project state is reset to before the update.")
+        oldProject = curProject
+        curProject = backup
+        del oldProject
+        return OperationResults.FAILURE
+        
+    del backup
+    return OperationResults.SUCCESS
+
+
 def _getCallerFileName():
 
     """ Return the file name of the second to last function on the stack.
@@ -103,6 +124,7 @@ def deleteObject(object):
     """
 
     global curProject
+    projectBackup = copy.deepcopy(curProject)
 
     if not issubclass(type(object), Identifiable):
         util.printErr("Cannot delete {} since it doesn't inherit from"\
@@ -118,26 +140,28 @@ def deleteObject(object):
     if not isProjectOpen():
         return OperationResults.FAILURE
 
-    # find out the name of the object in its parent
-    object.state = State.States.DELETED
+    realObject = curProject.searchObject(object)
+    if realObject is None:
+        return OperationResults.FAILURE
 
-    projectCpy = copy.deepcopy(curProject)
-    newObject = projectCpy.searchObject(object)
-    writer.addProjectUpdate(projectCpy, newObject, None)
-    result = writer.processProjectUpdates()
+    util.debug("Object id of deleted object: {}".format(id(realObject)))
+
+    realObject.state = State.States.DELETED
+    writer.addProjectUpdate(curProject, realObject, None)
+    result = _handleProjectUpdate("Object could not be deleted from "\
+            "data model" , projectBackup)
 
     # `result == None` if the update could not be processed.
-    # ==> `result == projectCpy` will be returned to stay on the errorenous
-    # state and give the user the chance to fix the issue.
-    if result is not None:
-        curProject = result[0]
+    if result ==  OperationResults.FAILURE:
+        curProject = projectBackup
         errMsg = "Couldn't delete {} from the file.".format(result[1])
         util.printErr(errMsg)
         return OperationResults.FAILURE
 
     # otherwise the updated project is returned
     else:
-        curProject.deleteObject(object)
+        util.debug("Deleting from project with id {}".format(id(curProject)))
+        curProject = curProject.deleteObject(realObject)
         return OperationResults.SUCCESS
 
 
@@ -208,10 +232,13 @@ def getTopics():
 
 
 def _searchRealTopic(topic: Topic):
+
     """ Searches `curProject` for `topic` and returns the result
 
     If not found then an error message is printed in addition
     """
+
+    global curProject
 
     realTopic = curProject.searchObject(topic)
     if realTopic is None:
@@ -250,6 +277,8 @@ def getComments(topic: Topic, viewpoint: Viewpoint = None):
     If viewpoint is set then the list of comments is filtered for ones
     referencing viewpoint.
     """
+
+    global curProject
 
     if not isProjectOpen():
         return OperationResults.FAILURE
@@ -571,27 +600,6 @@ def _isIfcGuid(guid: str):
     if pattern.fullmatch(guid) is None:
         return False
     return True
-
-
-def _handleProjectUpdate(errMsg, backup):
-
-    """ Request for all updates to be written, and handle the results.
-
-    If the update went through successful then the backup is deleted. Otherwise
-    the current state is rolled back.
-    """
-
-    errorenousUpdate = writer.processProjectUpdates()
-    if errorenousUpdate is not None:
-        util.printErr(errMsg)
-        util.printInfo("Project state is reset to before the update.")
-        oldProject = curProject
-        curProject = backup
-        del oldProject
-        return OperationResults.FAILURE
-
-    del backup
-    return OperationResults.SUCCESS
 
 
 def addFile(topic: Topic, ifcProject: str = "",

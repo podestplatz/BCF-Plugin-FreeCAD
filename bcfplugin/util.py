@@ -157,6 +157,10 @@ def debug(msg):
     to the message.
     """
 
+    allowedModules = [ "project.py", "programmaticInterface.py",
+            "plugin_view.py", "plugin_model.py", "plugin_delegate.py",
+            "interface_tests.py" ]
+
     if not (verbosity == Verbosity.EVERYTHING or
             verbosity == Verbosity.INFODEBUG):
         return
@@ -164,6 +168,9 @@ def debug(msg):
     callerStackFrame = inspect.stack()[1]
     callerModule = inspect.getmodule(callerStackFrame[0])
     callerModuleName = os.path.basename(callerModule.__file__)
+    if not callerModuleName in allowedModules:
+        return
+
     callerName = inspect.stack()[1].function
     debugmsg = "[DEBUG]{}:{}(): {}".format(callerModuleName, callerName, msg)
     if FREECAD:
