@@ -33,6 +33,7 @@ class MyMainWindow(QWidget):
 
         self.projectOpened.connect(self.topicCbModel.projectOpened)
         self.projectOpened.connect(self.openedProjectUiHandler)
+        self.projectOpened.connect(self.commentModel.resetItems)
 
         self.setLayout(self.mainLayout)
 

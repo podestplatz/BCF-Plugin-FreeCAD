@@ -92,11 +92,20 @@ class CommentModel(QAbstractListModel):
 
 
     @Slot(Topic)
-    def resetItems(self, topic):
+    def resetItems(self, topic = None):
 
-        """ Load comments from `topic` """
+        """ Load comments from `topic`.
+
+        If topic is set to `None` then all elements will be deleted from the
+        model."""
 
         self.beginResetModel()
+
+        if topic is None:
+            del self.items
+            self.items = list()
+            self.endResetModel()
+            return
 
         if not pI.isProjectOpen():
             util.showError("First you have to open a project.")
