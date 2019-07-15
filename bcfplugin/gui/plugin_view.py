@@ -70,6 +70,45 @@ class CommentView(QListView):
             util.showError("Could not delete comment.")
 
 
+class SnapshotView(QListView):
+
+    def __init__(self, parent = None):
+
+        QListView.__init__(self, parent)
+        self.minIconSize = QSize(100, 100)
+        self.doubleClicked.connect(self.openSnapshot)
+
+
+    def resizeEvent(self, event):
+
+        newSize = self.size()
+        rowCount = self.model().rowCount()
+        rowCount = rowCount if rowCount > 0 else 1
+
+        newItemWidth = newSize.width() / rowCount
+        newItemWidth -= (rowCount - 1) * self.spacing()
+        newItemSize = QSize(newItemWidth, newSize.height())
+
+        if (newItemWidth < self.minIconSize.width()):
+            newItemSize.setWidth(self.minIconSize.width())
+        elif (newItemSize.height() < self.minIconSize.height()):
+            newItemSize.setHeight(self.minIconSize.height())
+
+        self.model().setSize(newItemSize)
+        self.setIconSize(newItemSize)
+        QListView.resizeEvent(self, event)
+
+
+    @Slot()
+    def openSnapshot(self, idx):
+
+        img = self.model().realImage(idx)
+        lbl = QLabel(self)
+        lbl.setWindowFlags(Qt.Window)
+        lbl.setPixmap(img)
+        lbl.show()
+
+
 class MyMainWindow(QWidget):
 
     projectOpened = Signal()
@@ -91,9 +130,19 @@ class MyMainWindow(QWidget):
         self.commentGroup.hide()
         self.mainLayout.addWidget(self.commentGroup)
 
+        # snapshotArea is a stacked widget and will be used for the viewpoint
+        # area too
+        self.snapshotArea = self.createSnapshotGroup()
+        self.snapshotArea.hide()
+        self.mainLayout.addWidget(self.snapshotArea)
+
         self.projectOpened.connect(self.topicCbModel.projectOpened)
         self.projectOpened.connect(self.openedProjectUiHandler)
         self.projectOpened.connect(self.commentModel.resetItems)
+        self.commentList.doubleClicked.connect(
+                lambda idx: self.commentList.edit(idx))
+        self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
+        self.topicCbModel.selectionChanged.connect(self.snapshotModel.resetItems)
 
         self.setLayout(self.mainLayout)
 
@@ -162,9 +211,6 @@ class MyMainWindow(QWidget):
         self.commentList.setItemDelegate(self.commentDelegate)
         self.commentDelegate.invalidInput.connect(self.commentList.edit)
 
-        self.commentList.doubleClicked.connect(
-                lambda idx: self.commentList.edit(idx))
-        self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
 
         self.commentLayout.addWidget(self.commentList)
 
@@ -179,6 +225,18 @@ class MyMainWindow(QWidget):
         return commentGroup
 
 
+    def createSnapshotGroup(self):
+
+        snStack = QStackedWidget()
+
+        self.snapshotModel = model.SnapshotModel()
+        self.snapshotList = SnapshotView()
+        self.snapshotList.setModel(self.snapshotModel)
+
+        snStack.addWidget(self.snapshotList)
+        return snStack
+
+
     def createViewpointGroup(self):
         #TODO: implement
         pass
@@ -191,6 +249,7 @@ class MyMainWindow(QWidget):
         self.projectButton.setText("Open other")
         self.topicGroup.show()
         self.commentGroup.show()
+        self.snapshotArea.show()
 
 
     @Slot()

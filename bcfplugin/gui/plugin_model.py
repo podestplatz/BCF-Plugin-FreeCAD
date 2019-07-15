@@ -1,6 +1,10 @@
+import os
+import copy
+
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import QAbstractListModel, QModelIndex, Slot, Signal, Qt
+from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal, Qt,
+        QSize)
 
 import bcfplugin.programmaticInterface as pI
 import bcfplugin.util as util
@@ -261,3 +265,106 @@ class CommentModel(QAbstractListModel):
         return True
 
 
+class SnapshotModel(QAbstractListModel):
+
+
+    def __init__(self, parent = None):
+
+        QAbstractListModel.__init__(self, parent)
+        # Size of an icon
+        self.size = QSize(100, 100)
+        # currently open topic
+        self.currentTopic = None
+        # list of the snapshot files
+        self.snapshotList = []
+        # buffer of the already loaded images
+        self.snapshotImgs = []
+
+
+    def data(self, index, role = Qt.DisplayRole):
+
+        if not index.isValid():
+            return None
+
+        # only return icons.
+        if not role == Qt.DecorationRole:
+            return None
+
+        img = None
+        # check if image was already loaded
+        if self.snapshotImgs[index.row()] is not None:
+            img = self.snapshotImgs[index.row()]
+        else:
+            # lazy loading images into `self.snapshotImgs`
+            img = self.loadImage(self.snapshotList[index.row()])
+            self.snapshotImgs[index.row()] = img
+
+        if img is None:
+            return None
+
+        # scale image to currently set size
+        img = img.scaled(self.size, Qt.KeepAspectRatio)
+        return img
+
+
+    def realImage(self, index):
+
+        if not index.isValid():
+            return None
+
+        if self.snapshotImgs[index.row()] is None:
+            return None
+
+        img = self.snapshotImgs[index.row()]
+        return img
+
+
+    def rowCount(self, parent = QModelIndex()):
+
+        # only show the first three snapshots.
+        return len(self.snapshotList) if len(self.snapshotList) < 3 else 3
+
+
+    def loadImage(self, path):
+
+        """ Load the image behind `path` into `imgContainer` """
+        if not os.path.exists(path):
+            QMessageBox.information(None, tr("Image Load"), tr("The image {}"\
+                    " could not be found.".format(path)),
+                    QMessageBox.Ok)
+            return None
+
+        imgReader = QImageReader(path)
+        imgReader.setAutoTransform(True)
+        img = imgReader.read()
+        if img.isNull():
+            QMessageBox.information(None, tr("Image Load"), tr("The image {}"\
+                    " could not be loaded. Skipping it then.".format(path)),
+                    QMessageBox.Ok)
+            return None
+
+        return QPixmap.fromImage(img)
+
+
+    def setSize(self, newSize: QSize):
+
+        """ Sets the size in which the Pixmaps are returned """
+
+        self.size = newSize
+
+
+    @Slot()
+    def resetItems(self, topic = None):
+
+        self.beginResetModel()
+
+        self.currentTopic = topic
+        snapshots = pI.getSnapshots(self.currentTopic)
+        if snapshots == pI.OperationResults.FAILURE:
+            self.snapshotList = []
+        else:
+            self.snapshotList = snapshots
+
+        # clear the image buffer
+        self.snapshotImgs = [None]*len(snapshots)
+        self.endResetModel()

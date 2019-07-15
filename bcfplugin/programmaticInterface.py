@@ -59,8 +59,8 @@ class CamType(Enum):
 
 def _handleProjectUpdate(errMsg, backup):
 
-    """ Request for all updates to be written, and handle the results. 
-    
+    """ Request for all updates to be written, and handle the results.
+
     If the update went through successful then the backup is deleted. Otherwise
     the current state is rolled back.
     """
@@ -73,7 +73,7 @@ def _handleProjectUpdate(errMsg, backup):
         curProject = backup
         del oldProject
         return OperationResults.FAILURE
-        
+
     del backup
     return OperationResults.SUCCESS
 
@@ -320,6 +320,32 @@ def getViewpoints(topic: Topic):
             for vpRef in markup.viewpoints ]
 
     return viewpoints
+
+
+def getSnapshots(topic: Topic):
+
+    """ Returns a list of files representing the snapshots contained in `topic`.
+
+    No deep copy has to made here, since the list returnde by
+    `markup.getSnapshotFileList()` is already a list of strings with no tie to
+    the data model.
+    Every entry of the list returned by `markup.getSnapshotFileList()` is
+    assumed to be just the filename of the snapshot file. Thus the string is
+    joined with the path to the working directory.
+    """
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    realTopic = _searchRealTopic(topic)
+    if realTopic is None:
+        return OperationResults.FAILURE
+
+    markup = realTopic.containingObject
+    snapshots = markup.getSnapshotFileList()
+
+    topicDir = os.path.join(reader.bcfDir, str(realTopic.xmlId))
+    return [ os.path.join(topicDir, snapshot) for snapshot in snapshots ]
 
 
 def openIfcFile(path: str):

@@ -734,11 +734,11 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
     def getSnapshotFileList(self):
 
         """
-        From self.snapshots extracts the `snapshot` attributes and collects them in
+        From self.viewpoints extracts the `snapshot` attributes and collects them in
         a list. Only entries different from `None` are colleced.
         """
 
-        snapshotList = [ vp.snapshot for vp in self.viewpoints
+        snapshotList = [ str(vp.snapshot) for vp in self.viewpoints
                             if vp.snapshot ]
         return snapshotList
 
