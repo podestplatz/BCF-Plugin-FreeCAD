@@ -11,14 +11,23 @@ from bcfplugin.rdwr.markup import Comment
 
 
 def openProjectBtnHandler(file):
+
+    """ Handler of the "Open" button for a project """
+
     pI.openProject(file)
 
 
 def getProjectName():
+
+    """ Wrapper for programmaticInterface.getProjectName() """
+
     return pI.getProjectName()
 
 
 def saveProject(dstFile):
+
+    """ Wrapper for programmaticInterface.saveProject() """
+
     pI.saveProject(dstFile)
 
 
@@ -156,7 +165,7 @@ class CommentModel(QAbstractListModel):
     def data(self, index, role=Qt.DisplayRole):
 
         if not index.isValid() or (role != Qt.DisplayRole and
-                role != Qt.EditRole):
+                role != Qt.EditRole and role != Qt.ForegroundRole):
             return None
 
         comment = None
@@ -176,6 +185,16 @@ class CommentModel(QAbstractListModel):
             commentText = item.comment
             commentAuthor = item.author if item.modAuthor == "" else item.modAuthor
             comment = (commentText, commentAuthor)
+
+        elif role == Qt.ForegroundRole:
+            # set the color if a viewpoint is linked to the comment
+            white = QColor("black")
+            vpCol = QColor("blue")
+            col = white if item.viewpoint is None else vpCol
+            brush = QBrush()
+            brush.setColor(col)
+
+            return brush
 
         return comment
 

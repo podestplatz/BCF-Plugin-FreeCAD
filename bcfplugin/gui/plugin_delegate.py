@@ -1,8 +1,9 @@
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt)
+from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
 
 from copy import copy
+import bcfplugin.util as util
 
 
 commentRegex = "[a-zA-Z0-9.,\-\/ ]* -- .*@.*"
@@ -19,6 +20,46 @@ class CommentDelegate(QStyledItemDelegate):
         self.updateFonts(self.commentFont)
 
         self.commentYOffset = 10
+
+
+    def drawComment(self, comment, painter, fontMetric, leftX, topY, brush):
+
+        painter.save()
+        pen = painter.pen()
+        pen.setColor(brush.color())
+        painter.setPen(pen)
+
+        commentTextHeight = fontMetric.height()
+        commentTextWidth = fontMetric.width(comment[0])
+        commentStart = QPoint(leftX + 10, topY + fontMetric.height())
+        painter.drawText(commentStart, comment[0])
+        painter.restore()
+
+        return commentStart, commentTextHeight
+
+
+    def drawSeparationLine(self, painter, pen, start: QPoint, end: QPoint):
+
+        pen.setColor("lightGray")
+        painter.setPen(pen)
+        painter.drawLine(start, end)
+        start = QPoint(start.x(), start.y() + 1)
+        end = QPoint(end.x(), end.y() + 1)
+        painter.drawLine(start, end)
+
+
+    def drawAuthorDate(self, comment,
+            painter, pen,
+            start: QPoint, end: QPoint):
+
+        fontMetric = QFontMetrics(self.authorFont)
+        pen.setColor(QColor("#666699"))
+        painter.setPen(pen)
+        painter.setFont(self.authorFont)
+        painter.drawText(start, comment[1])
+
+        dateStart = QPoint(end.x() + 10, end.y())
+        painter.drawText(dateStart, comment[2])
 
 
     def paint(self, painter, option, index):
@@ -45,34 +86,25 @@ class CommentDelegate(QStyledItemDelegate):
         fontMetric = painter.fontMetrics()
 
         # draw comment
-        commentTextHeight = fontMetric.height()
-        commentTextWidth = fontMetric.width(comment[0])
-        commentStart = QPoint(leftX + 10, topY + fontMetric.height())
-        painter.drawText(commentStart, comment[0])
+        brush = index.model().data(index, Qt.ForegroundRole)
+        (commentStart, commentTextHeight) = self.drawComment(comment,
+                painter, fontMetric, leftX, topY, brush)
 
         # draw separation line
-        pen.setColor(QColor("lightGray"))
-        painter.setPen(pen)
         lineStart = QPoint(commentStart.x(),
                 commentStart.y() + commentTextHeight / 2)
         lineEnd = QPoint(lineStart.x() + boundingRect.width() - 20,
                 lineStart.y())
-        painter.drawLine(lineStart, lineEnd)
+        self.drawSeparationLine(painter, pen, lineStart, lineEnd)
 
         # draw author
-        fontMetric = QFontMetrics(self.authorFont)
-        pen.setColor(QColor("blue"))
-        painter.setPen(pen)
-        painter.setFont(self.authorFont)
         authorStart = QPoint(lineStart.x(),
                 lineStart.y() + fontMetric.height())
         authorWidth = fontMetric.width(comment[1])
         authorEnd = QPoint(authorStart.x() + authorWidth,
                 authorStart.y())
-        painter.drawText(authorStart, comment[1])
-
-        dateStart = QPoint(authorEnd.x() + 10, authorEnd.y())
-        painter.drawText(dateStart, comment[2])
+        self.drawAuthorDate(comment, painter, pen, authorStart,
+                authorEnd)
 
         painter.restore()
 
