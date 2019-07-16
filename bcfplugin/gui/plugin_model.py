@@ -178,15 +178,15 @@ class CommentModel(QAbstractListModel):
         commentAuthor = ""
         commentDate = ""
         dateFormat = "%Y-%m-%d %X"
+
+        commentText = item.comment.strip()
         if role == Qt.DisplayRole:
-            commentText = item.comment
             commentAuthor = item.author if item.modAuthor == "" else item.modAuthor
             commentDate = (item.date if item.modDate == item._modDate.defaultValue else item.modDate)
             commentDate = commentDate.strftime(dateFormat)
             comment = (commentText, commentAuthor, commentDate)
 
         elif role == Qt.EditRole: # date is automatically set when editing
-            commentText = item.comment
             commentAuthor = item.author if item.modAuthor == "" else item.modAuthor
             comment = (commentText, commentAuthor)
 
