@@ -70,6 +70,15 @@ class CommentView(QListView):
             util.showError("Could not delete comment.")
 
 
+    def resizeEvent(self, event):
+
+        """ Propagates the new width of the widget to the delegate """
+
+        newSize = self.size()
+        self.itemDelegate().setWidth(newSize.width())
+        QListView.resizeEvent(self, event)
+
+
 class SnapshotView(QListView):
 
     def __init__(self, parent = None):

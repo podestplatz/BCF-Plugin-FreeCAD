@@ -18,24 +18,29 @@ class CommentDelegate(QStyledItemDelegate):
         self.baseFontSize = 12
         self.commentFont = QFont("times")
         self.updateFonts(self.commentFont)
+        self.widgetWidth = 0
+        self.verticalOffset = -1
 
         self.commentYOffset = 10
 
 
-    def drawComment(self, comment, painter, fontMetric, leftX, topY, brush):
+    def drawComment(self, comment, painter, option, fontMetric, leftX, topY, brush):
 
         painter.save()
         pen = painter.pen()
         pen.setColor(brush.color())
         painter.setPen(pen)
 
-        commentTextHeight = fontMetric.height()
-        commentTextWidth = fontMetric.width(comment[0])
-        commentStart = QPoint(leftX + 10, topY + fontMetric.height())
-        painter.drawText(commentStart, comment[0])
+        commentBoundRect = self.getCommentRect(comment, option)
+        commentBoundRect.setX(leftX + 10)
+        commentBoundRect.setY(commentBoundRect.y() + self.commentYOffset)
+
+        painter.drawText(commentBoundRect,
+                Qt.TextWordWrap | Qt.AlignLeft,
+                comment[0])
         painter.restore()
 
-        return commentStart, commentTextHeight
+        return commentBoundRect.bottomLeft(), commentBoundRect.height()
 
 
     def drawSeparationLine(self, painter, pen, start: QPoint, end: QPoint):
@@ -62,15 +67,29 @@ class CommentDelegate(QStyledItemDelegate):
         painter.drawText(dateStart, comment[2])
 
 
+    def setVerticalOffset(self, paintDevice):
+
+        """ Set the vertical offset to one milimeter, using paintDevice to get DPI
+        in the y direction. """
+
+        offset = (paintDevice.logicalDpiY() / 25.4) * 1
+        self.verticalOffset = offset
+
+
     def paint(self, painter, option, index):
 
         if option.state & QStyle.State_Selected:
-            painter.fillRect(option.rect, option.palette.highlight())
+            painter.fillRect(styleOption.rect, option.palette.highlight())
         idx = index.row()
+
+        if self.verticalOffset == -1:
+            self.setVerticalOffset(painter.device())
 
         comment = index.model().data(index, Qt.DisplayRole)
         # top y coordinate at which drawing will begin downwards
-        drawingRect = super().initStyleOption(option, index)
+        drawingOption = super().initStyleOption(option, index)
+        #drawingRect = drawingOption.rect
+        #TODO switch to drawingRect
         leftX = option.rect.x()
         topY = option.rect.y()
 
@@ -88,12 +107,12 @@ class CommentDelegate(QStyledItemDelegate):
         # draw comment
         brush = index.model().data(index, Qt.ForegroundRole)
         (commentStart, commentTextHeight) = self.drawComment(comment,
-                painter, fontMetric, leftX, topY, brush)
+                painter, option, fontMetric, leftX, topY, brush)
 
         # draw separation line
         lineStart = QPoint(commentStart.x(),
-                commentStart.y() + commentTextHeight / 2)
-        lineEnd = QPoint(lineStart.x() + boundingRect.width() - 20,
+                commentStart.y() + self.verticalOffset)
+        lineEnd = QPoint(lineStart.x() + self.width - 20,
                 lineStart.y())
         self.drawSeparationLine(painter, pen, lineStart, lineEnd)
 
@@ -160,21 +179,28 @@ class CommentDelegate(QStyledItemDelegate):
 
     def calcCommentSize(self, comment, option):
 
-        """ Calculate the size of a comment element """
+        """ Calculate the size of a comment element.
 
-        commentFontMetric = QFontMetrics(self.commentFont)
+        The size of comment itself (`comment[0]`) is calculated considering
+        wordwrapping. The base rectangle, for calculating the bounding rectangle
+        of comment is constructed from the height given by `option.rect` and the
+        width set by `setWidth`.
+        Thus the size of comment wont exceed the width of the widget.
+        """
+
         authorFontMetric = QFontMetrics(self.authorFont)
+        commentBoundRect = self.getCommentRect(comment, option)
 
-        commentTextHeight = commentFontMetric.height()
+        commentTextHeight = commentBoundRect.height()
         authorTextHeight = authorFontMetric.height()
 
-        commentWidth = commentFontMetric.width(comment[0])
+        commentWidth = commentBoundRect.width()
         authorDateWidth = authorFontMetric.width(comment[1] + comment[2]) + 10
         # +1 is the separation line that is drawn
         # commentTextHeight / 2 is the offset from the comment text towards the
         # separation line
         height = (commentTextHeight + authorTextHeight +
-                commentTextHeight / 2 + self.commentYOffset + 1)
+                self.verticalOffset + self.commentYOffset + 1)
         width = commentWidth if commentWidth > authorDateWidth else authorDateWidth
 
         size = QSize(width, height)
@@ -188,4 +214,43 @@ class CommentDelegate(QStyledItemDelegate):
         comment = index.model().data(index, Qt.DisplayRole)
         size = self.calcCommentSize(comment, option)
 
+        if index.row() == 0:
+            util.debug("Size of the comment: {}".format(size))
+
         return size
+
+
+    def getCommentRect(self, comment, option):
+
+        """ Returns the rectangle where just the comment fits in.
+
+        The comment hereby is wordwrapped and won't exceed the widgets width.
+        """
+
+        commentFontMetric = QFontMetrics(self.commentFont)
+
+        # calculate the bounding rectangle for comment that fits into the
+        # width of the widget.
+        rect = self.getWidgetWithRect(option)
+        boundRect = commentFontMetric.boundingRect(rect,
+                Qt.TextWordWrap | Qt.AlignLeft,
+                comment[0])
+
+        return boundRect
+
+
+    def getWidgetWithRect(self, option):
+
+        """ Returns a rectangle based on `option.rect` where width is replaced
+        by `self.width` """
+
+        rect = option.rect
+        rect.setWidth(self.width)
+
+        return rect
+
+
+    @Slot()
+    def setWidth(self, newWidth):
+
+        self.width = newWidth
