@@ -6,7 +6,7 @@ import shutil
 from enum import Enum
 from urllib.error import URLError
 
-from PySide2.QtWidgets import QMessageBox
+from PySide2.QtWidgets import QMessageBox, QApplication
 
 
 FREECAD = False
@@ -23,6 +23,12 @@ errorFilePath = ""
 
 DEBUG = False
 """ Enables debug outputs """
+
+qApp = None
+""" Reference to the current QApplication instance """
+
+MMPI = 25.4
+""" Millimeters per inch """
 
 
 
@@ -178,6 +184,27 @@ def debug(msg):
         FreeCAD.Console.PrintMessage("{}\n".format(debugmsg))
     else:
         print(debugmsg)
+
+
+
+def getCurrentQScreen():
+
+    """ Return a reference to the QScreen object associated with the screen the
+    application is currently running on. """
+
+    global qApp
+
+    if qApp == None:
+        qApp = QApplication.instance()
+
+    # check if the application is running alongside a Qt Gui at all
+    if qApp == None:
+        return None
+
+    desktop = qApp.desktop()
+    screenNumber = desktop.screenNumber()
+
+    return qApp.screens()[screenNumber]
 
 
 def retrieveWebFile(schema: Schema, storePath: str):
