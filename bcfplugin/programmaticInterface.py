@@ -295,7 +295,7 @@ def getComments(topic: Topic, viewpoint: Viewpoint = None):
     return comments
 
 
-def getViewpoints(topic: Topic):
+def getViewpoints(topic: Topic, realViewpoint = True):
 
     """ Collect a list of viewpoints associated with the given topic.
 
@@ -303,6 +303,9 @@ def getViewpoints(topic: Topic):
     the viewpoint file and a reference to the read-in viewpoint.
     If the list cannot be constructed, because for example no project is
     currently open, OperationResults.FAILURE is returned.
+    If `realViewpoint` == True then the second element of every tuple is the
+    viewpoint object itself referenced by the viewpoint reference. Otherwise it
+    is the viewpoint reference.
     """
 
     global curProject
@@ -316,8 +319,14 @@ def getViewpoints(topic: Topic):
         return OperationResults.FAILURE
 
     markup = realTopic.containingObject
-    viewpoints = [ (str(vpRef.file), copy.deepcopy(vpRef.viewpoint))
-            for vpRef in markup.viewpoints ]
+    viewpoints = []
+    if realViewpoint:
+        viewpoints = [ (str(vpRef.file), copy.deepcopy(vpRef.viewpoint))
+                for vpRef in markup.viewpoints ]
+    else:
+        viewpoints = [ (str(vpRef.file), copy.deepcopy(vpRef))
+                for vpRef in markup.viewpoints ]
+
 
     return viewpoints
 

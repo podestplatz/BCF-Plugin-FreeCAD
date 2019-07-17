@@ -12,6 +12,13 @@ import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
 
 
+def tr(text):
+
+    """ Placeholder for the Qt translate function. """
+
+    return text
+
+
 class CommentView(QListView):
 
     def __init__(self, parent = None):
@@ -109,6 +116,13 @@ class SnapshotView(QListView):
         lbl.show()
 
 
+class ViewpointsListView(QListView):
+
+    def __init__(self, parent = None):
+
+        QListView.__init__(self, parent)
+
+
 class MyMainWindow(QWidget):
 
     projectOpened = Signal()
@@ -139,10 +153,15 @@ class MyMainWindow(QWidget):
         self.projectOpened.connect(self.topicCbModel.projectOpened)
         self.projectOpened.connect(self.openedProjectUiHandler)
         self.projectOpened.connect(self.commentModel.resetItems)
+        self.projectOpened.connect(self.snapshotModel.resetItems)
+        self.projectOpened.connect(self.viewpointsModel.resetItems)
+        self.projectOpened.connect(lambda: self.snStack.setCurrentIndex(0))
         self.commentList.doubleClicked.connect(
                 lambda idx: self.commentList.edit(idx))
         self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.snapshotModel.resetItems)
+        self.topicCbModel.selectionChanged.connect(self.viewpointsModel.resetItems)
+        self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
 
         self.setLayout(self.mainLayout)
 
@@ -227,14 +246,29 @@ class MyMainWindow(QWidget):
 
     def createSnapshotGroup(self):
 
-        snStack = QStackedWidget()
+        snGroup = QGroupBox()
+        self.snGroupLayout = QVBoxLayout(snGroup)
 
         self.snapshotModel = model.SnapshotModel()
         self.snapshotList = SnapshotView()
         self.snapshotList.setModel(self.snapshotModel)
 
-        snStack.addWidget(self.snapshotList)
-        return snStack
+        self.viewpointsModel = model.ViewpointsListModel(self.snapshotModel)
+        self.viewpointList = ViewpointsListView()
+        self.viewpointList.setModel(self.viewpointsModel)
+
+        self.snStack = QStackedWidget()
+        self.snStack.addWidget(self.snapshotList)
+        self.snStack.addWidget(self.viewpointList)
+
+        self.snStackSwitcher = QComboBox()
+        self.snStackSwitcher.addItem(tr("Snapshot Bar"))
+        self.snStackSwitcher.addItem(tr("Viewpoint List"))
+
+        self.snGroupLayout.addWidget(self.snStackSwitcher)
+        self.snGroupLayout.addWidget(self.snStack)
+
+        return snGroup
 
 
     def createViewpointGroup(self):
@@ -301,7 +335,6 @@ class MyMainWindow(QWidget):
         if filename != "":
             util.debug("Got a file to write to: {}.".format(filename))
             model.saveProject(filename[0])
-
 
 
 if __name__ == "__main__":
