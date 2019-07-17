@@ -23,6 +23,9 @@ class CommentDelegate(QStyledItemDelegate):
 
         self.commentYOffset = 10
 
+        # storage of the size hints. used to intelligently emit the
+        # sizeHintChanged signal
+        self.sizeHints = {}
 
     def drawComment(self, comment, painter, option, fontMetric, leftX, topY, brush):
 
@@ -79,7 +82,7 @@ class CommentDelegate(QStyledItemDelegate):
     def paint(self, painter, option, index):
 
         if option.state & QStyle.State_Selected:
-            painter.fillRect(styleOption.rect, option.palette.highlight())
+            painter.fillRect(option.rect, option.palette.highlight())
         idx = index.row()
 
         if self.verticalOffset == -1:
@@ -87,9 +90,6 @@ class CommentDelegate(QStyledItemDelegate):
 
         comment = index.model().data(index, Qt.DisplayRole)
         # top y coordinate at which drawing will begin downwards
-        drawingOption = super().initStyleOption(option, index)
-        #drawingRect = drawingOption.rect
-        #TODO switch to drawingRect
         leftX = option.rect.x()
         topY = option.rect.y()
 
@@ -165,6 +165,23 @@ class CommentDelegate(QStyledItemDelegate):
             util.printError("Here we have an invalid string")
 
 
+    def sizeHint(self, option, index):
+
+        """ Return the size of a comment element. """
+
+        comment = index.model().data(index, Qt.DisplayRole)
+
+        # recompute the size hint if the size changed (element == `None`) or
+        # compute it for the first time
+        if index not in self.sizeHints or self.sizeHints[index] is None:
+            size = self.calcCommentSize(comment, option)
+            self.sizeHints[index] = size
+
+        size = self.sizeHints[index]
+        return size
+
+
+
     def updateFonts(self, baseFont):
 
         """ Set the internal fonts to baseFont and update their sizes """
@@ -177,7 +194,7 @@ class CommentDelegate(QStyledItemDelegate):
         self.authorFont.setPointSize(self.baseFontSize - 4)
 
 
-    def calcCommentSize(self, comment, option):
+    def calcCommentSize(self, comment, option = None):
 
         """ Calculate the size of a comment element.
 
@@ -207,20 +224,7 @@ class CommentDelegate(QStyledItemDelegate):
         return size
 
 
-    def sizeHint(self, option, index):
-
-        """ Return the size of a comment element. """
-
-        comment = index.model().data(index, Qt.DisplayRole)
-        size = self.calcCommentSize(comment, option)
-
-        if index.row() == 0:
-            util.debug("Size of the comment: {}".format(size))
-
-        return size
-
-
-    def getCommentRect(self, comment, option):
+    def getCommentRect(self, comment, option = None):
 
         """ Returns the rectangle where just the comment fits in.
 
@@ -231,11 +235,15 @@ class CommentDelegate(QStyledItemDelegate):
 
         # calculate the bounding rectangle for comment that fits into the
         # width of the widget.
-        rect = self.getWidgetWithRect(option)
+        rect = None
+        if option is not None:
+            rect = self.getWidgetWithRect(option)
+        else:
+            rect = QRect(0, 0, self.width, 0)
+
         boundRect = commentFontMetric.boundingRect(rect,
                 Qt.TextWordWrap | Qt.AlignLeft,
                 comment[0])
-
         return boundRect
 
 
@@ -254,3 +262,22 @@ class CommentDelegate(QStyledItemDelegate):
     def setWidth(self, newWidth):
 
         self.width = newWidth
+        self.checkSizes()
+
+
+    def checkSizes(self):
+
+        indices = self.sizeHints.keys()
+        for index in indices:
+            comment = index.model().data(index, Qt.DisplayRole)
+            newHeight = self.calcCommentSize(comment).height()
+            oldHeight = None
+            if self.sizeHints[index] is not None: # prevent errors due to race conditions
+                oldHeight = self.sizeHints[index].height()
+
+            if newHeight != oldHeight:
+                self.sizeHintChanged.emit(index)
+                # mark the changed size hint for recomputation
+                self.sizeHints[index] = None
+
+
