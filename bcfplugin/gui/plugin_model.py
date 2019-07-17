@@ -290,16 +290,13 @@ class SnapshotModel(QAbstractListModel):
         if not role == Qt.DecorationRole:
             return None
 
-        img = None
-        # check if image was already loaded
-        if self.snapshotImgs[index.row()] is not None:
-            img = self.snapshotImgs[index.row()]
-        else:
-            # lazy loading images into `self.snapshotImgs`
+        # lazy loading images into `self.snapshotImgs`
+        if self.snapshotImgs[index.row()] is None:
             img = self.loadImage(self.snapshotList[index.row()])
             self.snapshotImgs[index.row()] = img
 
-        if img is None:
+        img = self.snapshotImgs[index.row()]
+        if img is None: # happens if the image could not be loaded
             return None
 
         # scale image to currently set size
@@ -307,7 +304,40 @@ class SnapshotModel(QAbstractListModel):
         return img
 
 
+    def rowCount(self, parent = QModelIndex()):
+
+        # only show the first three snapshots.
+        return len(self.snapshotList) if len(self.snapshotList) < 3 else 3
+
+
+    def imgFromFilename(self, filename):
+
+        """ Returns the image with `filename`. It is loaded if it isn't at the
+        point of inquiry.
+
+        The image is returned in original resolution. The user is responsible
+        for scaling it to the desired size.
+        """
+
+        filenameList = [ os.path.basename(path) for path in self.snapshotList ]
+        if filename not in filenameList:
+            return None
+
+        idx = filenameList.index(filename)
+        if self.snapshotImgs[idx] is None:
+            img = self.loadImage(self.snapshotList[idx])
+            self.snapshotImgs[idx] = img
+
+        img = self.snapshotImgs[idx]
+        if img is None: # image could not be loaded (FileNotFoundError?)
+            return None
+
+        return img
+
+
     def realImage(self, index):
+
+        """ Return the image at `index` in original resolution """
 
         if not index.isValid():
             return None
@@ -319,15 +349,10 @@ class SnapshotModel(QAbstractListModel):
         return img
 
 
-    def rowCount(self, parent = QModelIndex()):
-
-        # only show the first three snapshots.
-        return len(self.snapshotList) if len(self.snapshotList) < 3 else 3
-
-
     def loadImage(self, path):
 
-        """ Load the image behind `path` into `imgContainer` """
+        """ Load the image behind `path` and return a QPixmap """
+
         if not os.path.exists(path):
             QMessageBox.information(None, tr("Image Load"), tr("The image {}"\
                     " could not be found.".format(path)),
@@ -356,6 +381,12 @@ class SnapshotModel(QAbstractListModel):
     @Slot()
     def resetItems(self, topic = None):
 
+        """ Reset the internal state of the model.
+
+        If `topic` != None then the snapshots associated with the new topic are
+        loaded, else the list of snapshots is cleared.
+        """
+
         self.beginResetModel()
 
         self.currentTopic = topic
@@ -368,3 +399,98 @@ class SnapshotModel(QAbstractListModel):
         # clear the image buffer
         self.snapshotImgs = [None]*len(snapshots)
         self.endResetModel()
+
+
+class ViewpointsListModel(QAbstractListModel):
+
+    """
+    Model class to the viewpoins list.
+
+    It returns the name of a viewpoint, associated with the current topic as
+    well as an icon of the snapshot file that is referenced in the viewpoint. If
+    no snapshot is referenced then no icon is returned.  An icon is 10x10
+    millimeters in dimension. The actual sizes and offsets, in pixels, are
+    stored in variables containing 'Q'. All other sizes and offset variables
+    hold values in millimeters.These sizes and offsets are scaled to the
+    currently active screen, retrieved by `util.getCurrentQScreen()`.
+    """
+
+    def __init__(self, snapshotModel, parent = None):
+
+        QAbstractListModel.__init__(self, parent = None)
+        # holds instances of ViewpointReference
+        self.viewpoints = []
+        # used to retrieve the snapshot icons.
+        self.snapshotModel = snapshotModel
+
+        # set up the sizes and offsets
+        self._iconQSize = None # size in pixels
+        self._iconSize = QSize(10, 10) # size in millimeters
+        self.calcSizes()
+
+
+    @Slot()
+    def calcSizes(self):
+
+        """ Convert the millimeter sizes/offsets into pixels depending on the
+        current screen. """
+
+        screen = util.getCurrentQScreen()
+        # pixels per millimeter (not parts per million)
+        ppm = screen.logicalDotsPerInch() / util.MMPI
+
+        width = self._iconSize.width() * ppm
+        height = self._iconSize.height() * ppm
+        self._iconQSize = QSize(width, height)
+
+
+    @Slot()
+    def resetItems(self, topic = None):
+
+        """ If `topic != None` load viewpoints associated with `topic`, else
+        delete the internal state of the model """
+
+        self.beginResetModel()
+
+        if topic is None:
+            self.viewpoints = []
+        else:
+            self.viewpoints = [ vp[1] for vp in pI.getViewpoints(topic, False) ]
+
+        self.endResetModel()
+
+
+    def data(self, index, role = Qt.DisplayRole):
+
+        if not index.isValid():
+            return None
+
+        viewpoint = self.viewpoints[index.row()]
+        if role == Qt.DisplayRole:
+            # return the name of the viewpoints file
+            return str(viewpoint.file) + " (" + str(viewpoint.id) + ")"
+
+        elif role == Qt.DecorationRole:
+            # if a snapshot is linked, return an icon of it.
+            filename = str(viewpoint.snapshot)
+            icon = self.snapshotModel.imgFromFilename(filename)
+            if icon is None: # snapshot is not listed in markup and cannot be loaded
+                return None
+
+            scaledIcon = icon.scaled(self._iconQSize, Qt.KeepAspectRatio)
+            return scaledIcon
+
+
+    def rowCount(self, parent = QModelIndex()):
+
+        return len(self.viewpoints)
+
+
+    def setIconSize(self, size: QSize):
+
+        """ Size is expected to be given in millimeters. """
+
+        self._iconSize = size
+        self.calcSizes()
+
+
