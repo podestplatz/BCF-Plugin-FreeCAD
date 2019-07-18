@@ -1,10 +1,12 @@
 import xml.etree.ElementTree as ET
-import util
+from copy import deepcopy
 from typing import List
 from enum import Enum
 from uuid import UUID
 from datetime import date
 from xmlschema import XMLSchema
+
+import util
 from util import DEBUG, debug
 from rdwr.modification import (ModificationDate, ModificationAuthor,
         ModificationType)
@@ -38,6 +40,46 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
                 None, self)
         self._description = SimpleElement(description, "Description",
                 "", self)
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id, memo)
+        cpyguid = deepcopy(self.guid, memo)
+        cpyexternal = deepcopy(self.external, memo)
+        cpyreference = deepcopy(self.reference, memo)
+        cpydescription = deepcopy(self.description, memo)
+
+        cpy = DocumentReference(cpyguid, cpyexternal, cpyreference,
+                cpydescription)
+        cpy.id = cpyid
+        return cpy
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        if type(self) != type(other):
+            return False
+
+        return (self.guid == other.guid and
+                self.external == other.external and
+                self.reference == other.reference and
+                self.description == other.description)
+
+
+    def __str__(self):
+        str_ret = ("DocumentReference(guid={}, external={}, reference={},"\
+            " description={})").format(self.guid, self.external, self.reference,
+                self.description)
+
+        return str_ret
 
 
     @property
@@ -74,29 +116,6 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
     @description.setter
     def description(self, newVal):
         self._description.value = newVal
-
-    def __eq__(self, other):
-
-        """
-        Returns true if every variable member of both classes are the same
-        """
-
-        if type(self) != type(other):
-            return False
-
-        return (self.guid == other.guid and
-                self.external == other.external and
-                self.reference == other.reference and
-                self.description == other.description)
-
-
-    def __str__(self):
-        str_ret = ("DocumentReference(guid={}, external={}, reference={},"\
-            " description={})").format(self.guid, self.external, self.reference,
-                self.description)
-
-        return str_ret
-
 
     def getEtElement(self, elem):
 
@@ -180,6 +199,44 @@ class BimSnippet(Hierarchy, State, XMLName, Identifiable):
         self._schema = SimpleElement(schema, "ReferenceSchema", None, self)
 
 
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id, memo)
+        cpytype = deepcopy(self.type, memo)
+        cpyexternal = deepcopy(self.external, memo)
+        cpyreference = deepcopy(self.reference, memo)
+        cpyschema = deepcopy(self.schema, memo)
+
+        cpy = BimSnippet(cpytype, cpyexternal, cpyreference, cpyschema)
+        cpy.id = cpyid
+        return cpy
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        if type(self) != type(other):
+            return False
+
+        return (self.type == other.type and
+                self.external == other.external and
+                self.reference == other.reference and
+                self.schema == other.schema)
+
+    def __str__(self):
+
+        ret_str = ("BimSnippet(type='{}', isExternal='{}, reference='{}',"\
+                " referenceSchema='{}'").format(self.type, self.external,
+                        self.reference, self.schema)
+        return ret_str
+
+
     @property
     def type(self):
         return self._type.value
@@ -211,28 +268,6 @@ class BimSnippet(Hierarchy, State, XMLName, Identifiable):
     @schema.setter
     def schema(self, newVal):
         self._schema.value = newVal
-
-    def __eq__(self, other):
-
-        """
-        Returns true if every variable member of both classes are the same
-        """
-
-        if type(self) != type(other):
-            return False
-
-        return (self.type == other.type and
-                self.external == other.external and
-                self.reference == other.reference and
-                self.schema == other.schema)
-
-    def __str__(self):
-
-        ret_str = ("BimSnippet(type='{}', isExternal='{}, reference='{}',"\
-                " referenceSchema='{}'").format(self.type, self.external,
-                        self.reference, self.schema)
-        return ret_str
-
 
     def getEtElement(self, elem):
 
@@ -354,6 +389,125 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             self.bimSnippet.containingObject = self
 
 
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id, memo)
+        cpyxmlid = deepcopy(self.xmlId, memo)
+        cpytitle = deepcopy(self.title, memo)
+        cpydate = deepcopy(self.date, memo)
+        cpyauthor = deepcopy(self.author, memo)
+        cpytype = deepcopy(self.type, memo)
+        cpystatus = deepcopy(self.status, memo)
+        cpyreferencelinks = deepcopy(self.referenceLinks, memo)
+        cpydocrefs = deepcopy(self.docRefs, memo)
+        cpypriority = deepcopy(self.priority, memo)
+        cpyindex = deepcopy(self.index, memo)
+        cpylabels = deepcopy(self.labels, memo)
+        cpymoddate = deepcopy(self.modDate, memo)
+        cpymodauthor = deepcopy(self.modAuthor, memo)
+        cpyduedate = deepcopy(self.dueDate, memo)
+        cpyassignee = deepcopy(self.assignee, memo)
+        cpydescription = deepcopy(self.description, memo)
+        cpystage = deepcopy(self.stage, memo)
+        cpyrelatedtopics = deepcopy(self.relatedTopics, memo)
+        cpybimsnippet = deepcopy(self.bimSnippet, memo)
+
+        cpy = Topic(cpyxmlid, cpytitle, cpydate, cpyauthor, cpytype, cpystatus,
+                cpyreferencelinks, cpydocrefs, cpypriority, cpyindex, cpylabels,
+                cpymoddate, cpymodauthor, cpyduedate, cpyassignee,
+                cpydescription, cpystage, cpyrelatedtopics, cpybimsnippet)
+        cpy.id = cpyid
+        return cpy
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        if type(self) != type(other):
+            return False
+
+        self.__printEquality(self.xmlId == other.xmlId, "id")
+        self.__printEquality(self.title == other.title, "title")
+        self.__printEquality(self.date == other.date, "date")
+        self.__printEquality(self.author == other.author, "author")
+        self.__printEquality(self.type == other.type, "type")
+        self.__printEquality(self.status == other.status, "status")
+        self.__printEquality(self.docRefs == other.docRefs, "docRefs")
+        self.__printEquality(self.priority == other.priority, "priority")
+        self.__printEquality(self.index == other.index, "index")
+        self.__printEquality(self.labels == other.labels, "labels")
+        self.__printEquality(self.assignee == other.assignee, "assignee")
+        self.__printEquality(self.description == other.description, "description")
+        self.__printEquality(self.stage == other.stage, "stage")
+        self.__printEquality(self.relatedTopics == other.relatedTopics,
+                "relatedTopics")
+        self.__printEquality(self.modDate == other.modDate, "ModificationDate")
+        self.__printEquality(self.modAuthor == other.modAuthor, "ModificationAuthor")
+        self.__printEquality(self.__checkNone(self.dueDate,
+            other.dueDate), "dueDate")
+        self.__printEquality(self.__checkNone(self.bimSnippet,
+            other.bimSnippet), "bimSnippet")
+
+        return (self.xmlId == other.xmlId and
+                self.title == other.title and
+                self.__checkNone(self.date, other.date) and
+                self.author == other.author and
+                self.type == other.type and
+                self.status == other.status and
+                self.docRefs == other.docRefs and
+                self.priority == other.priority and
+                self.index == other.index and
+                self.labels == other.labels and
+                self.__checkNone(self.modDate, other.modDate) and
+                self.modAuthor, other.modAuthor and
+                self.__checkNone(self.dueDate, other.dueDate) and
+                self.assignee == other.assignee and
+                self.description == other.description and
+                self.stage == other.stage and
+                self.relatedTopics == other.relatedTopics and
+                self.bimSnippet == other.bimSnippet)
+
+    def __str__(self):
+        import pprint
+        doc_ref_str = "None"
+        if self.docRefs:
+            doc_ref_str = "["
+            for doc_ref in self.docRefs:
+                doc_ref_str += str(doc_ref)
+            doc_ref_str += "]"
+
+        str_ret = """---- Topic ----
+    ID: {},
+    Title: {},
+    Date: {},
+    Author: {},
+    Type: {},
+    Status: {},
+    Priority: {},
+    Index: {},
+    ModificationDate: {},
+    ModificationAuthor: {},
+    DueDate: {},
+    AssignedTo: {},
+    Description: {},
+    Stage: {},
+    RelatedTopics: {},
+    Labels: {},
+    DocumentReferences: {}""".format(self.xmlId, self.title, str(self.date),
+            self.author,
+            self.type, self.status, self.priority, self.index,
+            str(self.modDate), self.modAuthor, self.dueDate,
+            self.assignee, self.description, self.stage, self.relatedTopics,
+            self.labels, doc_ref_str)
+        return str_ret
+
+
     @property
     def date(self):
         return self._date.value
@@ -473,91 +627,6 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         if not equal:
             print("{} is not equal".format(name))
-
-
-    def __eq__(self, other):
-
-        """
-        Returns true if every variable member of both classes are the same
-        """
-
-        if type(self) != type(other):
-            return False
-
-        self.__printEquality(self.xmlId == other.xmlId, "id")
-        self.__printEquality(self.title == other.title, "title")
-        self.__printEquality(self.date == other.date, "date")
-        self.__printEquality(self.author == other.author, "author")
-        self.__printEquality(self.type == other.type, "type")
-        self.__printEquality(self.status == other.status, "status")
-        self.__printEquality(self.docRefs == other.docRefs, "docRefs")
-        self.__printEquality(self.priority == other.priority, "priority")
-        self.__printEquality(self.index == other.index, "index")
-        self.__printEquality(self.labels == other.labels, "labels")
-        self.__printEquality(self.assignee == other.assignee, "assignee")
-        self.__printEquality(self.description == other.description, "description")
-        self.__printEquality(self.stage == other.stage, "stage")
-        self.__printEquality(self.relatedTopics == other.relatedTopics,
-                "relatedTopics")
-        self.__printEquality(self.modDate == other.modDate, "ModificationDate")
-        self.__printEquality(self.modAuthor == other.modAuthor, "ModificationAuthor")
-        self.__printEquality(self.__checkNone(self.dueDate,
-            other.dueDate), "dueDate")
-        self.__printEquality(self.__checkNone(self.bimSnippet,
-            other.bimSnippet), "bimSnippet")
-
-        return (self.xmlId == other.xmlId and
-                self.title == other.title and
-                self.__checkNone(self.date, other.date) and
-                self.author == other.author and
-                self.type == other.type and
-                self.status == other.status and
-                self.docRefs == other.docRefs and
-                self.priority == other.priority and
-                self.index == other.index and
-                self.labels == other.labels and
-                self.__checkNone(self.modDate, other.modDate) and
-                self.modAuthor, other.modAuthor and
-                self.__checkNone(self.dueDate, other.dueDate) and
-                self.assignee == other.assignee and
-                self.description == other.description and
-                self.stage == other.stage and
-                self.relatedTopics == other.relatedTopics and
-                self.bimSnippet == other.bimSnippet)
-
-    def __str__(self):
-        import pprint
-        doc_ref_str = "None"
-        if self.docRefs:
-            doc_ref_str = "["
-            for doc_ref in self.docRefs:
-                doc_ref_str += str(doc_ref)
-            doc_ref_str += "]"
-
-        str_ret = """---- Topic ----
-    ID: {},
-    Title: {},
-    Date: {},
-    Author: {},
-    Type: {},
-    Status: {},
-    Priority: {},
-    Index: {},
-    ModificationDate: {},
-    ModificationAuthor: {},
-    DueDate: {},
-    AssignedTo: {},
-    Description: {},
-    Stage: {},
-    RelatedTopics: {},
-    Labels: {},
-    DocumentReferences: {}""".format(self.xmlId, self.title, str(self.date),
-            self.author,
-            self.type, self.status, self.priority, self.index,
-            str(self.modDate), self.modAuthor, self.dueDate,
-            self.assignee, self.description, self.stage, self.relatedTopics,
-            self.labels, doc_ref_str)
-        return str_ret
 
 
     def _createSimpleNode(self, parentNode: ET.Element,

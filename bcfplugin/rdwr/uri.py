@@ -1,3 +1,4 @@
+from copy import deepcopy
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
 from rdwr.interfaces.identifiable import Identifiable
@@ -18,6 +19,17 @@ class Uri(Hierarchy, State, Identifiable):
         State.__init__(self, state)
         Identifiable.__init__(self)
         self.uri = uri
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id, memo)
+
+        cpy = Uri(deepcopy(self.uri, memo))
+        cpy.id = cpyid
+        return cpy
 
 
     def __eq__(self, other):

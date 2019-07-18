@@ -65,6 +65,8 @@ def _handleProjectUpdate(errMsg, backup):
     the current state is rolled back.
     """
 
+    global curProject
+
     errorenousUpdate = writer.processProjectUpdates()
     if errorenousUpdate is not None:
         util.printErr(errMsg)
@@ -144,8 +146,6 @@ def deleteObject(object):
     if realObject is None:
         return OperationResults.FAILURE
 
-    util.debug("Object id of deleted object: {}".format(id(realObject)))
-
     realObject.state = State.States.DELETED
     writer.addProjectUpdate(curProject, realObject, None)
     result = _handleProjectUpdate("Object could not be deleted from "\
@@ -154,7 +154,7 @@ def deleteObject(object):
     # `result == None` if the update could not be processed.
     if result ==  OperationResults.FAILURE:
         curProject = projectBackup
-        errMsg = "Couldn't delete {} from the file.".format(result[1])
+        errMsg = "Couldn't delete {} from the file.".format(object)
         util.printErr(errMsg)
         return OperationResults.FAILURE
 

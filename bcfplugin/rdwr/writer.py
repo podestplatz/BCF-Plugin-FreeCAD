@@ -144,8 +144,11 @@ def getFileOfElement(element):
 
     debug("retrieving hierarchy of {}".format(element))
     elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
-    if not elementHierarchy: # element is not addable
+    if not elementHierarchy: # element cannot be modified
+        debug("Could not find a hierarchy {}")
         return None
+
+    debug("Hierarchy is {}".format(elementHierarchy))
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
     if "Viewpoint" in strHierarchy:

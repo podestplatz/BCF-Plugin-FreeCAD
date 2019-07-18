@@ -118,6 +118,8 @@ class DeleteObjectTest(unittest.TestCase):
         objectToDelete = pI.curProject.topicList[0].header.files[1]._ifcProjectId
         objectToDelete.state = s.State.States.DELETED
         pI.deleteObject(objectToDelete)
+        elementHierarchy = hierarchy.Hierarchy.checkAndGetHierarchy(objectToDelete)
+        util.debug("Hierarchy of element {}".format(elementHierarchy))
 
         newObject = pI.curProject.topicList[0].header.files[1]._ifcProjectId
         newObjectValue = newObject.value

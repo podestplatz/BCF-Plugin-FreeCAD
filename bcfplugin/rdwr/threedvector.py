@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+from copy import deepcopy
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
 from rdwr.interfaces.xmlname import XMLName
@@ -25,6 +26,15 @@ class ThreeDVector(Hierarchy, State, XMLName):
         self.x = x
         self.y = y
         self.z = z
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        return ThreeDVector(deepcopy(self.x, memo), deepcopy(self.y, memo),
+                deepcopy(self.z, memo))
 
 
     def __eq__(self, other):
@@ -73,6 +83,15 @@ class Point(ThreeDVector):
                 state, self.__class__.__name__)
 
 
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        return Point(deepcopy(self.x, memo), deepcopy(self.y, memo),
+                deepcopy(self.z, memo))
+
+
     def getEtElement(self, elem):
 
         """
@@ -97,6 +116,15 @@ class Direction(ThreeDVector, XMLName):
 
         ThreeDVector.__init__(self, x, y, z, containingElement, state)
         XMLName.__init__(self)
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        return Direction(deepcopy(self.x, memo), deepcopy(self.y, memo),
+                deepcopy(self.z, memo))
 
 
     def getEtElement(self, elem):
@@ -131,6 +159,17 @@ class Line(Hierarchy, State, XMLName):
             self.start.containingObject = self
         if self.end is not None:
             self.end.containingObject = self
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpystart = deepcopy(self.start, memo)
+        cpyend = deepcopy(self.end, memo)
+
+        return Line(cpystart, cpyend)
 
 
     def __eq__(self, other):
@@ -180,6 +219,17 @@ class ClippingPlane(Hierarchy, State, XMLName):
             self.location.containingObject = self
         if self.direction is not None:
             self.direction.containingObject = self
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpylocation = deepcopy(self.location, memo)
+        cpydirection = deepcopy(self.direction, memo)
+
+        return ClippingPlane(cpylocation, cpydirection)
 
 
     def __eq__(self, other):

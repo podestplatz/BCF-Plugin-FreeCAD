@@ -52,6 +52,6 @@ class Hierarchy:
         Creates a hierarchy list starting from `element`.
         """
 
-        if not isinstance(element, Hierarchy):
+        if not issubclass(type(element), Hierarchy):
             return None
         return element.getHierarchyList()

@@ -1,3 +1,4 @@
+from copy import deepcopy
 from uuid import UUID
 from util import debug
 from rdwr.uri import Uri
@@ -124,6 +125,32 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
         self.defaultListElement = defaultValue
 
 
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+
+        Create a new list with deep copied elements.
+        """
+
+        cpyid = deepcopy(self.id, memo)
+        cpyxmlname = deepcopy(self.xmlName, memo)
+        cpydflvalue = deepcopy(self.defaultListElement, memo)
+        idlist = list()
+        tmpList = list()
+        for item in self:
+            cpyitemid = deepcopy(item.id, memo)
+            cpyitem = deepcopy(item.value, memo)
+            idlist.append(cpyitemid)
+            tmpList.append(cpyitem)
+
+        cpy = SimpleList(tmpList, xmlName = cpyxmlname, defaultValue = cpydflvalue)
+        cpy.id = cpyid
+        # set the item ids to the original values
+        for item,itemid in zip(cpy, idlist):
+            item.id = itemid
+        return cpy
+
+
     def append(self, item):
 
         """ Envelope item into SimpleElement before appending to self.
@@ -168,6 +195,12 @@ class Attribute(XMLName, Hierarchy, State, Identifiable):
         Identifiable.__init__(self)
         self.value = value
         self.defaultValue = defaultValue
+
+
+    def __str__(self):
+
+        retstr = "{}:'{}'".format(self.xmlName, self.value)
+        return retstr
 
 
     def searchObject(self, object):
