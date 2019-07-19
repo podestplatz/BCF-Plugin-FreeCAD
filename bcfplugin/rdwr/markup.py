@@ -516,11 +516,6 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         self._modAuthor = ModificationAuthor(modAuthor, self,
                 ModificationType.MODIFICATION)
 
-        # TODO: is this necessary?
-        # set containingObject of complex members
-        if self.viewpoint is not None:
-            self.viewpoint.containingObject = self
-
 
     def __deepcopy__(self, memo):
 
