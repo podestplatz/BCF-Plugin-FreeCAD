@@ -1,6 +1,8 @@
+import os
+
 from copy import deepcopy
 from uuid import UUID
-from util import debug
+from util import debug, printErr
 from rdwr.uri import Uri
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
@@ -9,17 +11,30 @@ from rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
 
 
 def listSetContainingElement(itemList, containingObject):
+
+    import inspect
+    callerStackFrame = inspect.stack()[1]
+    callerFunction = callerStackFrame.function
+    callerLine = callerStackFrame.lineno
+    callerModule = inspect.getmodule(callerStackFrame[0])
+    callerModuleName = os.path.basename(callerModule.__file__)
+
     if len(itemList) == 0:
         return None
 
+    ignoreList = list()
     for item in itemList:
         if not issubclass(type(item), Hierarchy):
-            raise ValueError("{} is not a subclass of Hierarchy! Element of"\
-                    " the wrong type has index {}".format(type(item),
-                        itemList.index(item)))
+            index = itemList.index(item)
+            printErr("{} is not a subclass of Hierarchy! Element of"\
+                    " the wrong type has index {}. Not setting containing" \
+                    "Object then. Called by {}.{}: {}".format(type(item),
+                        index, callerModuleName, callerFunction, callerLine))
+            ignoreList.append(index)
 
     for item in itemList:
-        item.containingObject = containingObject
+        if itemList.index(item) not in ignoreList:
+            item.containingObject = containingObject
 
 
 def searchListObject(object, elementList):
@@ -54,6 +69,19 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
         Identifiable.__init__(self)
         self.value = value
         self.defaultValue = defaultValue
+
+
+    def __deepcopy__(self, memo):
+
+        cpyid = deepcopy(self.id)
+        cpyvalue = deepcopy(self.value)
+        cpydeflvalue = deepcopy(self.defaultValue)
+        cpyxmlname = deepcopy(self.xmlName)
+        cpystate = deepcopy(self.state)
+
+        cpy = SimpleElement(cpyvalue, cpyxmlname, cpydeflvalue, None, cpystate)
+        cpy.id = cpyid
+        return cpy
 
 
     def __eq__(self, other):
@@ -135,19 +163,13 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
         cpyid = deepcopy(self.id, memo)
         cpyxmlname = deepcopy(self.xmlName, memo)
         cpydflvalue = deepcopy(self.defaultListElement, memo)
-        idlist = list()
         tmpList = list()
         for item in self:
-            cpyitemid = deepcopy(item.id, memo)
-            cpyitem = deepcopy(item.value, memo)
-            idlist.append(cpyitemid)
+            cpyitem = deepcopy(item, memo)
             tmpList.append(cpyitem)
 
         cpy = SimpleList(tmpList, xmlName = cpyxmlname, defaultValue = cpydflvalue)
         cpy.id = cpyid
-        # set the item ids to the original values
-        for item,itemid in zip(cpy, idlist):
-            item.id = itemid
         return cpy
 
 
@@ -165,8 +187,10 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
         if not isinstance(newElem, SimpleElement):
             newElem = SimpleElement(item, self.xmlName, self.defaultListElement,
                     self.containingObject, self.States.ADDED)
+        """
         else:
             newElem.state = State.States.ADDED
+        """
 
         list.append(self, newElem)
 
@@ -197,6 +221,19 @@ class Attribute(XMLName, Hierarchy, State, Identifiable):
         self.defaultValue = defaultValue
 
 
+    def __deepcopy__(self, memo):
+
+        cpyid = deepcopy(self.id)
+        cpyvalue = deepcopy(self.value)
+        cpydeflvalue = deepcopy(self.defaultValue)
+        cpyxmlname = deepcopy(self.xmlName)
+        cpystate = deepcopy(self.state)
+
+        cpy = Attribute(cpyvalue, cpyxmlname, cpydeflvalue, None, cpystate)
+        cpy.id = cpyid
+        return cpy
+
+
     def __str__(self):
 
         retstr = "{}:'{}'".format(self.xmlName, self.value)
@@ -216,6 +253,31 @@ class Attribute(XMLName, Hierarchy, State, Identifiable):
 
 
 class Project(Hierarchy, State, XMLName, XMLIdentifiable, Identifiable):
+
+    """ Class representing a complete BCF file.
+
+    From it a path to every other, properly instantiated object of the data
+    model can be found.
+
+    Deepcopies of project are created in the usual fashion, copying everything.
+    However a deepcopy of just an element somewhere down the path, only copy
+    downwards, and not back upwards again. This would be the case, because
+    nearly every object inherits from `Hierarchy` supplying the class with a
+    reference to its containing object.
+    For example consider this graph:
+                /-> Title  /-> Header
+        Project \-> Markup \-> Topic
+                            \-> Comment
+
+    A copy of the markup node will copy all objects right from it, but the copy
+    won't follow the path to the left to project.
+    This behavior is obtained in two steps:
+        1. a custom implementation of __deepcopy__ in every class
+        2. the infusion of a temporary member into every "to-be-copied" object.
+           This member determines whether the containing object reference shall
+           also be copied or not.
+    """
+
     def __init__(self,
             uuid: UUID,
             name: str = "",
@@ -234,6 +296,29 @@ class Project(Hierarchy, State, XMLName, XMLIdentifiable, Identifiable):
         self._extSchemaSrc = SimpleElement(extSchemaSrc, "ExtensionSchema",
                 None, self)
         self.topicList = list()
+
+
+    def __deepcopy__(self, memo):
+
+        """ Creates a complete deepcopy of the whole project """
+
+        cpyid = deepcopy(self.id, memo)
+        cpyxmlid = deepcopy(self.xmlId, memo)
+        cpyname = deepcopy(self._name, memo)
+        cpyextschemasrc = deepcopy(self._extSchemaSrc, memo)
+        cpytopics = deepcopy(self.topicList, memo)
+
+        cpy = Project(cpyxmlid)
+        cpy._name = cpyname
+        cpy._extSchemaSrc = cpyextschemasrc
+        cpy.topicList = cpytopics
+        listSetContainingElement(cpy.topicList, cpy)
+
+        members = [ cpy._name, cpy._extSchemaSrc ]
+        listSetContainingElement(members, cpy)
+
+        return cpy
+
 
     @property
     def name(self):
@@ -298,6 +383,7 @@ topicList='{}')""".format(str(self.xmlId),
     def searchObject(self, object):
 
         if not issubclass(type(object), Identifiable):
+            debug("object {} is not a subclass of Identifiable".format(object))
             return None
 
         id = object.id

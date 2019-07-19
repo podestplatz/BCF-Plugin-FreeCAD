@@ -12,7 +12,7 @@ from rdwr.modification import (ModificationDate, ModificationAuthor,
         ModificationType)
 from rdwr.uri import Uri
 from rdwr.project import (Attribute, SimpleElement, SimpleList,
-        searchListObject)
+        searchListObject, listSetContainingElement)
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
 from rdwr.interfaces.state import State
@@ -48,14 +48,21 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
         """
 
         cpyid = deepcopy(self.id, memo)
-        cpyguid = deepcopy(self.guid, memo)
-        cpyexternal = deepcopy(self.external, memo)
-        cpyreference = deepcopy(self.reference, memo)
-        cpydescription = deepcopy(self.description, memo)
+        cpyguid = deepcopy(self._guid, memo)
+        cpyexternal = deepcopy(self._external, memo)
+        cpyreference = deepcopy(self._reference, memo)
+        cpydescription = deepcopy(self._description, memo)
 
-        cpy = DocumentReference(cpyguid, cpyexternal, cpyreference,
-                cpydescription)
+        cpy = DocumentReference()
+        cpy._guid = cpyguid
+        cpy._external = cpyexternal
+        cpy._reference = cpyreference
+        cpy._description = cpydescription
         cpy.id = cpyid
+
+        members = [ cpy._guid, cpy._external, cpy._reference, cpy._description ]
+        listSetContainingElement(members, cpy)
+
         return cpy
 
 
@@ -205,13 +212,21 @@ class BimSnippet(Hierarchy, State, XMLName, Identifiable):
         """
 
         cpyid = deepcopy(self.id, memo)
-        cpytype = deepcopy(self.type, memo)
-        cpyexternal = deepcopy(self.external, memo)
-        cpyreference = deepcopy(self.reference, memo)
-        cpyschema = deepcopy(self.schema, memo)
+        cpytype = deepcopy(self._type, memo)
+        cpyexternal = deepcopy(self._external, memo)
+        cpyreference = deepcopy(self._reference, memo)
+        cpyschema = deepcopy(self._schema, memo)
 
-        cpy = BimSnippet(cpytype, cpyexternal, cpyreference, cpyschema)
+        cpy = BimSnippet()
+        cpy._type = cpytype
+        cpy._external = cpyexternal
+        cpy._reference = cpyreference
+        cpy._schema = cpyschema
         cpy.id = cpyid
+
+        members = [ cpy._type, cpy._external, cpy._reference, cpy._schema ]
+        listSetContainingElement(members, cpy)
+
         return cpy
 
 
@@ -396,30 +411,55 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         cpyid = deepcopy(self.id, memo)
         cpyxmlid = deepcopy(self.xmlId, memo)
-        cpytitle = deepcopy(self.title, memo)
-        cpydate = deepcopy(self.date, memo)
-        cpyauthor = deepcopy(self.author, memo)
-        cpytype = deepcopy(self.type, memo)
-        cpystatus = deepcopy(self.status, memo)
+        cpytitle = deepcopy(self._title, memo)
+        cpydate = deepcopy(self._date, memo)
+        cpyauthor = deepcopy(self._author, memo)
+        cpytype = deepcopy(self._type, memo)
+        cpystatus = deepcopy(self._status, memo)
         cpyreferencelinks = deepcopy(self.referenceLinks, memo)
         cpydocrefs = deepcopy(self.docRefs, memo)
-        cpypriority = deepcopy(self.priority, memo)
-        cpyindex = deepcopy(self.index, memo)
+        cpypriority = deepcopy(self._priority, memo)
+        cpyindex = deepcopy(self._index, memo)
         cpylabels = deepcopy(self.labels, memo)
-        cpymoddate = deepcopy(self.modDate, memo)
-        cpymodauthor = deepcopy(self.modAuthor, memo)
-        cpyduedate = deepcopy(self.dueDate, memo)
-        cpyassignee = deepcopy(self.assignee, memo)
-        cpydescription = deepcopy(self.description, memo)
-        cpystage = deepcopy(self.stage, memo)
+        cpymoddate = deepcopy(self._modDate, memo)
+        cpymodauthor = deepcopy(self._modAuthor, memo)
+        cpyduedate = deepcopy(self._dueDate, memo)
+        cpyassignee = deepcopy(self._assignee, memo)
+        cpydescription = deepcopy(self._description, memo)
+        cpystage = deepcopy(self._stage, memo)
         cpyrelatedtopics = deepcopy(self.relatedTopics, memo)
         cpybimsnippet = deepcopy(self.bimSnippet, memo)
 
-        cpy = Topic(cpyxmlid, cpytitle, cpydate, cpyauthor, cpytype, cpystatus,
-                cpyreferencelinks, cpydocrefs, cpypriority, cpyindex, cpylabels,
-                cpymoddate, cpymodauthor, cpyduedate, cpyassignee,
-                cpydescription, cpystage, cpyrelatedtopics, cpybimsnippet)
+        cpy = Topic(cpyxmlid, None, None, None)
+        cpy._title = cpytitle
+        cpy._date = cpydate
+        cpy._author = cpyauthor
+        cpy._type = cpytype
+        cpy._status = cpystatus
+        cpy.referenceLinks = cpyreferencelinks
+        cpy.docRefs = cpydocrefs
+        cpy._priority = cpypriority
+        cpy._index = cpyindex
+        cpy.labels = cpylabels
+        cpy._modDate = cpymoddate
+        cpy._modauthor = cpymodauthor
+        cpy._dueDate = cpyduedate
+        cpy._assignee = cpyassignee
+        cpy._description = cpydescription
+        cpy._stage = cpystage
+        cpy.relatedTopics = cpyrelatedtopics
+        cpy.bimSnippet = cpybimsnippet
         cpy.id = cpyid
+
+        listSetContainingElement(cpy.referenceLinks, cpy)
+        listSetContainingElement(cpy.labels, cpy)
+        listSetContainingElement(cpy.relatedTopics, cpy)
+        members = [ cpy._title, cpy._date, cpy._author, cpy._type, cpy._status,
+                cpy._priority, cpy._index, cpy._modDate, cpy._modAuthor,
+                cpy._dueDate, cpy._assignee, cpy._description, cpy._stage,
+                cpy.bimSnippet ]
+        listSetContainingElement(members, cpy)
+
         return cpy
 
 

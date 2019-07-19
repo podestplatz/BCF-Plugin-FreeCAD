@@ -169,7 +169,11 @@ class Line(Hierarchy, State, XMLName):
         cpystart = deepcopy(self.start, memo)
         cpyend = deepcopy(self.end, memo)
 
-        return Line(cpystart, cpyend)
+        cpy = Line(cpystart, cpyend)
+        cpy.start.containingObject = cpy
+        cpy.end.containingObject = cpy
+
+        return cpy
 
 
     def __eq__(self, other):
@@ -229,7 +233,11 @@ class ClippingPlane(Hierarchy, State, XMLName):
         cpylocation = deepcopy(self.location, memo)
         cpydirection = deepcopy(self.direction, memo)
 
-        return ClippingPlane(cpylocation, cpydirection)
+        cpy = ClippingPlane(cpylocation, cpydirection)
+        cpy.direction.containingObject = cpy
+        cpy.location.containingObject = cpy
+
+        return cpy
 
 
     def __eq__(self, other):

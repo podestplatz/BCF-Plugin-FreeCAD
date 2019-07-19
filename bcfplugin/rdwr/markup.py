@@ -49,16 +49,26 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
         """
 
         cpyid = deepcopy(self.id, memo)
-        cpyIfcProjectId = deepcopy(self.ifcProjectId, memo)
-        cpyIfcSpatStrEl = deepcopy(self.ifcSpatialStructureElement, memo)
-        cpyIsExternal = deepcopy(self.external, memo)
-        cpyfilename = deepcopy(self.filename, memo)
-        cpytime = deepcopy(self.time, memo)
-        cpyreference = deepcopy(self.reference, memo)
+        cpyIfcProjectId = deepcopy(self._ifcProjectId, memo)
+        cpyIfcSpatStrEl = deepcopy(self._ifcSpatialStructureElement, memo)
+        cpyIsExternal = deepcopy(self._external, memo)
+        cpyfilename = deepcopy(self._filename, memo)
+        cpytime = deepcopy(self._time, memo)
+        cpyreference = deepcopy(self._reference, memo)
 
-        cpy = HeaderFile(cpyIfcProjectId, cpyIfcSpatStrEl, cpyIsExternal, cpyfilename,
-                cpytime, cpyreference)
+        cpy = HeaderFile()
+        cpy._ifcProjectId = cpyIfcProjectId
+        cpy._ifcSpatialStructureElement = cpyIfcSpatStrEl
+        cpy._external = cpyIsExternal
+        cpy._filename = cpyfilename
+        cpy._time = cpytime
+        cpy._reference = cpyreference
         cpy.id = cpyid
+
+        members = [ cpy._ifcProjectId, cpy._ifcSpatialStructureElement,
+                cpy._external, cpy._filename, cpy._time, cpy._reference ]
+        listSetContainingElement(members, cpy)
+
         return cpy
 
 
@@ -250,6 +260,7 @@ class Header(Hierarchy, State, XMLName, Identifiable):
 
         cpy = Header(deepcopy(self.files, memo))
         cpy.id = cpyid
+
         return cpy
 
 
@@ -328,14 +339,22 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         """
 
         cpyid = deepcopy(self.id, memo)
-        cpyfile = deepcopy(self.file, memo)
-        cpysnapshot = deepcopy(self.snapshot, memo)
-        cpyindex = deepcopy(self.index, memo)
-        cpyviewpoint = deepcopy(self.viewpoint, memo)
+        cpyxmlid = deepcopy(self.xmlId, memo)
+        cpyfile = deepcopy(self._file, memo)
+        cpysnapshot = deepcopy(self._snapshot, memo)
+        cpyindex = deepcopy(self._index, memo)
+        cpyviewpoint = deepcopy(self._viewpoint, memo)
 
-        cpy = ViewpointReference(cpyfile, cpysnapshot, cpyindex)
+        cpy = ViewpointReference(cpyxmlid)
+        cpy._file = cpyfile
+        cpy._snapshot = cpysnapshot
+        cpy._index = cpyindex
         cpy.viewpoint = cpyviewpoint
         cpy.id = cpyid
+
+        members = [ cpy._file, cpy._snapshot, cpy._index, cpy.viewpoint ]
+        listSetContainingElement(members, cpy)
+
         return cpy
 
 
@@ -524,16 +543,28 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         cpyid = deepcopy(self.id, memo)
         cpyguid = deepcopy(self.xmlId, memo)
-        cpycomment = deepcopy(self.comment, memo)
+        cpycomment = deepcopy(self._comment, memo)
         cpyviewpoint = deepcopy(self.viewpoint, memo)
-        cpydate = deepcopy(self.date, memo)
-        cpyauthor = deepcopy(self.author, memo)
-        cpymoddate = deepcopy(self.modDate, memo)
-        cpymodauthor = deepcopy(self.modAuthor, memo)
+        cpydate = deepcopy(self._date, memo)
+        cpyauthor = deepcopy(self._author, memo)
+        cpymoddate = deepcopy(self._modDate, memo)
+        cpymodauthor = deepcopy(self._modAuthor, memo)
 
-        cpy = Comment(cpyguid, cpydate, cpyauthor, cpycomment, cpyviewpoint,
-                cpymoddate, cpymodauthor)
+        cpy = Comment(cpyguid, None, None, None)
+        cpy._comment = cpycomment
+        cpy._date = cpydate
+        cpy._author = cpyauthor
+        cpy._moddate = cpymoddate
+        cpy._modauthor = cpymodauthor
+        cpy.viewpoint = cpyviewpoint
         cpy.id = cpyid
+
+        members = [cpy._comment, cpy._date, cpy._author, cpy._moddate,
+                cpy._modauthor]
+        if cpy.viewpoint is not None:
+            members.append(cpy.viewpoint)
+
+        listSetContainingElement(members, cpy)
         return cpy
 
 
@@ -750,6 +781,11 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
 
         cpy = Markup(cpytopic, cpyheader, cpycomments, cpyviewpoints)
         cpy.id = cpyid
+        listSetContainingElement(cpy.comments, cpy)
+        listSetContainingElement(cpy.viewpoints, cpy)
+        members = [ cpy.topic, cpy.header ]
+        listSetContainingElement(members, cpy)
+
         return cpy
 
 
