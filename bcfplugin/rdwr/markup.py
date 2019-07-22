@@ -57,6 +57,7 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
         cpyreference = deepcopy(self._reference, memo)
 
         cpy = HeaderFile()
+        cpy.state = self.state
         cpy._ifcProjectId = cpyIfcProjectId
         cpy._ifcSpatialStructureElement = cpyIfcSpatStrEl
         cpy._external = cpyIsExternal
@@ -260,6 +261,7 @@ class Header(Hierarchy, State, XMLName, Identifiable):
 
         cpy = Header(deepcopy(self.files, memo))
         cpy.id = cpyid
+        cpy.state = self.state
 
         return cpy
 
@@ -346,6 +348,7 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         cpyviewpoint = deepcopy(self._viewpoint, memo)
 
         cpy = ViewpointReference(cpyxmlid)
+        cpy.state = self.state
         cpy._file = cpyfile
         cpy._snapshot = cpysnapshot
         cpy._index = cpyindex
@@ -554,15 +557,19 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         cpy._comment = cpycomment
         cpy._date = cpydate
         cpy._author = cpyauthor
-        cpy._moddate = cpymoddate
-        cpy._modauthor = cpymodauthor
+        cpy._modDate = cpymoddate
+        cpy._modAuthor = cpymodauthor
         cpy.viewpoint = cpyviewpoint
         cpy.id = cpyid
+        cpy.state = self.state
 
-        members = [cpy._comment, cpy._date, cpy._author, cpy._moddate,
-                cpy._modauthor]
+        members = [cpy._comment, cpy._date, cpy._author, cpy._modDate,
+                cpy._modAuthor]
         if cpy.viewpoint is not None:
             members.append(cpy.viewpoint)
+
+        debug("Containing object of modAuthor = {}, self = {}".format(
+            id(self._modAuthor.containingObject), id(self)))
 
         listSetContainingElement(members, cpy)
         return cpy
@@ -781,6 +788,7 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
 
         cpy = Markup(cpytopic, cpyheader, cpycomments, cpyviewpoints)
         cpy.id = cpyid
+        cpy.state = self.state
         listSetContainingElement(cpy.comments, cpy)
         listSetContainingElement(cpy.viewpoints, cpy)
         members = [ cpy.topic, cpy.header ]

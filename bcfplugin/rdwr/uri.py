@@ -29,6 +29,8 @@ class Uri(Hierarchy, State, Identifiable):
 
         cpy = Uri(deepcopy(self.uri, memo))
         cpy.id = cpyid
+        cpy.state = self.state
+
         return cpy
 
 

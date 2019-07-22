@@ -1,3 +1,4 @@
+from copy import deepcopy
 from enum import Enum
 from datetime import datetime
 from rdwr.interfaces.hierarchy import Hierarchy
@@ -32,6 +33,18 @@ class ModificationAuthor(p.SimpleElement):
         if modType == ModificationType.MODIFICATION:
             name = "ModifiedAuthor"
         p.SimpleElement.__init__(self, author, name, "", containingElement, state)
+
+
+    def __deepcopy__(self, memo):
+
+        cpysuper = p.SimpleElement.__deepcopy__(self, memo)
+        cpy = ModificationAuthor(deepcopy(self.author))
+        cpy.id = cpysuper.id
+        cpy.state = cpysuper.state
+        cpy.xmlName = cpysuper.xmlName
+        cpy.defaultValue = cpysuper.defaultValue
+
+        return cpy
 
 
     @property
@@ -81,6 +94,18 @@ class ModificationDate(p.SimpleElement):
         if modType == ModificationType.MODIFICATION:
             name = "ModifiedDate"
         p.SimpleElement.__init__(self, date, name, None, containingElement, state)
+
+
+    def __deepcopy__(self, memo):
+
+        cpysuper = p.SimpleElement.__deepcopy__(self, memo)
+        cpy = ModificationDate(deepcopy(self.date))
+        cpy.id = cpysuper.id
+        cpy.state = cpysuper.state
+        cpy.xmlName = cpysuper.xmlName
+        cpy.defaultValue = cpysuper.defaultValue
+
+        return cpy
 
 
     @property

@@ -164,7 +164,8 @@ def debug(msg):
     """
 
     allowedModules = [ "project.py", "programmaticInterface.py",
-            "interface_tests.py", "writer.py", "markup.py", "topic.py" ]
+            "interface_tests.py", "writer.py", "markup.py", "topic.py",
+            "util.py" ]
 
     if not (verbosity == Verbosity.EVERYTHING or
             verbosity == Verbosity.INFODEBUG):
@@ -184,6 +185,10 @@ def debug(msg):
     else:
         print(debugmsg)
 
+
+def printMembers(element):
+    for property, value in vars(element).items():
+        debug("{}.{}={}".format(element.__class__.__name__, property, value))
 
 
 def getCurrentQScreen():

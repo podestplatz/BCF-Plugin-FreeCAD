@@ -843,7 +843,13 @@ def addProjectUpdate(project: p.Project, element, prevVal):
     global projectUpdates
 
     projectCpy = c.deepcopy(project)
-    elementCpy = projectCpy.searchObject(element)
+    # copy element and morph it into the hierarchy of the copied project
+    elementCpy = c.deepcopy(element)
+    oldElement = projectCpy.searchObject(element)
+    elementCpy.containingObject = oldElement.containingObject
+
+    util.printMembers(element)
+    util.printMembers(elementCpy)
     if elementCpy is None:
         raise RuntimeError("Could not find element id {} in project"\
                 " {}".format(element.id, projectCpy))

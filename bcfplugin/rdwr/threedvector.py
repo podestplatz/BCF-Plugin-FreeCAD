@@ -33,8 +33,10 @@ class ThreeDVector(Hierarchy, State, XMLName):
         """ Create a deepcopy of the object without copying `containingObject`
         """
 
-        return ThreeDVector(deepcopy(self.x, memo), deepcopy(self.y, memo),
+        cpy = ThreeDVector(deepcopy(self.x, memo), deepcopy(self.y, memo),
                 deepcopy(self.z, memo))
+        cpy.state = self.state
+        return cpy
 
 
     def __eq__(self, other):
@@ -88,8 +90,10 @@ class Point(ThreeDVector):
         """ Create a deepcopy of the object without copying `containingObject`
         """
 
-        return Point(deepcopy(self.x, memo), deepcopy(self.y, memo),
+        cpy = Point(deepcopy(self.x, memo), deepcopy(self.y, memo),
                 deepcopy(self.z, memo))
+        cpy.state = self.state
+        return cpy
 
 
     def getEtElement(self, elem):
@@ -123,8 +127,10 @@ class Direction(ThreeDVector, XMLName):
         """ Create a deepcopy of the object without copying `containingObject`
         """
 
-        return Direction(deepcopy(self.x, memo), deepcopy(self.y, memo),
+        cpy = Direction(deepcopy(self.x, memo), deepcopy(self.y, memo),
                 deepcopy(self.z, memo))
+        cpy.state = self.state
+        return cpy
 
 
     def getEtElement(self, elem):
@@ -172,6 +178,7 @@ class Line(Hierarchy, State, XMLName):
         cpy = Line(cpystart, cpyend)
         cpy.start.containingObject = cpy
         cpy.end.containingObject = cpy
+        cpy.state = self.state
 
         return cpy
 
@@ -236,6 +243,7 @@ class ClippingPlane(Hierarchy, State, XMLName):
         cpy = ClippingPlane(cpylocation, cpydirection)
         cpy.direction.containingObject = cpy
         cpy.location.containingObject = cpy
+        cpy.state = self.state
 
         return cpy
 

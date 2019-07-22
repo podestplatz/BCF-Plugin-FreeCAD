@@ -59,6 +59,7 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
         cpy._reference = cpyreference
         cpy._description = cpydescription
         cpy.id = cpyid
+        cpy.state = self.state
 
         members = [ cpy._guid, cpy._external, cpy._reference, cpy._description ]
         listSetContainingElement(members, cpy)
@@ -223,6 +224,7 @@ class BimSnippet(Hierarchy, State, XMLName, Identifiable):
         cpy._reference = cpyreference
         cpy._schema = cpyschema
         cpy.id = cpyid
+        cpy.state = self.state
 
         members = [ cpy._type, cpy._external, cpy._reference, cpy._schema ]
         listSetContainingElement(members, cpy)
@@ -450,6 +452,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         cpy.relatedTopics = cpyrelatedtopics
         cpy.bimSnippet = cpybimsnippet
         cpy.id = cpyid
+        cpy.state = self.state
 
         listSetContainingElement(cpy.referenceLinks, cpy)
         listSetContainingElement(cpy.labels, cpy)

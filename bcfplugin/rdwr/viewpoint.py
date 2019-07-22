@@ -68,6 +68,7 @@ class Bitmap(Hierarchy, State, XMLName):
 
         cpy = Bitmap(cpyformat, cpyreference, cpylocation, cpynormal,
                 cpyupvector, cpyheight)
+        cpy.state = self.state
         return cpy
 
 
@@ -162,6 +163,7 @@ class Camera(Hierarchy, State, XMLName):
         cpyupvector = deepcopy(self.upvector, memo)
 
         cpy = Camera(cpyviewpoint, cpydirection, cpyupvector)
+        cpy.state = self.state
         return cpy
 
 
@@ -234,6 +236,7 @@ class PerspectiveCamera(Camera, XMLName):
 
         cpy = PerspectiveCamera(cpyviewpoint, cpydirection, cpyupvector,
                 cpyfieldofview)
+        cpy.state = self.state
         return cpy
 
 
@@ -300,6 +303,7 @@ class OrthogonalCamera(Camera, XMLName):
 
         cpy = OrthogonalCamera(cpyviewpoint, cpydirection, cpyupvector,
                 cpyviewworldscale)
+        cpy.state = self.state
         return cpy
 
 
@@ -358,6 +362,7 @@ class Component(Hierarchy, State, XMLName):
         cpyauthoringtoolid = deepcopy(self.authoringtoolId)
 
         cpy = Component(cpyifcid, cpyoriginatingsystem, cpyauthoringtoolid)
+        cpy.state = self.state
         return cpy
 
 
@@ -436,6 +441,7 @@ class ComponentColour(Hierarchy, State, XMLName):
         cpycomponents = deepcopy(self.components, memo)
 
         cpy = ComponentColour(cpycolour, cpycomponents)
+        cpy.state = self.state
         return cpy
 
 
@@ -486,6 +492,7 @@ class ViewSetupHints(Hierarchy, State, XMLName):
         cpyspaces = deepcopy(self.spacesVisible, memo)
 
         cpy = ViewSetupHints(cpyopenings, cpyspacebound, cpyspaces)
+        cpy.state = self.state
         return cpy
 
 
@@ -561,6 +568,7 @@ class Components(Hierarchy, State, XMLName):
 
         cpy = Components(cpyvisibilitydefault, cpyvisibilityexceptions,
                 cpyselection, cpyviewsetuphints, cpycolouring)
+        cpy.state = self.state
         return cpy
 
 
@@ -701,6 +709,7 @@ class Viewpoint(Hierarchy, State, XMLName, Identifiable, XMLIdentifiable):
         cpy = Viewpoint(cpyguid, cpycomponents, cpyocamera, cpypcamera,
                 cpylines, cpyclippingplanes, cpybitmaps)
         cpy.id = cpyid
+        cpy.state = self.state
         return cpy
 
 

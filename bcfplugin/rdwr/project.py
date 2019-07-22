@@ -81,6 +81,8 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
 
         cpy = SimpleElement(cpyvalue, cpyxmlname, cpydeflvalue, None, cpystate)
         cpy.id = cpyid
+        cpy.state = self.state
+
         return cpy
 
 
@@ -170,6 +172,8 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
 
         cpy = SimpleList(tmpList, xmlName = cpyxmlname, defaultValue = cpydflvalue)
         cpy.id = cpyid
+        cpy.state = self.state
+
         return cpy
 
 
@@ -231,6 +235,8 @@ class Attribute(XMLName, Hierarchy, State, Identifiable):
 
         cpy = Attribute(cpyvalue, cpyxmlname, cpydeflvalue, None, cpystate)
         cpy.id = cpyid
+        cpy.state = self.state
+
         return cpy
 
 
@@ -309,6 +315,8 @@ class Project(Hierarchy, State, XMLName, XMLIdentifiable, Identifiable):
         cpytopics = deepcopy(self.topicList, memo)
 
         cpy = Project(cpyxmlid)
+        cpy.id = cpyid
+        cpy.state = self.state
         cpy._name = cpyname
         cpy._extSchemaSrc = cpyextschemasrc
         cpy.topicList = cpytopics

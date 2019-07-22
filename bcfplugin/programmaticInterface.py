@@ -15,6 +15,8 @@ import rdwr.reader as reader
 import rdwr.writer as writer
 import rdwr.project as p
 import rdwr.markup as m
+from rdwr.modification import (ModificationDate, ModificationAuthor,
+        ModificationType)
 from rdwr.viewpoint import Viewpoint, OrthogonalCamera, PerspectiveCamera
 from rdwr.topic import Topic, DocumentReference, BimSnippet
 from rdwr.markup import Comment, Header, HeaderFile, ViewpointReference, Markup
@@ -867,10 +869,12 @@ def setModDateAuthor(element, author="", addUpdate=True):
     modDate = utc.localize(datetime.datetime.now())
 
     oldDate = element.modDate
-    element.modDate = modDate
+    element._modDate = ModificationDate(modDate, element,
+            ModificationType.MODIFICATION)
 
     oldAuthor = element.modAuthor
-    element.modAuthor = author
+    element._modAuthor = ModificationAuthor(author, element,
+            ModificationType.MODIFICATION)
 
     if addUpdate:
         element._modDate.state = State.States.MODIFIED
@@ -1008,11 +1012,13 @@ def modifyElement(element, author=""):
     realElement.state = State.States.DELETED
     writer.addProjectUpdate(curProject, realElement, None)
 
+    util.debug("Setting state of {} to equal {}".format(realElement, element))
     # copy the state of the given element to the real element
     for property, value in vars(element).items():
         setattr(realElement, property, copy.deepcopy(value))
+        util.debug("Set comment.{}={}".format(property, value))
 
-    # if topic was modified update `modDate` and `modAuthor`
+    # if topic/comment was modified update `modDate` and `modAuthor`
     if isinstance(realElement, Topic) or isinstance(realElement, Comment):
         if author == "":
             # Rollback and delete the latest update
@@ -1022,8 +1028,11 @@ def modifyElement(element, author=""):
             writer.projectUpdates.pop(len(writer.projectUpdates)-1)
             return OperationResults.FAILURE
 
-        setModDateAuthor(realElement, author, False)
+        setModDateAuthor(realElement, copy.deepcopy(element.modAuthor), False)
+        util.debug("ModAuthor: {}; ModDate: {}".format(realElement.modAuthor,
+            realElement.modDate))
 
+    util.debug("Add {} as new project update".format(realElement))
     realElement.state = State.States.ADDED
     writer.addProjectUpdate(curProject, realElement, None)
     return _handleProjectUpdate("Could not modify element {}".format(element.xmlName),
