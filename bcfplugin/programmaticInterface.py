@@ -869,12 +869,10 @@ def setModDateAuthor(element, author="", addUpdate=True):
     modDate = utc.localize(datetime.datetime.now())
 
     oldDate = element.modDate
-    element._modDate = ModificationDate(modDate, element,
-            ModificationType.MODIFICATION)
+    element.modDate = modDate
 
     oldAuthor = element.modAuthor
-    element._modAuthor = ModificationAuthor(author, element,
-            ModificationType.MODIFICATION)
+    element.modAuthor = author
 
     if addUpdate:
         element._modDate.state = State.States.MODIFIED
@@ -1028,7 +1026,7 @@ def modifyElement(element, author=""):
             writer.projectUpdates.pop(len(writer.projectUpdates)-1)
             return OperationResults.FAILURE
 
-        setModDateAuthor(realElement, copy.deepcopy(element.modAuthor), False)
+        setModDateAuthor(realElement, author, False)
         util.debug("ModAuthor: {}; ModDate: {}".format(realElement.modAuthor,
             realElement.modDate))
 

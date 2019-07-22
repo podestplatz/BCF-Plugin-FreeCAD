@@ -30,7 +30,7 @@ class XMLName:
 
     @xmlName.setter
     def xmlName(self, newVal):
-        pass
+        self._xmlname = newVal
 
     def getEtElement(self, elem):
 

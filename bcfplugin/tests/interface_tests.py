@@ -342,14 +342,16 @@ class ModifyElementTests(unittest.TestCase):
         commentToModify = comments[0]
 
         newText = "Hello my name is... Slim Shaaaaadyyyy"
+        newAuthor = "a@b.c"
         commentToModify.comment = newText
-        self.plugin.modifyElement(commentToModify, author="a@b.c")
+        self.plugin.modifyElement(commentToModify, author=newAuthor)
 
         newTopics = self.retrieveTopics()
         newComments = self.retrieveComments(newTopics[0])
         updatedComment = newComments[0]
 
-        self.assertTrue(updatedComment.comment == newText)
+        self.assertTrue(updatedComment.comment == newText and
+                updatedComment.modAuthor == newAuthor)
 
 
     def test_modifyCommentWithoutAuthor(self):

@@ -668,7 +668,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
     def __printEquality(self, equal, name):
 
-        if not equal:
+        if not equal and False:
             print("{} is not equal".format(name))
 
 
