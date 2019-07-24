@@ -7,18 +7,32 @@ from math import pi
 import rdwr.threedvector as vector
 import util
 
+from rdwr.threedvector import (Point, Direction)
 from rdwr.viewpoint import (OrthogonalCamera, PerspectiveCamera, Component,
-        ComponentColour)
-from rdwr.threedvector import Point, Direction
+        ComponentColour, Line)
 
 # it is assumed that this file is only imported iff the plugin is running inside
 # FreeCAD in Gui mode.
 import FreeCADGui
 import FreeCAD
+draftAvailable = True
+try:
+    import Draft
+except:
+    util.printInfo("Cannot import Draft workbench. No elements can be drawn")
+    draftAvailable = False
 
 
 pCamClassTypeId = coin.SoPerspectiveCamera_getClassTypeId
 oCamClassTypeId = coin.SoOrthographicCamera_getClassTypeId
+
+doc = FreeCAD.ActiveDocument
+""" Reference to the document the model to the BCF file is open in """
+
+bcfGroupName = "BCF"
+bcfGroup = None
+""" Reference to the document object group all elements will be assigned to,
+that get created by functions inside this file """
 
 
 class Unit(Enum):
@@ -189,6 +203,68 @@ def setOCamera(camSettings: OrthogonalCamera):
     setCamera(camSettings.viewPoint, camSettings.direction, camSettings.upVector)
     util.printInfo("Camera type {}".format(view.getCameraType()))
     cam.height.setValue(camSettings.viewWorldScale)
+
+
+def drawLine(start: FreeCAD.Vector, end: FreeCAD.Vector):
+
+    """ Creates a line from start to end using the draft workbench. """
+
+    if start is None or end is None:
+        return None
+    if not (isinstance(start, FreeCAD.Vector) and is instance(end,
+            FreeCAD.Vector)):
+        return None
+
+    pl = FreeCAD.Placement()
+    pl.Rotation.Q = (0, 0, 0, 1) # set the rotation in terms of quarternions
+    pl.Base = copy.deepcopy(start)
+    points = [start, end]
+    line = Draft.makeWire(points, placement=pl, closed=False, face=False,
+            support = None)
+
+    return line
+
+
+def checkIfGroupExists(name: str):
+
+    obj = doc.getObject(name)
+    if obj is None:
+        return False
+
+    if not isinstance(obj, FreeCAD.DocumentObjectGroup):
+        return False
+
+    return obj
+
+
+def createLines(lines: List[Line]):
+
+    """ Creates every line in `lines` and adds them to the BCF group """
+
+    global bcfGroup
+    global bcfGroupName
+
+    # get a reference to the bcf group and store it in bcfGroup
+    if bcfGroup is None:
+        group = checkIfGroupExists(bcfGroupName)
+        if not group:
+            bcfGroup = doc.addObject("App::DocumentObjectGroup", bcfGroupName)
+        else:
+            bcfGroup = obj
+
+    # try to add all lines in `lines`. Skip the failing ones
+    for line in lines:
+        start = line.start
+        end = line.end
+        fStart = FreeCAD.Vector(start.x, start.y, start.z)
+        fEnd = FreeCAD.Vector(end.x, end.y, end.z)
+        line = drawLine(fStart, fEnd)
+
+        if line is not None:
+            bcfGroup.addObject(line)
+        else:
+            util.printErr("Could not add line. Either start or end is None, or"\
+                    " the points are not of type `FreeCAD.Vector`")
 
 
 def readCamera():
