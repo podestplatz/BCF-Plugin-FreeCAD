@@ -1,12 +1,15 @@
 import re
 from typing import List
 from pivy import coin
-from rdwr.viewpoint import (OrthogonalCamera, PerspectiveCamera, Component,
-        ComponentColour)
-from rdwr.threedvector import Point, Direction
+from enum import Enum
+from math import pi
 
 import rdwr.threedvector as vector
 import util
+
+from rdwr.viewpoint import (OrthogonalCamera, PerspectiveCamera, Component,
+        ComponentColour)
+from rdwr.threedvector import Point, Direction
 
 # it is assumed that this file is only imported iff the plugin is running inside
 # FreeCAD in Gui mode.
@@ -16,6 +19,68 @@ import FreeCAD
 
 pCamClassTypeId = coin.SoPerspectiveCamera_getClassTypeId
 oCamClassTypeId = coin.SoOrthographicCamera_getClassTypeId
+
+
+class Unit(Enum):
+    METER = 1
+    MMETER = 2
+    INCH = 3
+    CMETER = 4
+    FOOT = 5
+
+
+def getConversionFactor(srcUnit: Unit, dstUnit: Unit = Unit.MMETER):
+
+    """ Returns the conversion factor to get a value from the `srcUnit` into
+    `dstUnit`.
+
+    Currently only conversion factors for the destination unit METER are
+    returned
+    """
+
+    conversionFactor = None
+    if srcUnit == Unit.METER:
+        conversionFactor = 1000
+    elif srcUnit == Unit.MMETER:
+        conversionFactor = 1
+    elif srcUnit == Unit.INCH:
+        conversionFactor = 25.4
+    elif srcUnit == Unit.CMETER:
+        conversionFactor = 10
+    elif srcUnit == Unit.FOOT:
+        conversionFactor = 304.8
+
+    return conversionFactor
+
+
+def degreeToRadians(degrees):
+
+    """ Convert a value in degrees into radians """
+
+    return degrees * pi / 180
+
+
+def convertToFreeCADUnits(vector: FreeCAD.Vector = None,
+        distance: float = None, srcUnit: Unit = Unit.METER):
+
+    """ Convert a FreeCAD.Vector or a simple distance to millimeters as used by
+    FreeCAD.
+
+    It can convert all values from the units specified in the `Unit` Enum to
+    millimeters.
+    """
+
+    conversionFactor = getConversionFactor(srcUnit, Unit.MMETER) # meter to millimeter
+
+    newVal = None
+    if vector is not None:
+        newVal = FreeCAD.Vector(vector.x * conversionFactor,
+                vector.y * conversionFactor,
+                vector.z * conversionFactor)
+    elif distance is not None:
+        newVal = distance * conversionFactor
+
+    return newVal
 
 
 def getRotation(normal: FreeCAD.Vector, up: FreeCAD.Vector):
@@ -63,6 +128,12 @@ def setCamera(camViewpoint: vector.Point,
     fPosition = FreeCAD.Vector(camViewpoint.x, camViewpoint.y, camViewpoint.z)
     fUpVector = FreeCAD.Vector(camUpVector.x, camUpVector.y, camUpVector.z)
     fDirVector = FreeCAD.Vector(camDirection.x, camDirection.y, camDirection.z)
+
+    # convert the vectors units to the unit FreeCAD uses
+    fPosition = convertToFreeCADUnits(vector = fPosition, srcUnit = Unit.METER)
+    fUpVector = convertToFreeCADUnits(vector = fUpVector, srcUnit = Unit.METER)
+    fDirVector = convertToFreeCADUnits(vector = fDirVector, srcUnit = Unit.METER)
+
     rotation = getRotation(fDirVector, fUpVector)
 
     cam.orientation.setValue(rotation.Q)
@@ -91,7 +162,10 @@ def setPCamera(camSettings: PerspectiveCamera):
 
     setCamera(camSettings.viewPoint, camSettings.direction, camSettings.upVector)
     util.printInfo("Camera type {}".format(view.getCameraType()))
-    cam.heightAngle.setValue(camSettings.fieldOfView)
+    angle = degreeToRadians(camSettings.fieldOfView)
+    util.printInfo("Setting the fieldOfView = {} radians ({}"\
+            " degrees)".format(angle, camSettings.fieldOfView))
+    cam.heightAngle.setValue(angle)
 
 
 def setOCamera(camSettings: OrthogonalCamera):
