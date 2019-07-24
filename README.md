@@ -54,7 +54,7 @@ If you have installed the dependencies in a python virtual environment, FreeCAD 
     sys.path.append("VENV/lib/python[VERSION]/site-packages
     ```
     
-## Using the nonGui frontend
+## Using the non-GUI frontend
 To get access to the nonGui-frontend (also called programmatic interface or PI for short) the import of `bcfplugin` suffices. 
 ```python
 >>> import bcfplugin as plugin
@@ -116,6 +116,19 @@ And to get a list of related documents run the function `getAdditionalDocumentRe
 
 You might have noticed by now that the topic is a rather important object, so treat it with care!
 If you stumble upon a member `id` in any object gotten from the plugin, please don't modify it. The BCFPlugin relies upon it!
+
+## Using the GUI frontend
+
+At point of writing the plugin cannot be used in graphical mode inside FreeCAD. However it can be started as separate application.
+To start the Qt5 application run (this code example assumes that you are already inside the top directory of the git repository):
+
+```bash
+$> cd ./bcfplugin/gui
+$> python plugin_view.py
+```
+
+This will show you, at first, a small application with just one label and one button urging you to open a BCF-file. After you selected a valid one, the GUI builds to its full extend and shows every available control. For a complete tutorial on the plugin's GUI please visit the [Tutorials/GUI](https://github.com/podestplatz/BCF-Plugin-FreeCAD/wiki/GUI-Tutorial) on the [wiki page](https://github.com/podestplatz/BCF-Plugin-FreeCAD/wiki/)
+
 
 ## Debugging
 
