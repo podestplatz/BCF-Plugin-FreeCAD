@@ -1,8 +1,10 @@
 import re
+import copy
 from typing import List
 from pivy import coin
 from enum import Enum
 from math import pi
+from random import randrange
 
 import rdwr.threedvector as vector
 import util
@@ -29,7 +31,7 @@ oCamClassTypeId = coin.SoOrthographicCamera_getClassTypeId
 doc = FreeCAD.ActiveDocument
 """ Reference to the document the model to the BCF file is open in """
 
-bcfGroupName = "BCF"
+bcfGroupName = "BCF-{}".format(randrange(5000))
 bcfGroup = None
 """ Reference to the document object group all elements will be assigned to,
 that get created by functions inside this file """
@@ -211,7 +213,7 @@ def drawLine(start: FreeCAD.Vector, end: FreeCAD.Vector):
 
     if start is None or end is None:
         return None
-    if not (isinstance(start, FreeCAD.Vector) and is instance(end,
+    if not (isinstance(start, FreeCAD.Vector) and isinstance(end,
             FreeCAD.Vector)):
         return None
 

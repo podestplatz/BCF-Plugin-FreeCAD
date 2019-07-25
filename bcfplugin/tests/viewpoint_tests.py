@@ -18,13 +18,13 @@ def setCameraSettings(project, vC):
 
 
 import sys
-sys.path.append("/home/patrick/projects/freecad/plugin/env/lib/python3.7/site-packages")
+sys.path.append("../../env/lib/python3.7/site-packages")
 import bcfplugin
 import bcfplugin.programmaticInterface
 import bcfplugin.frontend.viewController as vC
-FreeCAD.open(u"/home/patrick/projects/freecad/plugin/bcf-examples/clippingPlane_bernd/bcfexample1.FCStd")
+FreeCAD.open(u"../../bcf-examples/clippingPlane_bernd/bcfexample1.FCStd")
 
-bcfplugin.programmaticInterface.openProject("/home/patrick/projects/freecad/plugin/bcf-examples/bcfexmple_bernd.bcf")
+bcfplugin.programmaticInterface.openProject("../../bcf-examples/bcfexmple_bernd.bcf")
 project = bcfplugin.programmaticInterface.curProject
 
 setCameraSettings(project, vC)
