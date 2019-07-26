@@ -589,11 +589,11 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         defaultValue = self._type.defaultValue
         if self.type != defaultValue:
-            elem.attrib["type"] = self.type
+            elem.attrib[self._type.xmlName] = self.type
 
         defaultValue = self._status.defaultValue
         if self.status != defaultValue:
-            elem.attrib["status"] = self.status
+            elem.attrib[self._status.xmlName] = self.status
 
         for refLink in self.referenceLinks:
             refLinkElem = self._createSimpleNode(elem, refLink)
