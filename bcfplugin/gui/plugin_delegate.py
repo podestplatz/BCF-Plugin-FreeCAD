@@ -7,6 +7,7 @@ import bcfplugin.util as util
 
 
 commentRegex = "[a-zA-Z0-9.,\-\/ ]* -- .*@.*"
+dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
 
 class CommentDelegate(QStyledItemDelegate):
 
@@ -293,4 +294,29 @@ class CommentDelegate(QStyledItemDelegate):
                 # mark the changed size hint for recomputation
                 self.sizeHints[index] = None
 
+
+
+class TopicMetricsDelegate(QStyledItemDelegate):
+
+    def __init__(self, parent = None):
+
+        QStyledItemDelegate.__init__(self, parent)
+
+
+    def createEditor(self, parent, option, index):
+
+        dueDateIndex = index().model.members.index(model.topic._dueDate)
+        if index.row() == dueDateIndex:
+            validator = QRegExpValidator()
+            validator.setRegExp(dueDateRegex)
+
+            startValue = "" # TODO: use current date
+            editor = QLineEdit(startValue)
+            editor.setValidator(validator)
+            editor.setFrame(True)
+
+            return editor
+
+        else:
+            super().createEditor(parent, option, index)
 
