@@ -265,6 +265,17 @@ class CommentModel(QAbstractListModel):
         return True
 
 
+    def referencedViewpoint(self, index):
+
+        """ Return true if the comment, specified by `index` references a
+        viewpoint. False otherwise """
+
+        if not index.isValid():
+            return None
+
+        return self.items[index.row()].viewpoint
+
+
 class SnapshotModel(QAbstractListModel):
 
 

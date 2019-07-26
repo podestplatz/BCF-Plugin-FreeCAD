@@ -10,6 +10,7 @@ from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
 import bcfplugin.gui.plugin_model as model
 import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
+from bcfplugin.rdwr.viewpoint import Viewpoint
 
 
 def tr(text):
@@ -20,6 +21,8 @@ def tr(text):
 
 
 class CommentView(QListView):
+
+    specialCommentSelected = Signal((Viewpoint))
 
     def __init__(self, parent = None):
 
@@ -59,6 +62,16 @@ class CommentView(QListView):
 
         deleteButton.show()
         self.delBtn = deleteButton
+
+
+    def currentChanged(self, current, previous):
+
+        """ If the current comment links to a viewpoint then select that
+        viewpoint in viewpointsList.  """
+
+        viewpoint = current.model().referencedViewpoint(current)
+        if viewpoint is not None:
+            self.specialCommentSelected.emit(viewpoint)
 
 
     def deleteDelBtn(self):
@@ -132,6 +145,32 @@ class ViewpointsListView(QListView):
         QListView.__init__(self, parent)
 
 
+    def findViewpoint(self, desired: Viewpoint):
+
+        index = -1
+        for i in range(0, self.model().rowCount()):
+            index = self.model().createIndex(i, 0)
+            data = self.model().data(index, Qt.DisplayRole)
+
+            if str(desired.id) in data:
+                index = i
+                break
+
+        return index
+
+
+    @Slot(Viewpoint)
+    def selectViewpoint(self, viewpoint: Viewpoint):
+
+        util.debug("Hello now I should select an element right?")
+        start = self.model().createIndex(0, 0)
+        searchValue = str(viewpoint.file) + " (" + str(viewpoint.id) + ")"
+        matches = self.model().match(start, Qt.DisplayRole, searchValue)
+        if len(matches) > 0:
+            util.debug("Is it element: {}".format(matches[0].row()))
+            self.setCurrentIndex(matches[0])
+
+
 class MyMainWindow(QWidget):
 
     projectOpened = Signal()
@@ -171,6 +210,11 @@ class MyMainWindow(QWidget):
         self.topicCbModel.selectionChanged.connect(self.snapshotModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.viewpointsModel.resetItems)
         self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
+        # comment, referencing a viewpoint, selected => select corresponding
+        #viewpoint
+        self.commentList.specialCommentSelected.connect(lambda x:
+                self.snStack.setCurrentIndex(1))
+        self.commentList.specialCommentSelected.connect(self.viewpointList.selectViewpoint)
 
         self.setLayout(self.mainLayout)
 
