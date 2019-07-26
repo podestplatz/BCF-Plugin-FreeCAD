@@ -33,6 +33,15 @@ def test_letLinesDraw():
     vC.createLines(viewpoints[0].lines)
 
 
+def test_addClipPlanes():
+
+    topics = [ topic[1] for topic in pI.getTopics() ]
+    viewpoints = [ vp[1] for vp in pI.getViewpoints(topics[0]) ]
+    clippingPlanes = viewpoints[0].clippingPlanes
+    clip = clippingPlanes[0]
+
+    vC.createClippingPlane(clip)
+
 
 #if __name__ == "__main__":
 testFileDir = "viewController-tests"
@@ -43,4 +52,4 @@ setupBCFFile("viewpoint_with_lines.bcfv", "viewController-tests",
 pI.openProject("./{}/{}".format(testFileDir, testBCFFile))
 
 test_letLinesDraw()
-
+test_addClipPlanes()

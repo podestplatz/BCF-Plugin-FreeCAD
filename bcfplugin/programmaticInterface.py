@@ -470,6 +470,12 @@ def activateViewpoint(viewpoint: Viewpoint,
         vCtrl.applyVisibilitySettings(components.visibilityDefault,
                 components.visibilityExceptions)
 
+    # check if any clipping planes are defined and create everyone if so.
+    if (viewpoint.clippingPlanes is not None and
+            len(viewpoint.clippingPlanes) > 0):
+        for clip in viewpoint.clippingPlanes:
+            vCtrl.createClippingPlane(clip)
+
 
 def addCurrentViewpoint(topic: Topic):
 

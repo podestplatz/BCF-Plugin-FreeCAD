@@ -5,13 +5,14 @@ from pivy import coin
 from enum import Enum
 from math import pi
 from random import randrange
+from pivy import coin
 
 import rdwr.threedvector as vector
 import util
 
 from rdwr.threedvector import (Point, Direction)
 from rdwr.viewpoint import (OrthogonalCamera, PerspectiveCamera, Component,
-        ComponentColour, Line)
+        ComponentColour, Line, ClippingPlane)
 
 # it is assumed that this file is only imported iff the plugin is running inside
 # FreeCAD in Gui mode.
@@ -35,6 +36,9 @@ bcfGroupName = "BCF-{}".format(randrange(5000))
 bcfGroup = None
 """ Reference to the document object group all elements will be assigned to,
 that get created by functions inside this file """
+
+clipPlanes = list()
+""" List of all currently active clipping planes """
 
 
 class Unit(Enum):
@@ -241,7 +245,10 @@ def checkIfGroupExists(name: str):
 
 def createLines(lines: List[Line]):
 
-    """ Creates every line in `lines` and adds them to the BCF group """
+    """ Creates every line in `lines` and adds them to the BCF group
+
+    Returns True if all lines could be created. Otherwise False is returned.
+    """
 
     global bcfGroup
     global bcfGroupName
@@ -267,6 +274,38 @@ def createLines(lines: List[Line]):
         else:
             util.printErr("Could not add line. Either start or end is None, or"\
                     " the points are not of type `FreeCAD.Vector`")
+
+    return True
+
+
+def createClippingPlane(clip: ClippingPlane):
+
+    """ Creates a clipping plane `clip` on the scene graph of FreeCADGui """
+
+    if (clip is None or
+            clip.direction is None or
+            clip.location is None):
+        return False
+
+    sceneGraph = FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
+
+    # create plane that gets added to the scene graph
+    normal = coin.SbVec3f(convertToFreeCADUnits(distance = clip.direction.x),
+            convertToFreeCADUnits(distance = clip.direction.y),
+            convertToFreeCADUnits(distance = clip.direction.z))
+    ref = coin.SbVec3f(convertToFreeCADUnits(distance = clip.location.x),
+            convertToFreeCADUnits(distance = clip.location.y),
+            convertToFreeCADUnits(distance = clip.location.z))
+    plane = coin.SbPlane(normal, ref)
+
+    clipplane = coin.SoClipPlane()
+    clipplane.plane.setValue(plane)
+
+    # add the clipping plane to the scenegraph
+    sceneGraph.insertChild(clipplane, 0)
+    clipPlanes.append(clipplane)
+
+    return True
 
 
 def readCamera():
