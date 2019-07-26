@@ -170,7 +170,10 @@ class MyMainWindow(QWidget):
         self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.snapshotModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.viewpointsModel.resetItems)
+        self.topicCbModel.selectionChanged.connect(self.topicDetailsBtn.show)
+        self.topicCbModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
         self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
+        self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
 
         self.setLayout(self.mainLayout)
 
@@ -217,9 +220,17 @@ class MyMainWindow(QWidget):
         self.topicCb.setModel(self.topicCbModel)
         self.topicCb.currentIndexChanged.connect(self.topicCbModel.newSelection)
 
+        self.topicDetailsBtn = QPushButton("Details")
+        self.topicDetailsBtn.hide()
+
+        self.topicDetailsModel = model.TopicMetricsModel()
+        self.topicDetailsView = QTableView()
+        self.topicDetailsView.setModel(self.topicDetailsModel)
+
         self.topicHLayout = QHBoxLayout(topicGroup)
         self.topicHLayout.addWidget(self.topicLabel)
         self.topicHLayout.addWidget(self.topicCb)
+        self.topicHLayout.addWidget(self.topicDetailsBtn)
 
         return topicGroup
 
@@ -344,6 +355,13 @@ class MyMainWindow(QWidget):
         if filename != "":
             util.debug("Got a file to write to: {}.".format(filename))
             model.saveProject(filename[0])
+
+
+    @Slot()
+    def showTopicMetrics(self):
+
+        util.debug("Showing topic metrics window")
+        self.topicDetailsView.show()
 
 
 if __name__ == "__main__":

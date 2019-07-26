@@ -48,12 +48,6 @@ class CommentDelegate(QStyledItemDelegate):
         self._verticalQOffset = self._verticalOffset * ppm
         self._maxCommentHeight = screen.size().height()
 
-        util.debug("ppm({})".format(ppm))
-        util.debug("commentXOffset({});commentYOffset({});"\
-                "separationLineThickness({});verticalOffset({})".format(
-                    self._commentXQOffset, self._commentYQOffset,
-                    self._separationLineThickness, self._verticalQOffset))
-
 
     def drawComment(self, comment, painter, option, fontMetric, leftX, topY, brush):
 
@@ -75,11 +69,6 @@ class CommentDelegate(QStyledItemDelegate):
                 Qt.TextWordWrap | Qt.AlignLeft,
                 comment[0])
 
-        util.debug("Drew comment text into rectangle:"\
-                " {}".format(commentBoundRect))
-        util.debug("Drew with font: {}".format(painter.font()))
-        util.debug("Comment font: {}".format(self.commentFont))
-
         painter.restore()
         return commentBoundRect.bottomLeft(), commentBoundRect.height()
 
@@ -90,9 +79,6 @@ class CommentDelegate(QStyledItemDelegate):
                 start.y() + self._separationLineQThickness)
         separationRect = QRect(start, end)
         painter.fillRect(separationRect, QColor("lightGray"))
-
-        util.debug("Drew separation line into rectangle:"\
-                " {}".format(separationRect))
 
 
     def drawAuthorDate(self, comment,
@@ -107,8 +93,6 @@ class CommentDelegate(QStyledItemDelegate):
 
         dateStart = QPoint(end.x() + 10, end.y())
         painter.drawText(dateStart, comment[2])
-
-        util.debug("Drew author and date starting from: {}".format(start))
 
 
     def paint(self, painter, option, index):
@@ -269,7 +253,6 @@ class CommentDelegate(QStyledItemDelegate):
             rect = QRect(0, 0, self.width - self._commentXQOffset,
                     self._maxCommentHeight)
 
-        util.debug("Calculated size with font {}".format(self.commentFont))
         boundRect = commentFontMetric.boundingRect(rect,
                 Qt.TextWordWrap | Qt.AlignLeft,
                 comment[0])
