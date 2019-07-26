@@ -446,6 +446,7 @@ def activateViewpoint(viewpoint: Viewpoint,
                 " GUI. Thus cannot set camera position")
         return OperationResults.FAILURE
 
+    # Apply camera settings
     camSettings = None
     if camType == CamType.ORTHOGONAL:
         camSettings = viewpoint.oCamera
@@ -465,10 +466,17 @@ def activateViewpoint(viewpoint: Viewpoint,
     elif camType == CamType.PERSPECTIVE:
         vCtrl.setPCamera(camSettings)
 
+    # Apply visibility component settings
+    # Thereby the visibility of each specified component, the colour and its
+    # selection is set.
+    # NOTE: ViewSetupHints are not applied atm
     if viewpoint.components is not None:
+        util.debug("applying components settings")
         components = viewpoint.components
         vCtrl.applyVisibilitySettings(components.visibilityDefault,
                 components.visibilityExceptions)
+        vCtrl.colourComponents(components.colouring)
+        vCtrl.selectComponents(components.selection)
 
     # check if any clipping planes are defined and create everyone if so.
     if (viewpoint.clippingPlanes is not None and
@@ -479,7 +487,14 @@ def activateViewpoint(viewpoint: Viewpoint,
 
 def addCurrentViewpoint(topic: Topic):
 
-    """ """
+    """ Reads the current view settings and adds them as viewpoint to `topic`
+
+    The view settings include:
+        - selection state of each ifc object
+        - color of each ifc object
+        - camera position and orientation
+    """
+
     global curProject
     projectBackup = copy.deepcopy(curProject)
 

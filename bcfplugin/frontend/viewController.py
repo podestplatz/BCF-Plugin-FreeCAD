@@ -388,7 +388,7 @@ def colourToTuple(colour: str):
     including the '#' character.
     """
 
-    colourPattern = re.compile("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
+    colourPattern = re.compile("^([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
     if not colourPattern.fullmatch(colour):
         return None
 
@@ -417,6 +417,8 @@ def colourComponents(colourings: List[ComponentColour], ifcObjects = None):
     `colourings`.
     """
 
+    util.printInfo("Colouring components")
+
     if ifcObjects is None:
         ifcObjects = getIfcObjects()
 
@@ -425,6 +427,8 @@ def colourComponents(colourings: List[ComponentColour], ifcObjects = None):
         colour = colouring.colour
         colTuple = colourToTuple(colour)
 
+        util.printInfo("Got colour {} for components {}".format(colTuple,
+            colouring.components))
         for component in colouring.components:
             cIfcId = component.ifcId
 
@@ -434,6 +438,8 @@ def colourComponents(colourings: List[ComponentColour], ifcObjects = None):
                 vObj = obj.Document.getObject(obj.Name).ViewObject
                 if hasattr(vObj, "ShapeColor"):
                     vObj.ShapeColor = colTuple
+                    util.printInfo("Setting color of obj ({}) to"\
+                            " {}".format(vObj, colTuple))
 
 
 def applyVisibilitySettings(defaultVisibility: bool,
@@ -479,14 +485,19 @@ def selectComponents(components: List[Component], ifcObjects = None):
     if ifcObjects is None:
         ifcObjects = getIfcObjects()
 
+    util.printInfo("Walking through components {} to select".format(components))
     selectionCnt = 0
     FreeCADGui.Selection.clearSelection()
     for component in components:
         ifcUID = component.ifcId
 
+        util.printInfo("Checking {} if it is in ifcObjects {}".format(ifcUID,
+            ifcObjects))
         if ifcUID in ifcObjects:
             FreeCADGui.Selection.addSelection(ifcObjects[ifcUID])
             selectionCnt += 1
+            util.printInfo("Adding object {} to"\
+                    " selection.".format(ifcObjects[ifcUID]))
 
     return selectionCnt
 
