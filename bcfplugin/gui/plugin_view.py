@@ -172,6 +172,7 @@ class MyMainWindow(QWidget):
         self.topicCbModel.selectionChanged.connect(self.viewpointsModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.topicDetailsBtn.show)
         self.topicCbModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
+        self.topicCbModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
         self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
         self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
 
@@ -224,8 +225,7 @@ class MyMainWindow(QWidget):
         self.topicDetailsBtn.hide()
 
         self.topicDetailsModel = model.TopicMetricsModel()
-        self.topicDetailsView = QTableView()
-        self.topicDetailsView.setModel(self.topicDetailsModel)
+        self.addDocumentsModel = model.AdditionalDocumentsModel()
 
         self.topicHLayout = QHBoxLayout(topicGroup)
         self.topicHLayout.addWidget(self.topicLabel)
@@ -249,7 +249,6 @@ class MyMainWindow(QWidget):
         self.commentDelegate = delegate.CommentDelegate()
         self.commentList.setItemDelegate(self.commentDelegate)
         self.commentDelegate.invalidInput.connect(self.commentList.edit)
-
 
         self.commentLayout.addWidget(self.commentList)
 
@@ -360,8 +359,24 @@ class MyMainWindow(QWidget):
     @Slot()
     def showTopicMetrics(self):
 
-        util.debug("Showing topic metrics window")
-        self.topicDetailsView.show()
+        metricsWindow = QDialog(self)
+
+        layout = QVBoxLayout()
+        metricsWindow.setLayout(layout)
+
+        topicMetrics = QTableView()
+        topicMetrics.setModel(self.topicDetailsModel)
+        layout.addWidget(topicMetrics)
+
+        addDocGroup = QGroupBox()
+        addDocGroup.setTitle("Additional Documents")
+        addDocGroupLayout = QVBoxLayout(addDocGroup)
+        addDocTable = QTableView()
+        addDocTable.setModel(self.addDocumentsModel)
+        addDocGroupLayout.addWidget(addDocTable)
+        layout.addWidget(addDocGroup)
+
+        metricsWindow.show()
 
 
 if __name__ == "__main__":

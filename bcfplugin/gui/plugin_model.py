@@ -551,13 +551,10 @@ class TopicMetricsModel(QAbstractTableModel):
             return None
 
         if orientation == Qt.Horizontal:
-            print("Section({});Orietnation({});Role({})".format(section,
-                orientation, role))
             if section == 0:
                 header = "Key"
             elif section == 1:
                 header = "Value"
-            print("Returning header '{}'".format(header))
 
         return header
 
@@ -629,9 +626,83 @@ class TopicMetricsModel(QAbstractTableModel):
             self.topic = topic
             self.members = self.createMembersList(self.topic)
 
-        util.debug("Set new topic in model TopicMetricsModel"\
-                " {}".format(self.topic))
+        self.endResetModel()
+
+
+
+class AdditionalDocumentsModel(QAbstractTableModel):
+
+
+    def __init__(self, parent = None):
+
+        QAbstractTableModel.__init__(self, parent)
+        self.topic = None
+        self.documents = []
+
+
+    def createDocumentsList(self, topic):
+
+        self.documents = topic.docRefs
+
+
+    @Slot()
+    def resetItems(self, topic = None):
+
+        self.beginResetModel()
+
+        if topic is None:
+            self.documents = []
+            self.topic = None
+
+        else:
+            self.createDocumentsList(topic)
+            self.topic = topic
 
         self.endResetModel()
 
+
+    def rowCount(self, parent = QModelIndex()):
+
+        util.debug("called")
+        return len(self.documents)
+
+
+    def columnCount(self, parent = QModelIndex()):
+
+        util.debug("called")
+        return 3 # external, description, reference
+
+
+    def data(self, index, role = Qt.DisplayRole):
+
+        if not index.isValid():
+            return None
+
+        ret_val = None
+        if role == Qt.DisplayRole:
+            if index.column() == 0:
+                ret_val = self.documents[index.row()].description
+            elif index.column() == 1:
+                ret_val = self.documents[index.row()].external
+            elif index.column() == 2:
+                ret_val = str(self.documents[index.row()].reference)
+
+        return ret_val
+
+
+    def headerData(self, section, orientation, role = Qt.DisplayRole):
+
+        if role != Qt.DisplayRole:
+            return None
+
+        header = None
+        if orientation == Qt.Horizontal:
+            if section == 0:
+                header = "Description"
+            elif section == 1:
+                header = "is external?"
+            elif section == 2:
+                header = "Uri"
+
+        return header
 
