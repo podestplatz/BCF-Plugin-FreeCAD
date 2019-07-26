@@ -540,11 +540,11 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
     Date: {},
     Author: {},
     Type: {},
-    Status: {},
+    {}: {},
     Priority: {},
     Index: {},
-    ModificationDate: {},
-    ModificationAuthor: {},
+    {}: {},
+    {}: {},
     DueDate: {},
     AssignedTo: {},
     Description: {},
@@ -553,10 +553,10 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
     Labels: {},
     DocumentReferences: {}""".format(self.xmlId, self.title, str(self.date),
             self.author,
-            self.type, self.status, self.priority, self.index,
-            str(self.modDate), self.modAuthor, self.dueDate,
-            self.assignee, self.description, self.stage, self.relatedTopics,
-            self.labels, doc_ref_str)
+            self.type, self._status.xmlName, self.status, self.priority, self.index,
+            self._modDate.xmlName, str(self.modDate), self._modAuthor.xmlName,
+            self.modAuthor, self.dueDate, self.assignee, self.description,
+            self.stage, self.relatedTopics, self.labels, doc_ref_str)
         return str_ret
 
 

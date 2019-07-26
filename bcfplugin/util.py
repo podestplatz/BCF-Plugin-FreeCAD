@@ -165,7 +165,7 @@ def debug(msg):
 
     allowedModules = [ "project.py", "programmaticInterface.py",
             "plugin_view.py", "plugin_model.py", "plugin_delegate.py",
-            "interface_tests.py" ]
+            "interface_tests.py", "modification.py" ]
 
     if not (verbosity == Verbosity.EVERYTHING or
             verbosity == Verbosity.INFODEBUG):
