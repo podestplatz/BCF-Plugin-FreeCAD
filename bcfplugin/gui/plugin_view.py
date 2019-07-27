@@ -225,6 +225,7 @@ class MyMainWindow(QWidget):
         self.topicDetailsBtn.hide()
 
         self.topicDetailsModel = model.TopicMetricsModel()
+        self.topicDetailsDelegate = delegate.TopicMetricsDelegate()
         self.addDocumentsModel = model.AdditionalDocumentsModel()
 
         self.topicHLayout = QHBoxLayout(topicGroup)
@@ -366,6 +367,7 @@ class MyMainWindow(QWidget):
 
         topicMetrics = QTableView()
         topicMetrics.setModel(self.topicDetailsModel)
+        topicMetrics.setItemDelegate(self.topicDetailsDelegate)
         layout.addWidget(topicMetrics)
 
         addDocGroup = QGroupBox()

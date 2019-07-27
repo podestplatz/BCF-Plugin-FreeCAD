@@ -298,6 +298,15 @@ class CommentDelegate(QStyledItemDelegate):
 
 class TopicMetricsDelegate(QStyledItemDelegate):
 
+    """
+    This delegate class is used for controlling the data entry of in the topic
+    metrics window.
+
+    It also, like the comment delegate, checks whether the user already has
+    entered his/her email address that will be set inserted ModifiedAuthor in
+    the data model.
+    """
+
     def __init__(self, parent = None):
 
         QStyledItemDelegate.__init__(self, parent)
@@ -305,13 +314,14 @@ class TopicMetricsDelegate(QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
 
-        dueDateIndex = index().model.members.index(model.topic._dueDate)
+        model = index.model()
+        dueDateIndex = model.members.index(model.topic._dueDate)
         if index.row() == dueDateIndex:
             validator = QRegExpValidator()
             validator.setRegExp(dueDateRegex)
 
             startValue = "" # TODO: use current date
-            editor = QLineEdit(startValue)
+            editor = QLineEdit(startValue, parent)
             editor.setValidator(validator)
             editor.setFrame(True)
 
