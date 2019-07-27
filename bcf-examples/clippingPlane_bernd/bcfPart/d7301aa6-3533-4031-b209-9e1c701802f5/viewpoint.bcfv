@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualizationInfo Guid="62b91142-e20c-444f-a678-7c28b23a124b">
+	<Components>
+		<ViewSetupHints SpacesVisible="false" SpaceBoundariesVisible="false" OpeningsVisible="false" />
+		<Visibility DefaultVisibility="false">
+			<Exceptions>
+				<Component IfcGuid="2twsOAW_OHwPm_J59Y2WFs" />
+				<Component IfcGuid="2txH9wW_OHwQIUJ59Y2WFs" />
+			</Exceptions>
+		</Visibility>
+	</Components>
+	<PerspectiveCamera>
+		<CameraViewPoint>
+			<X>4.0785220861434937</X>
+			<Y>-1.5288909673690796</Y>
+			<Z>3.8552243709564209</Z>
+		</CameraViewPoint>
+		<CameraDirection>
+			<X>-0.41597223281860352</X>
+			<Y>0.6249469518661499</Y>
+			<Z>-0.66061067581176758</Z>
+		</CameraDirection>
+		<CameraUpVector>
+			<X>-0.3660394549369812</X>
+			<Y>0.54992961883544922</Y>
+			<Z>0.75072813034057617</Z>
+		</CameraUpVector>
+		<FieldOfView>65</FieldOfView>
+	</PerspectiveCamera>
+	<ClippingPlanes>
+		<ClippingPlane>
+			<Location>
+				<X>1.5</X>
+				<Y>1.5</Y>
+				<Z>1.2510015964508057</Z>
+			</Location>
+			<Direction>
+				<X>-0</X>
+				<Y>0</Y>
+				<Z>1</Z>
+			</Direction>
+		</ClippingPlane>
+	</ClippingPlanes>
+</VisualizationInfo>
