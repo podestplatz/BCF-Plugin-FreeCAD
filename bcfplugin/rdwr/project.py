@@ -47,13 +47,15 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
     in the corresponding xsd file
     """
 
+    typeDict = { "int": int, "float": float, "str": str }
+
     def __init__(self, value, xmlName, defaultValue, containingElement,
             state = State.States.ORIGINAL):
         XMLName.__init__(self, xmlName)
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         Identifiable.__init__(self)
-        self.value = value
+        self._value = value
         self.defaultValue = defaultValue
 
 
@@ -72,6 +74,29 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
 
     def __str__(self):
         return "{}: {}".format(self.xmlName, self.value)
+
+    @property
+    def value(self):
+        return self._value
+
+
+    @value.setter
+    def value(self, newValue):
+
+        """ Try to convert the value automatically to the type of the default
+        value.
+
+        For example:
+            `newValue` is of type str, `self.defaultValue` is of type
+            int then the second line resolves to:
+                self._value = int(newValue)
+        """
+
+        dstClassName = self.defaultValue.__class__.__name__
+        if dstClassName in self.typeDict:
+            self._value = self.typeDict[dstClassName](newValue)
+        else:
+            self._value = newValue
 
 
     def getEtElement(self, elem):
@@ -295,6 +320,7 @@ topicList='{}')""".format(str(self.xmlId),
         are assigned their default value and complex objects are set to None.
         """
 
+        debug("My id is {}".format(id(self)))
         parent = object.containingObject
 
         memberName = ""
@@ -304,7 +330,6 @@ topicList='{}')""".format(str(self.xmlId),
         # if `object` is part of a list then its name will be referenced by
         # `memberName`
         for (mName, mValue) in vars(parent).items():
-            debug("checking member {}".format(mName))
             if issubclass(type(mValue), list):
                 if object in mValue:
                     memberName = mName
@@ -322,13 +347,15 @@ topicList='{}')""".format(str(self.xmlId),
             msg = ("The name referencing {} in its parent {} could"\
                     " not be found").format(object, parent)
             debug(msg)
-            print(msg, file=sys.stderr)
+            util.printErr(msg)
             return False
 
         # remove the object fom the list
         if isList:
-            debug("Removing {} from list member {}".format(object, memberName))
-            getattr(parent, memberName).remove(object)
+            l = getattr(parent, memberName)
+            debug("Object to delete has id {}".format(id(object)))
+            objIdx = l.index(object)
+            l.remove(object)
 
         # set the object back to its default state
         else:
@@ -341,7 +368,7 @@ topicList='{}')""".format(str(self.xmlId),
             else:
                 setattr(parent, memberName, None)
 
-        return True
+        return self
 
 
     def getEtElement(self, elem):

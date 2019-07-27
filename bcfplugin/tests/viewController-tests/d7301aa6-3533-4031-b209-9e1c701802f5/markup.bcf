@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Markup>
+	<Topic Guid="d7301aa6-3533-4031-b209-9e1c701802f5" TopicType="Issue" TopicStatus="Active">
+		<Title>bcfexample1</Title>
+		<Priority>Normal</Priority>
+		<Index>1</Index>
+		<CreationDate>2019-05-31T20:59:43+00:00</CreationDate>
+		<CreationAuthor>b.hahnebach@jpbi.ch</CreationAuthor>
+		<ModifiedDate>2019-05-31T20:59:43+00:00</ModifiedDate>
+		<ModifiedAuthor>b.hahnebach@jpbi.ch</ModifiedAuthor>
+		<AssignedTo>b.hahnebach@jpbi.ch</AssignedTo>
+		<Description>clipping plane</Description>
+	</Topic>
+	<Comment Guid="d5545441-19b2-47ff-9302-5fc16d3f6d67">
+		<Date>2019-05-31T20:59:43+00:00</Date>
+		<Author>b.hahnebach@jpbi.ch</Author>
+		<Comment>horizontal clipping plane</Comment>
+		<Viewpoint Guid="62b91142-e20c-444f-a678-7c28b23a124b" />
+		<ModifiedDate>2019-05-31T20:59:43+00:00</ModifiedDate>
+		<ModifiedAuthor>b.hahnebach@jpbi.ch</ModifiedAuthor>
+	</Comment>
+	<Viewpoints Guid="62b91142-e20c-444f-a678-7c28b23a124b">
+		<Viewpoint>viewpoint.bcfv</Viewpoint>
+		<Snapshot>snapshot.png</Snapshot>
+	</Viewpoints>
+</Markup>

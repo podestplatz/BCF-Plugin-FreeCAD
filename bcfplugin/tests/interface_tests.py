@@ -75,6 +75,29 @@ class DeleteObjectTest(unittest.TestCase):
         self.assertTrue(len(pI.curProject.topicList[0].comments)==0)
 
 
+    def test_deleteCopiedComment(self):
+
+        project.debug("+++++++++++++++++++")
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath,
+                self.testFileDir,
+                self.testTopicDir,
+                self.testBCFName)
+        if pI.openProject(testFile) == pI.OperationResults.FAILURE:
+            print("Could not open file")
+            self.assertTrue(False)
+
+        util.debug("Id of created project is {}".format(id(pI.curProject)))
+        topics = [ topic[1] for topic in pI.getTopics() ]
+        comments = [ comment[1] for comment in pI.getComments(topics[0]) ]
+
+        commentToDelete = comments[0]
+        util.debug("Id of the comment copy {}".format(id(commentToDelete)))
+        pI.deleteObject(commentToDelete)
+
+        self.assertTrue(len(pI.curProject.topicList[0].comments)==0)
+
+
     def test_deleteIfcProject(self):
 
         """

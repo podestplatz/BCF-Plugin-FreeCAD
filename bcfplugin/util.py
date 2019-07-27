@@ -6,6 +6,8 @@ import shutil
 from enum import Enum
 from urllib.error import URLError
 
+from PySide2.QtWidgets import QMessageBox, QApplication
+
 
 FREECAD = False
 """ Set by BCFPlugin.py when running inside FreeCAD """
@@ -22,6 +24,16 @@ errorFilePath = ""
 DEBUG = False
 """ Enables debug outputs """
 
+qApp = None
+""" Reference to the current QApplication instance """
+
+MMPI = 25.4
+""" Millimeters per inch """
+
+AUTHOR_FILE = "author.txt"
+""" Name of the authors file, in which the email address will be stored once per
+session """
+
 
 
 class Verbosity(Enum):
@@ -30,7 +42,7 @@ class Verbosity(Enum):
     IMPORTANTERRORS = 3
     INFODEBUG = 4
 
-verbosity = Verbosity.IMPORTANTERRORS
+verbosity = Verbosity.EVERYTHING
 if (verbosity == Verbosity.EVERYTHING or verbosity == Verbosity.INFODEBUG):
     # used to inspect the stack to get caller function and caller filename
     import inspect
@@ -90,10 +102,8 @@ def getSystemTmp(createNew: bool = False):
 
     if createNew or tempDir is None:
         tempDir = tempfile.TemporaryDirectory()
-        #tempDir = tempfile.mkdtemp()
 
     return tempDir.name
-    #return tempDir
 
 
 def printErr(msg, toFile=False):
@@ -137,6 +147,12 @@ def printErrorList(errors, toFile=False):
         printErr(error, toFile)
 
 
+def showError(msg):
+
+    msgBox = QMessageBox()
+    msgBox.critical(None, "ERROR", msg)
+
+
 def debug(msg):
 
     """ Prints msg to the default output.
@@ -148,6 +164,10 @@ def debug(msg):
     to the message.
     """
 
+    allowedModules = [ "project.py", "programmaticInterface.py",
+            "plugin_view.py", "plugin_model.py", "plugin_delegate.py",
+            "interface_tests.py", "modification.py" ]
+
     if not (verbosity == Verbosity.EVERYTHING or
             verbosity == Verbosity.INFODEBUG):
         return
@@ -155,6 +175,9 @@ def debug(msg):
     callerStackFrame = inspect.stack()[1]
     callerModule = inspect.getmodule(callerStackFrame[0])
     callerModuleName = os.path.basename(callerModule.__file__)
+    if not callerModuleName in allowedModules:
+        return
+
     callerName = inspect.stack()[1].function
     debugmsg = "[DEBUG]{}:{}(): {}".format(callerModuleName, callerName, msg)
     if FREECAD:
@@ -162,6 +185,75 @@ def debug(msg):
         FreeCAD.Console.PrintMessage("{}\n".format(debugmsg))
     else:
         print(debugmsg)
+
+
+
+def getCurrentQScreen():
+
+    """ Return a reference to the QScreen object associated with the screen the
+    application is currently running on. """
+
+    global qApp
+
+    if qApp == None:
+        qApp = QApplication.instance()
+
+    # check if the application is running alongside a Qt Gui at all
+    if qApp == None:
+        return None
+
+    desktop = qApp.desktop()
+    screenNumber = desktop.screenNumber()
+
+    return qApp.screens()[screenNumber]
+
+
+def isAuthorSet():
+
+    """ Checks for author.txt file in temp directory.
+
+    author.txt will be filled once per session with the email address of the
+    author. It is then used as value for the "ModifiedAuthor" fields in the data
+    model.
+    """
+
+    authorsPath = os.path.join(getSystemTmp(), AUTHOR_FILE)
+    if os.path.exists(authorsPath):
+        return True
+    return False
+
+
+def setAuthor(author: str):
+
+    """ Creates the authors file in the temporary directory with `author` as
+    content.
+
+    If the file already exists, then the file is just overwritten.
+    """
+
+    authorsPath = os.path.join(getSystemTmp(), AUTHOR_FILE)
+    with open(authorsPath, "w") as f:
+        f.write(author)
+
+
+def getAuthor():
+
+    """ Reads the contents of AUTHORS_FILE and returns its contents.
+
+    If the file does not exist `None` is returned. This function assumes that
+    the file only contains one line, without a line break, containing the
+    author's email.
+    """
+
+    authorsPath = os.path.join(getSystemTmp(), AUTHOR_FILE)
+    if not os.path.exists(authorsPath):
+        return None
+
+    author = ""
+    with open(authorsPath, "r") as f:
+        author = f.read()
+
+    return author
 
 
 def retrieveWebFile(schema: Schema, storePath: str):

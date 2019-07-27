@@ -4,6 +4,7 @@ import sys
 import copy
 import pytz
 import shutil
+import inspect
 import datetime
 from enum import Enum
 from typing import List, Tuple
@@ -24,14 +25,14 @@ from rdwr.interfaces.state import State
 from rdwr.interfaces.xmlname import XMLName
 
 if util.GUI:
-    import frontend.viewpointController as vpCtrl
+    import frontend.viewController as vCtrl
 
 __all__ = [ "CamType", "deleteObject", "openProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint", "addCurrentViewpoint",
         "addComment", "addFile", "addLabel", "addDocumentReference", "addTopic",
-        "copyFileToProject", "modifyComment", "modifyElement"
+        "copyFileToProject", "modifyComment", "modifyElement", "saveProject"
         ]
 
 utc = pytz.UTC
@@ -54,6 +55,49 @@ class OperationResults(Enum):
 class CamType(Enum):
     ORTHOGONAL = 1
     PERSPECTIVE = 2
+
+
+def _handleProjectUpdate(errMsg, backup):
+
+    """ Request for all updates to be written, and handle the results.
+
+    If the update went through successful then the backup is deleted. Otherwise
+    the current state is rolled back.
+    """
+
+    errorenousUpdate = writer.processProjectUpdates()
+    if errorenousUpdate is not None:
+        util.printErr(errMsg)
+        util.printInfo("Project state is reset to before the update.")
+        oldProject = curProject
+        curProject = backup
+        del oldProject
+        return OperationResults.FAILURE
+
+    del backup
+    return OperationResults.SUCCESS
+
+
+def _getCallerFileName():
+
+    """ Return the file name of the second to last function on the stack.
+
+    This function assumes that it is called from another function inside this
+    module.
+    For every method a new stack frame is pushed onto the stack, thus the
+    previous stack frame (gotten via `inspect.stack()[1]`) will be of the
+    function inside this module. `_getCallerFileName` now returns the file name
+    of the function that called the former.
+
+    For example:
+        a() -> b() -> _getCallerFileName()
+        Returns module(a).__file__
+    """
+
+    frame = inspect.stack()[2]
+    module = inspect.getmodule(frame[0])
+
+    return module.__file__
 
 
 def isProjectOpen():
@@ -80,6 +124,7 @@ def deleteObject(object):
     """
 
     global curProject
+    projectBackup = copy.deepcopy(curProject)
 
     if not issubclass(type(object), Identifiable):
         util.printErr("Cannot delete {} since it doesn't inherit from"\
@@ -95,26 +140,28 @@ def deleteObject(object):
     if not isProjectOpen():
         return OperationResults.FAILURE
 
-    # find out the name of the object in its parent
-    object.state = State.States.DELETED
+    realObject = curProject.searchObject(object)
+    if realObject is None:
+        return OperationResults.FAILURE
 
-    projectCpy = copy.deepcopy(curProject)
-    newObject = projectCpy.searchObject(object)
-    writer.addProjectUpdate(projectCpy, newObject, None)
-    result = writer.processProjectUpdates()
+    util.debug("Object id of deleted object: {}".format(id(realObject)))
+
+    realObject.state = State.States.DELETED
+    writer.addProjectUpdate(curProject, realObject, None)
+    result = _handleProjectUpdate("Object could not be deleted from "\
+            "data model" , projectBackup)
 
     # `result == None` if the update could not be processed.
-    # ==> `result == projectCpy` will be returned to stay on the errorenous
-    # state and give the user the chance to fix the issue.
-    if result is not None:
-        curProject = result[0]
+    if result ==  OperationResults.FAILURE:
+        curProject = projectBackup
         errMsg = "Couldn't delete {} from the file.".format(result[1])
         util.printErr(errMsg)
         return OperationResults.FAILURE
 
     # otherwise the updated project is returned
     else:
-        curProject.deleteObject(object)
+        util.debug("Deleting from project with id {}".format(id(curProject)))
+        curProject = curProject.deleteObject(realObject)
         return OperationResults.SUCCESS
 
 
@@ -140,6 +187,13 @@ def openProject(bcfFile):
 
     curProject = project
     return OperationResults.SUCCESS
+
+
+def getProjectName():
+
+    """ Return the name of the open project """
+
+    return curProject.name
 
 
 def getTopics():
@@ -178,10 +232,13 @@ def getTopics():
 
 
 def _searchRealTopic(topic: Topic):
+
     """ Searches `curProject` for `topic` and returns the result
 
     If not found then an error message is printed in addition
     """
+
+    global curProject
 
     realTopic = curProject.searchObject(topic)
     if realTopic is None:
@@ -221,6 +278,8 @@ def getComments(topic: Topic, viewpoint: Viewpoint = None):
     referencing viewpoint.
     """
 
+    global curProject
+
     if not isProjectOpen():
         return OperationResults.FAILURE
 
@@ -236,7 +295,7 @@ def getComments(topic: Topic, viewpoint: Viewpoint = None):
     return comments
 
 
-def getViewpoints(topic: Topic):
+def getViewpoints(topic: Topic, realViewpoint = True):
 
     """ Collect a list of viewpoints associated with the given topic.
 
@@ -244,6 +303,9 @@ def getViewpoints(topic: Topic):
     the viewpoint file and a reference to the read-in viewpoint.
     If the list cannot be constructed, because for example no project is
     currently open, OperationResults.FAILURE is returned.
+    If `realViewpoint` == True then the second element of every tuple is the
+    viewpoint object itself referenced by the viewpoint reference. Otherwise it
+    is the viewpoint reference.
     """
 
     global curProject
@@ -257,10 +319,42 @@ def getViewpoints(topic: Topic):
         return OperationResults.FAILURE
 
     markup = realTopic.containingObject
-    viewpoints = [ (str(vpRef.file), copy.deepcopy(vpRef.viewpoint))
-            for vpRef in markup.viewpoints ]
+    viewpoints = []
+    if realViewpoint:
+        viewpoints = [ (str(vpRef.file), copy.deepcopy(vpRef.viewpoint))
+                for vpRef in markup.viewpoints ]
+    else:
+        viewpoints = [ (str(vpRef.file), copy.deepcopy(vpRef))
+                for vpRef in markup.viewpoints ]
+
 
     return viewpoints
+
+
+def getSnapshots(topic: Topic):
+
+    """ Returns a list of files representing the snapshots contained in `topic`.
+
+    No deep copy has to made here, since the list returnde by
+    `markup.getSnapshotFileList()` is already a list of strings with no tie to
+    the data model.
+    Every entry of the list returned by `markup.getSnapshotFileList()` is
+    assumed to be just the filename of the snapshot file. Thus the string is
+    joined with the path to the working directory.
+    """
+
+    if not isProjectOpen():
+        return OperationResults.FAILURE
+
+    realTopic = _searchRealTopic(topic)
+    if realTopic is None:
+        return OperationResults.FAILURE
+
+    markup = realTopic.containingObject
+    snapshots = markup.getSnapshotFileList()
+
+    topicDir = os.path.join(reader.bcfDir, str(realTopic.xmlId))
+    return [ os.path.join(topicDir, snapshot) for snapshot in snapshots ]
 
 
 def openIfcFile(path: str):
@@ -352,6 +446,7 @@ def activateViewpoint(viewpoint: Viewpoint,
                 " GUI. Thus cannot set camera position")
         return OperationResults.FAILURE
 
+    # Apply camera settings
     camSettings = None
     if camType == CamType.ORTHOGONAL:
         camSettings = viewpoint.oCamera
@@ -367,14 +462,39 @@ def activateViewpoint(viewpoint: Viewpoint,
         return OperationResults.FAILURE
 
     if camType == CamType.ORTHOGONAL:
-        vpCtrl.setOCamera(camSettings)
+        vCtrl.setOCamera(camSettings)
     elif camType == CamType.PERSPECTIVE:
-        vpCtrl.setPCamera(camSettings)
+        vCtrl.setPCamera(camSettings)
+
+    # Apply visibility component settings
+    # Thereby the visibility of each specified component, the colour and its
+    # selection is set.
+    # NOTE: ViewSetupHints are not applied atm
+    if viewpoint.components is not None:
+        util.debug("applying components settings")
+        components = viewpoint.components
+        vCtrl.applyVisibilitySettings(components.visibilityDefault,
+                components.visibilityExceptions)
+        vCtrl.colourComponents(components.colouring)
+        vCtrl.selectComponents(components.selection)
+
+    # check if any clipping planes are defined and create everyone if so.
+    if (viewpoint.clippingPlanes is not None and
+            len(viewpoint.clippingPlanes) > 0):
+        for clip in viewpoint.clippingPlanes:
+            vCtrl.createClippingPlane(clip)
 
 
 def addCurrentViewpoint(topic: Topic):
 
-    """ """
+    """ Reads the current view settings and adds them as viewpoint to `topic`
+
+    The view settings include:
+        - selection state of each ifc object
+        - color of each ifc object
+        - camera position and orientation
+    """
+
     global curProject
     projectBackup = copy.deepcopy(curProject)
 
@@ -396,7 +516,7 @@ def addCurrentViewpoint(topic: Topic):
 
     camSettings = None
     try:
-        camSettings = vpCtrl.readCamera()
+        camSettings = vCtrl.readCamera()
     except AttributeError as err:
         util.printErr("Camera settings could not be read. Make sure the 3D"\
                 " view is active.")
@@ -536,19 +656,6 @@ def _isIfcGuid(guid: str):
     if pattern.fullmatch(guid) is None:
         return False
     return True
-
-
-def _handleProjectUpdate(errMsg, backup):
-
-    """ Request for all updates to be written, and handle the results. """
-
-    errorenousUpdate = writer.processProjectUpdates()
-    if errorenousUpdate is not None:
-        util.printErr(errMsg)
-        util.printInfo("Project state is reset to before the update.")
-        curProject = backup
-        return OperationResults.FAILURE
-    return OperationResults.SUCCESS
 
 
 def addFile(topic: Topic, ifcProject: str = "",
@@ -840,27 +947,40 @@ def modifyComment(comment: Comment, newText: str, author: str):
 
 def getTopic(element):
 
-    """ If element is below topic in hierarchy then the corresponding topic
-    object is returned.
+    """ Returns the topic to which `element` is associated.
 
-    If the element is of type Markup then the associated topic object is
+    If `element` could not be found inside the current project `None` is
+    returned. If `element` could not be associated to any existing topic `None`
+    is returned. In the case that this function is called from outside this
+    module (`programmaticInterface.py`), a deep copy of the found topic is
     returned.
     """
 
-    elemHierarchy = element.getHierarchyList()
+    realElement = curProject.searchObject(element)
+    if realElement is None:
+        util.printError("Element {} could not be found in the current project.")
+        return None
+
+    elemHierarchy = realElement.getHierarchyList()
 
     topic = None
-    for element in elemHierarchy:
-        if isinstance(element, Markup):
-            topic = element.topic
+    for elem in elemHierarchy:
+        if isinstance(elem, Markup):
+            topic = elem.topic
             break
-        elif isinstance(element, Topic):
-            topic = element
+        elif isinstance(elem, Topic):
+            topic = elem
             break
         else:
             continue
 
-    return topic
+    if _getCallerFileName() == __file__:
+        return topic
+    elif topic is not None:
+        topicCpy = copy.deepcopy(topic)
+        return topicCpy
+    else:
+        return None
 
 
 def modifyElement(element, author=""):
@@ -983,3 +1103,11 @@ def addViewpointToComment(comment: Comment, viewpoint: ViewpointReference, autho
     writer.addProjectUpdate(curProject, realComment._modAuthor, oldAuthor)
 
     return _handleProjectUpdate("Could not assign viewpoint.", projectBackup)
+
+
+def saveProject(dstFile):
+
+    """ Save the current state of the working directory to `dstfile` """
+
+    bcfRootPath = reader.bcfDir
+    writer.createBcfFile(bcfRootPath, dstFile)

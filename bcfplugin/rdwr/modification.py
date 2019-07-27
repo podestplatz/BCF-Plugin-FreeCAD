@@ -73,7 +73,9 @@ class ModificationDate(p.SimpleElement):
             date: datetime,
             containingElement = None,
             modType: ModificationType = ModificationType.CREATION,
-            state: State.States = State.States.ORIGINAL):
+            state: State.States = State.States.ORIGINAL,
+            dateFormat = "%Y-%m-%d %X"
+            ):
 
         name = ""
         if modType == ModificationType.CREATION:
@@ -81,6 +83,13 @@ class ModificationDate(p.SimpleElement):
         if modType == ModificationType.MODIFICATION:
             name = "ModifiedDate"
         p.SimpleElement.__init__(self, date, name, None, containingElement, state)
+        self.dateFormat = dateFormat
+
+
+    def __str__(self):
+
+        ret_str = self.value.strftime(self.dateFormat)
+        return ret_str
 
 
     @property
