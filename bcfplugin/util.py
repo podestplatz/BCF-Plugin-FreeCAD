@@ -30,6 +30,10 @@ qApp = None
 MMPI = 25.4
 """ Millimeters per inch """
 
+AUTHOR_FILE = "author.txt"
+""" Name of the authors file, in which the email address will be stored once per
+session """
+
 
 
 class Verbosity(Enum):
@@ -99,10 +103,8 @@ def getSystemTmp():
 
     if tempDir is None:
         tempDir = tempfile.TemporaryDirectory()
-        #tempDir = tempfile.mkdtemp()
 
     return tempDir.name
-    #return tempDir
 
 
 def printErr(msg, toFile=False):
@@ -205,6 +207,54 @@ def getCurrentQScreen():
     screenNumber = desktop.screenNumber()
 
     return qApp.screens()[screenNumber]
+
+
+def isAuthorSet():
+
+    """ Checks for author.txt file in temp directory.
+
+    author.txt will be filled once per session with the email address of the
+    author. It is then used as value for the "ModifiedAuthor" fields in the data
+    model.
+    """
+
+    authorsPath = os.path.join(getSystemTmp(), AUTHOR_FILE)
+    if os.path.exists(authorsPath):
+        return True
+    return False
+
+
+def setAuthor(author: str):
+
+    """ Creates the authors file in the temporary directory with `author` as
+    content.
+
+    If the file already exists, then the file is just overwritten.
+    """
+
+    authorsPath = os.path.join(getSystemTmp(), AUTHOR_FILE)
+    with open(authorsPath, "w") as f:
+        f.write(author)
+
+
+def getAuthor():
+
+    """ Reads the contents of AUTHORS_FILE and returns its contents.
+
+    If the file does not exist `None` is returned. This function assumes that
+    the file only contains one line, without a line break, containing the
+    author's email.
+    """
+
+    authorsPath = os.path.join(getSystemTmp(), AUTHOR_FILE)
+    if not os.path.exists(authorsPath):
+        return None
+
+    author = ""
+    with open(authorsPath, "r") as f:
+        author = f.read()
+
+    return author
 
 
 def retrieveWebFile(schema: Schema, storePath: str):

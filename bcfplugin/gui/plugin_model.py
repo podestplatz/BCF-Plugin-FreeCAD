@@ -221,18 +221,20 @@ class CommentModel(QAbstractListModel):
     def setData(self, index, value, role=Qt.EditRole):
         # https://doc.qt.io/qtforpython/PySide2/QtCore/QAbstractItemModel.html#PySide2.QtCore.PySide2.QtCore.QAbstractItemModel.roleNames
 
+        """ `value` is assumed to be a tuple constructed by `CommentDelegate`.
+
+        The first value contains the text of the comment, the second contains
+        the email address of the author who did the modification.
+        """
+
         if not index.isValid() or role != Qt.EditRole:
             return False
 
-        splitText = self.checkValue(value)
-        if not splitText:
-            return False
-
         commentToEdit = self.items[index.row()]
-        commentToEdit.comment = splitText[0]
-        commentToEdit.modAuthor = splitText[1]
+        commentToEdit.comment = value[0]
+        commentToEdit.modAuthor = value[1]
 
-        pI.modifyElement(commentToEdit, splitText[1])
+        pI.modifyElement(commentToEdit, value[1])
         topic = pI.getTopic(commentToEdit)
         self.resetItems(topic)
 
@@ -248,12 +250,8 @@ class CommentModel(QAbstractListModel):
         """
 
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
-        splitText = self.checkValue(value)
-        if not splitText:
-            self.endInsertRows()
-            return False
 
-        success = pI.addComment(self.currentTopic, splitText[0], splitText[1], None)
+        success = pI.addComment(self.currentTopic, value[0], value[1], None)
         if success == pI.OperationResults.FAILURE:
             self.endInsertRows()
             return False
@@ -591,13 +589,17 @@ class TopicMetricsModel(QAbstractTableModel):
             return False
 
         try:
-            self.members[index.row()].value = value
+            self.members[index.row()].value = value[0]
         except Exception as err:
             util.printErr(str(err))
             return False
 
-        pI.modifyElement(self.topic, self.topic.modAuthor)
+        result = pI.modifyElement(self.topic, value[1])
+        if result == pI.OperationResults.FAILURE:
+            return False
 
+        topic = pI.getTopic(self.topic)
+        self.resetItems(topic)
         return True
 
 

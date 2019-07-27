@@ -6,8 +6,44 @@ from copy import copy
 import bcfplugin.util as util
 
 
-commentRegex = "[a-zA-Z0-9.,\-\/ ]* -- .*@.*"
+emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+commentRegex = "[a-zA-Z0-9.,\-\/ ]* -- {}".format(emailRegex)
 dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
+
+authorsDialog = None
+authorsLineEdit = None
+@Slot()
+def setAuthor():
+
+    global authorsDialog
+    global authorsLineEdit
+
+    author = authorsLineEdit.text()
+    util.setAuthor(author)
+    authorsDialog.close()
+
+
+def openAuthorsDialog(parent):
+
+    global authorsDialog
+    global authorsLineEdit
+
+    authorsDialog = QDialog(parent)
+    authorsDialog.setWindowTitle("Enter your e-Mail")
+
+    form = QFormLayout()
+    emailValidator = QRegExpValidator()
+    emailValidator.setRegExp(emailRegex)
+
+    authorsLineEdit = QLineEdit(parent)
+    authorsLineEdit.setValidator(emailValidator)
+    authorsLineEdit.editingFinished.connect(setAuthor)
+
+    form.addRow("E-Mail:", authorsLineEdit)
+    authorsDialog.setLayout(form)
+    authorsDialog.setModal(True)
+    authorsDialog.exec()
+
 
 class CommentDelegate(QStyledItemDelegate):
 
@@ -144,13 +180,17 @@ class CommentDelegate(QStyledItemDelegate):
 
         """ Makes the comment and the author available in a QLineEdit """
 
-        comment = index.model().data(index, Qt.EditRole)
-        startText = comment[0] + " -- " + comment[1]
+        modAuthor = ""
+        if util.isAuthorSet():
+            modAuthor = util.getAuthor()
+        else:
+            openAuthorsDialog(None)
+            modAuthor = util.getAuthor()
 
-        validator = QRegExpValidator()
-        validator.setRegExp(commentRegex)
-        editor = QLineEdit(startText, parent)
-        editor.setValidator(validator)
+        util.debug("The email you entered is: {}".format(modAuthor))
+
+        comment = index.model().data(index, Qt.EditRole)
+        editor = QLineEdit(comment[0], parent)
         editor.setFrame(True)
 
         return editor
@@ -161,7 +201,7 @@ class CommentDelegate(QStyledItemDelegate):
         """ Updates the editor data with the data at `index` in the model """
 
         comment = index.model().data(index, Qt.EditRole)
-        editorText = comment[0] + " -- " + comment[1]
+        editorText = comment[0]
         editor.setText(editorText)
 
 
@@ -170,7 +210,8 @@ class CommentDelegate(QStyledItemDelegate):
         """ Updates the model at `index` with the current text of the editor """
 
         text = editor.text()
-        success = model.setData(index, text)
+        author = util.getAuthor()
+        success = model.setData(index, (text, author))
         if not success:
             util.showError("The comment hast to be separated by '--' from the" \
                     " email address!")
@@ -295,7 +336,6 @@ class CommentDelegate(QStyledItemDelegate):
                 self.sizeHints[index] = None
 
 
-
 class TopicMetricsDelegate(QStyledItemDelegate):
 
     """
@@ -314,19 +354,35 @@ class TopicMetricsDelegate(QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
 
+        modAuthor = ""
+        if util.isAuthorSet():
+            modAuthor = util.getAuthor()
+        else:
+            openAuthorsDialog(None)
+            modAuthor = util.getAuthor()
+
+        util.debug("The email you entered is: {}".format(modAuthor))
+
         model = index.model()
         dueDateIndex = model.members.index(model.topic._dueDate)
+
+        startValue = "" # TODO: use current value
+        editor = QLineEdit(startValue, parent)
         if index.row() == dueDateIndex:
             validator = QRegExpValidator()
             validator.setRegExp(dueDateRegex)
 
-            startValue = "" # TODO: use current date
-            editor = QLineEdit(startValue, parent)
             editor.setValidator(validator)
             editor.setFrame(True)
+        return editor
 
-            return editor
 
-        else:
-            super().createEditor(parent, option, index)
+    def setModelData(self, editor, model, index):
 
+        """ Updates the model at `index` with the current text of the editor """
+
+        text = editor.text()
+        value = (text, util.getAuthor())
+        success = model.setData(index, value)
+        if not success:
+            util.showError("The value could not be updated.")
