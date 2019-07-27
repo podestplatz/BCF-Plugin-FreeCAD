@@ -209,12 +209,16 @@ class MyMainWindow(QWidget):
         self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.snapshotModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.viewpointsModel.resetItems)
+        self.topicCbModel.selectionChanged.connect(self.topicDetailsBtn.show)
+        self.topicCbModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
+        self.topicCbModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
         self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
         # comment, referencing a viewpoint, selected => select corresponding
         #viewpoint
         self.commentList.specialCommentSelected.connect(lambda x:
                 self.snStack.setCurrentIndex(1))
         self.commentList.specialCommentSelected.connect(self.viewpointList.selectViewpoint)
+        self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
 
         self.setLayout(self.mainLayout)
 
@@ -261,9 +265,17 @@ class MyMainWindow(QWidget):
         self.topicCb.setModel(self.topicCbModel)
         self.topicCb.currentIndexChanged.connect(self.topicCbModel.newSelection)
 
+        self.topicDetailsBtn = QPushButton("Details")
+        self.topicDetailsBtn.hide()
+
+        self.topicDetailsModel = model.TopicMetricsModel()
+        self.topicDetailsDelegate = delegate.TopicMetricsDelegate()
+        self.addDocumentsModel = model.AdditionalDocumentsModel()
+
         self.topicHLayout = QHBoxLayout(topicGroup)
         self.topicHLayout.addWidget(self.topicLabel)
         self.topicHLayout.addWidget(self.topicCb)
+        self.topicHLayout.addWidget(self.topicDetailsBtn)
 
         return topicGroup
 
@@ -283,10 +295,9 @@ class MyMainWindow(QWidget):
         self.commentList.setItemDelegate(self.commentDelegate)
         self.commentDelegate.invalidInput.connect(self.commentList.edit)
 
-
         self.commentLayout.addWidget(self.commentList)
 
-        self.commentPlaceholder = "comment -- author email"
+        self.commentPlaceholder = "Enter a new comment here"
         self.commentValidator = QRegExpValidator()
         self.commentValidator.setRegExp(delegate.commentRegex)
         self.newCommentEdit = QLineEdit()
@@ -359,10 +370,12 @@ class MyMainWindow(QWidget):
         util.debug("Pressed enter on the input")
         editor = self.newCommentEdit
         text = editor.text()
-        if self.commentValidator.validate(text, 0) == QValidator.Invalid:
-            QToolTip.showText(editor.mapToGlobal(QPoint()), "Invalid Input."\
-                    " Template for a comment is: <comment text> -- <email address>")
-            return
+
+        if util.isAuthorSet():
+            modAuthor = util.getAuthor()
+        else:
+            delegate.openAuthorsDialog(None)
+
         self.addComment()
 
 
@@ -370,7 +383,7 @@ class MyMainWindow(QWidget):
     def addComment(self):
 
         text = self.newCommentEdit.text()
-        success = self.commentModel.addComment(text)
+        success = self.commentModel.addComment((text, util.getAuthor()))
         if not success:
             util.showError("Could not add a new comment")
             return
@@ -388,6 +401,30 @@ class MyMainWindow(QWidget):
         if filename != "":
             util.debug("Got a file to write to: {}.".format(filename))
             model.saveProject(filename[0])
+
+
+    @Slot()
+    def showTopicMetrics(self):
+
+        metricsWindow = QDialog(self)
+
+        layout = QVBoxLayout()
+        metricsWindow.setLayout(layout)
+
+        topicMetrics = QTableView()
+        topicMetrics.setModel(self.topicDetailsModel)
+        topicMetrics.setItemDelegate(self.topicDetailsDelegate)
+        layout.addWidget(topicMetrics)
+
+        addDocGroup = QGroupBox()
+        addDocGroup.setTitle("Additional Documents")
+        addDocGroupLayout = QVBoxLayout(addDocGroup)
+        addDocTable = QTableView()
+        addDocTable.setModel(self.addDocumentsModel)
+        addDocGroupLayout.addWidget(addDocTable)
+        layout.addWidget(addDocGroup)
+
+        metricsWindow.show()
 
 
 if __name__ == "__main__":

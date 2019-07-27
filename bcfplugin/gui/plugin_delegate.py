@@ -6,7 +6,44 @@ from copy import copy
 import bcfplugin.util as util
 
 
-commentRegex = "[a-zA-Z0-9.,\-\/ ]* -- .*@.*"
+emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+commentRegex = "[a-zA-Z0-9.,\-\/ ]* -- {}".format(emailRegex)
+dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
+
+authorsDialog = None
+authorsLineEdit = None
+@Slot()
+def setAuthor():
+
+    global authorsDialog
+    global authorsLineEdit
+
+    author = authorsLineEdit.text()
+    util.setAuthor(author)
+    authorsDialog.close()
+
+
+def openAuthorsDialog(parent):
+
+    global authorsDialog
+    global authorsLineEdit
+
+    authorsDialog = QDialog(parent)
+    authorsDialog.setWindowTitle("Enter your e-Mail")
+
+    form = QFormLayout()
+    emailValidator = QRegExpValidator()
+    emailValidator.setRegExp(emailRegex)
+
+    authorsLineEdit = QLineEdit(parent)
+    authorsLineEdit.setValidator(emailValidator)
+    authorsLineEdit.editingFinished.connect(setAuthor)
+
+    form.addRow("E-Mail:", authorsLineEdit)
+    authorsDialog.setLayout(form)
+    authorsDialog.setModal(True)
+    authorsDialog.exec()
+
 
 class CommentDelegate(QStyledItemDelegate):
 
@@ -48,12 +85,6 @@ class CommentDelegate(QStyledItemDelegate):
         self._verticalQOffset = self._verticalOffset * ppm
         self._maxCommentHeight = screen.size().height()
 
-        util.debug("ppm({})".format(ppm))
-        util.debug("commentXOffset({});commentYOffset({});"\
-                "separationLineThickness({});verticalOffset({})".format(
-                    self._commentXQOffset, self._commentYQOffset,
-                    self._separationLineThickness, self._verticalQOffset))
-
 
     def drawComment(self, comment, painter, option, fontMetric, leftX, topY, brush):
 
@@ -75,11 +106,6 @@ class CommentDelegate(QStyledItemDelegate):
                 Qt.TextWordWrap | Qt.AlignLeft,
                 comment[0])
 
-        util.debug("Drew comment text into rectangle:"\
-                " {}".format(commentBoundRect))
-        util.debug("Drew with font: {}".format(painter.font()))
-        util.debug("Comment font: {}".format(self.commentFont))
-
         painter.restore()
         return commentBoundRect.bottomLeft(), commentBoundRect.height()
 
@@ -90,9 +116,6 @@ class CommentDelegate(QStyledItemDelegate):
                 start.y() + self._separationLineQThickness)
         separationRect = QRect(start, end)
         painter.fillRect(separationRect, QColor("lightGray"))
-
-        util.debug("Drew separation line into rectangle:"\
-                " {}".format(separationRect))
 
 
     def drawAuthorDate(self, comment,
@@ -107,8 +130,6 @@ class CommentDelegate(QStyledItemDelegate):
 
         dateStart = QPoint(end.x() + 10, end.y())
         painter.drawText(dateStart, comment[2])
-
-        util.debug("Drew author and date starting from: {}".format(start))
 
 
     def paint(self, painter, option, index):
@@ -159,13 +180,17 @@ class CommentDelegate(QStyledItemDelegate):
 
         """ Makes the comment and the author available in a QLineEdit """
 
-        comment = index.model().data(index, Qt.EditRole)
-        startText = comment[0] + " -- " + comment[1]
+        modAuthor = ""
+        if util.isAuthorSet():
+            modAuthor = util.getAuthor()
+        else:
+            openAuthorsDialog(None)
+            modAuthor = util.getAuthor()
 
-        validator = QRegExpValidator()
-        validator.setRegExp(commentRegex)
-        editor = QLineEdit(startText, parent)
-        editor.setValidator(validator)
+        util.debug("The email you entered is: {}".format(modAuthor))
+
+        comment = index.model().data(index, Qt.EditRole)
+        editor = QLineEdit(comment[0], parent)
         editor.setFrame(True)
 
         return editor
@@ -176,7 +201,7 @@ class CommentDelegate(QStyledItemDelegate):
         """ Updates the editor data with the data at `index` in the model """
 
         comment = index.model().data(index, Qt.EditRole)
-        editorText = comment[0] + " -- " + comment[1]
+        editorText = comment[0]
         editor.setText(editorText)
 
 
@@ -185,7 +210,8 @@ class CommentDelegate(QStyledItemDelegate):
         """ Updates the model at `index` with the current text of the editor """
 
         text = editor.text()
-        success = model.setData(index, text)
+        author = util.getAuthor()
+        success = model.setData(index, (text, author))
         if not success:
             util.showError("The comment hast to be separated by '--' from the" \
                     " email address!")
@@ -269,7 +295,6 @@ class CommentDelegate(QStyledItemDelegate):
             rect = QRect(0, 0, self.width - self._commentXQOffset,
                     self._maxCommentHeight)
 
-        util.debug("Calculated size with font {}".format(self.commentFont))
         boundRect = commentFontMetric.boundingRect(rect,
                 Qt.TextWordWrap | Qt.AlignLeft,
                 comment[0])
@@ -311,3 +336,53 @@ class CommentDelegate(QStyledItemDelegate):
                 self.sizeHints[index] = None
 
 
+class TopicMetricsDelegate(QStyledItemDelegate):
+
+    """
+    This delegate class is used for controlling the data entry of in the topic
+    metrics window.
+
+    It also, like the comment delegate, checks whether the user already has
+    entered his/her email address that will be set inserted ModifiedAuthor in
+    the data model.
+    """
+
+    def __init__(self, parent = None):
+
+        QStyledItemDelegate.__init__(self, parent)
+
+
+    def createEditor(self, parent, option, index):
+
+        modAuthor = ""
+        if util.isAuthorSet():
+            modAuthor = util.getAuthor()
+        else:
+            openAuthorsDialog(None)
+            modAuthor = util.getAuthor()
+
+        util.debug("The email you entered is: {}".format(modAuthor))
+
+        model = index.model()
+        dueDateIndex = model.members.index(model.topic._dueDate)
+
+        startValue = "" # TODO: use current value
+        editor = QLineEdit(startValue, parent)
+        if index.row() == dueDateIndex:
+            validator = QRegExpValidator()
+            validator.setRegExp(dueDateRegex)
+
+            editor.setValidator(validator)
+            editor.setFrame(True)
+        return editor
+
+
+    def setModelData(self, editor, model, index):
+
+        """ Updates the model at `index` with the current text of the editor """
+
+        text = editor.text()
+        value = (text, util.getAuthor())
+        success = model.setData(index, value)
+        if not success:
+            util.showError("The value could not be updated.")

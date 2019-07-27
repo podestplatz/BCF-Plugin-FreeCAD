@@ -45,13 +45,15 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
     in the corresponding xsd file
     """
 
+    typeDict = { "int": int, "float": float, "str": str }
+
     def __init__(self, value, xmlName, defaultValue, containingElement,
             state = State.States.ORIGINAL):
         XMLName.__init__(self, xmlName)
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         Identifiable.__init__(self)
-        self.value = value
+        self._value = value
         self.defaultValue = defaultValue
 
 
@@ -70,6 +72,29 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
 
     def __str__(self):
         return "{}: {}".format(self.xmlName, self.value)
+
+    @property
+    def value(self):
+        return self._value
+
+
+    @value.setter
+    def value(self, newValue):
+
+        """ Try to convert the value automatically to the type of the default
+        value.
+
+        For example:
+            `newValue` is of type str, `self.defaultValue` is of type
+            int then the second line resolves to:
+                self._value = int(newValue)
+        """
+
+        dstClassName = self.defaultValue.__class__.__name__
+        if dstClassName in self.typeDict:
+            self._value = self.typeDict[dstClassName](newValue)
+        else:
+            self._value = newValue
 
 
     def getEtElement(self, elem):

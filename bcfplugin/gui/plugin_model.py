@@ -3,8 +3,8 @@ import copy
 
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal, Qt,
-        QSize)
+from PySide2.QtCore import (QAbstractListModel, QAbstractTableModel,
+        QModelIndex, Slot, Signal, Qt, QSize)
 
 import bcfplugin.programmaticInterface as pI
 import bcfplugin.util as util
@@ -221,18 +221,20 @@ class CommentModel(QAbstractListModel):
     def setData(self, index, value, role=Qt.EditRole):
         # https://doc.qt.io/qtforpython/PySide2/QtCore/QAbstractItemModel.html#PySide2.QtCore.PySide2.QtCore.QAbstractItemModel.roleNames
 
+        """ `value` is assumed to be a tuple constructed by `CommentDelegate`.
+
+        The first value contains the text of the comment, the second contains
+        the email address of the author who did the modification.
+        """
+
         if not index.isValid() or role != Qt.EditRole:
             return False
 
-        splitText = self.checkValue(value)
-        if not splitText:
-            return False
-
         commentToEdit = self.items[index.row()]
-        commentToEdit.comment = splitText[0]
-        commentToEdit.modAuthor = splitText[1]
+        commentToEdit.comment = value[0]
+        commentToEdit.modAuthor = value[1]
 
-        pI.modifyElement(commentToEdit, splitText[1])
+        pI.modifyElement(commentToEdit, value[1])
         topic = pI.getTopic(commentToEdit)
         self.resetItems(topic)
 
@@ -248,12 +250,8 @@ class CommentModel(QAbstractListModel):
         """
 
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
-        splitText = self.checkValue(value)
-        if not splitText:
-            self.endInsertRows()
-            return False
 
-        success = pI.addComment(self.currentTopic, splitText[0], splitText[1], None)
+        success = pI.addComment(self.currentTopic, value[0], value[1], None)
         if success == pI.OperationResults.FAILURE:
             self.endInsertRows()
             return False
@@ -504,4 +502,220 @@ class ViewpointsListModel(QAbstractListModel):
         self._iconSize = size
         self.calcSizes()
 
+
+class TopicMetricsModel(QAbstractTableModel):
+
+    """ Model for the table that shows metrics of the topic.
+
+    The uuid will not be visible in the metrics view. """
+
+
+    def __init__(self, parent = None):
+        QAbstractTableModel.__init__(self, parent)
+        self.disabledIndices = [ 1, 2, 7, 8 ]
+        self.topic = None
+        self.members = []
+
+
+    def createMembersList(self, topic):
+
+        """ Create and return an ordered list of members, in the order they
+        shall be shown.
+
+        An object inside this list will be the underlying object representing
+        the value. This is done to be able to access the xmlName which is used
+        as the name of the value.
+        """
+
+        members = [topic._title, topic._date, topic._author, topic._type,
+                topic._status, topic._priority, topic._index, topic._modDate,
+                topic._modAuthor, topic._dueDate, topic._assignee,
+                topic._description ]
+
+        return members
+
+
+    def data(self, index, role = Qt.DisplayRole):
+
+        if not index.isValid():
+            return None
+
+        if role != Qt.DisplayRole:
+            return None
+
+        member = self.members[index.row()]
+        if index.column() == 0:
+            return member.xmlName
+        elif index.column() == 1:
+            return str(member.value)
+        else:
+            # I don't know that an additional column could display actually
+            return None
+
+
+    def headerData(self, section, orientation, role = Qt.DisplayRole):
+
+        header = None
+        if role != Qt.DisplayRole:
+            return None
+
+        if orientation == Qt.Horizontal:
+            if section == 0:
+                header = "Key"
+            elif section == 1:
+                header = "Value"
+
+        return header
+
+
+    def flags(self, index):
+
+        """ All items in the second column can be edited and selected """
+
+        flags = Qt.NoItemFlags
+        if not index.isValid():
+            return flags
+        # every disabled row just shall be greyed out, but its content still
+        # visible
+        if index.column() == 0:
+            flags |= Qt.ItemIsSelectable
+            flags |= Qt.ItemIsEnabled
+
+        if index.column() == 1:
+            flags = Qt.ItemIsSelectable
+            flags |= Qt.ItemIsEditable
+            flags |= Qt.ItemIsEnabled
+
+        if index.column() == 1 and index.row() in self.disabledIndices:
+            flags = Qt.NoItemFlags
+
+        return flags
+
+
+    def setData(self, index, value, role = Qt.EditRole):
+
+        """ Update a member of topic with the value entered by the user """
+
+        if not index.isValid():
+            return False
+
+        try:
+            self.members[index.row()].value = value[0]
+        except Exception as err:
+            util.printErr(str(err))
+            return False
+
+        result = pI.modifyElement(self.topic, value[1])
+        if result == pI.OperationResults.FAILURE:
+            return False
+
+        topic = pI.getTopic(self.topic)
+        self.resetItems(topic)
+        return True
+
+
+    def rowCount(self, parent = QModelIndex()):
+
+        return 12
+
+
+    def columnCount(self, parent = QModelIndex()):
+
+        """ Only two columns will be shown. The first contains the name of the
+        value, the second one the value itself """
+
+        return 2
+
+
+    @Slot(Topic)
+    def resetItems(self, topic = None):
+
+        self.beginResetModel()
+
+        if topic is None:
+            self.topic = None
+            self.members = []
+        else:
+            self.topic = topic
+            self.members = self.createMembersList(self.topic)
+
+        self.endResetModel()
+
+
+
+class AdditionalDocumentsModel(QAbstractTableModel):
+
+
+    def __init__(self, parent = None):
+
+        QAbstractTableModel.__init__(self, parent)
+        self.topic = None
+        self.documents = []
+
+
+    def createDocumentsList(self, topic):
+
+        self.documents = topic.docRefs
+
+
+    @Slot()
+    def resetItems(self, topic = None):
+
+        self.beginResetModel()
+
+        if topic is None:
+            self.documents = []
+            self.topic = None
+
+        else:
+            self.createDocumentsList(topic)
+            self.topic = topic
+
+        self.endResetModel()
+
+
+    def rowCount(self, parent = QModelIndex()):
+
+        util.debug("called")
+        return len(self.documents)
+
+
+    def columnCount(self, parent = QModelIndex()):
+
+        util.debug("called")
+        return 3 # external, description, reference
+
+
+    def data(self, index, role = Qt.DisplayRole):
+
+        if not index.isValid():
+            return None
+
+        ret_val = None
+        if role == Qt.DisplayRole:
+            if index.column() == 0:
+                ret_val = self.documents[index.row()].description
+            elif index.column() == 1:
+                ret_val = self.documents[index.row()].external
+            elif index.column() == 2:
+                ret_val = str(self.documents[index.row()].reference)
+
+        return ret_val
+
+
+    def headerData(self, section, orientation, role = Qt.DisplayRole):
+
+        if role != Qt.DisplayRole:
+            return None
+
+        header = None
+        if orientation == Qt.Horizontal:
+            if section == 0:
+                header = "Description"
+            elif section == 1:
+                header = "is external?"
+            elif section == 2:
+                header = "Uri"
+
+        return header
 
