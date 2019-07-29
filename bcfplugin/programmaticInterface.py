@@ -1116,4 +1116,4 @@ def saveProject(dstFile):
     """ Save the current state of the working directory to `dstfile` """
 
     bcfRootPath = reader.bcfDir
-    writer.createBcfFile(bcfRootPath, dstFile)
+    writer.zipToBcfFile(bcfRootPath, dstFile)
