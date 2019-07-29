@@ -108,8 +108,6 @@ def isProjectOpen():
     """
 
     if curProject is None:
-        util.printErr("No project is open. Please open a project before trying to"\
-            " retrieve topics")
         return False
     return True
 
@@ -142,6 +140,10 @@ def deleteObject(object):
 
     realObject = curProject.searchObject(object)
     if realObject is None:
+        # No rollback has to be done here, since the state of the project is not
+        # changed anyways.
+        util.printErr("Object {} could not be found in project {}".format(
+            object.__class__, curProject.__class__))
         return OperationResults.FAILURE
 
     util.debug("Object id of deleted object: {}".format(id(realObject)))
@@ -890,15 +892,17 @@ def setModDateAuthor(element, author="", addUpdate=True):
     oldDate = element.modDate
     element.modDate = modDate
 
-    oldAuthor = element.modAuthor
-    element.modAuthor = author
+    if author != "" and author is not None:
+        oldAuthor = element.modAuthor
+        element.modAuthor = author
 
     if addUpdate:
         element._modDate.state = State.States.MODIFIED
         writer.addProjectUpdate(curProject, element._modDate, oldDate)
 
-        element._modAuthor.state = State.States.MODIFIED
-        writer.addProjectUpdate(curProject, element._modAuthor, oldDate)
+        if author != "" and author is not None:
+            element._modAuthor.state = State.States.MODIFIED
+            writer.addProjectUpdate(curProject, element._modAuthor, oldDate)
 
 
 def modifyComment(comment: Comment, newText: str, author: str):
@@ -1035,6 +1039,7 @@ def modifyElement(element, author=""):
 
     # if topic was modified update `modDate` and `modAuthor`
     if isinstance(realElement, Topic) or isinstance(realElement, Comment):
+        """
         if author == "":
             # Rollback and delete the latest update
             util.printErr("Author is not set, but {} is updated. For a"\
@@ -1042,6 +1047,7 @@ def modifyElement(element, author=""):
             curProject = projectBackup
             writer.projectUpdates.pop(len(writer.projectUpdates)-1)
             return OperationResults.FAILURE
+        """
 
         setModDateAuthor(realElement, author, False)
 

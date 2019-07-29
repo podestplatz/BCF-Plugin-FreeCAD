@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
 from uuid import UUID
-from util import debug
+from util import debug, printErr
 from rdwr.uri import Uri
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
@@ -345,10 +345,10 @@ topicList='{}')""".format(str(self.xmlId),
 
         if memberName == "":
             msg = ("The name referencing {} in its parent {} could"\
-                    " not be found").format(object, parent)
+                    " not be found").format(object.__class__, parent.__class__)
             debug(msg)
-            util.printErr(msg)
-            return False
+            printErr(msg)
+            return None
 
         # remove the object fom the list
         if isList:

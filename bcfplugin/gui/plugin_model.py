@@ -122,7 +122,7 @@ class CommentModel(QAbstractListModel):
 
         if not pI.isProjectOpen():
             util.showError("First you have to open a project.")
-            util.printError("First you have to open a project.")
+            util.printErr("First you have to open a project.")
             self.endResetModel()
             return
 
@@ -130,7 +130,7 @@ class CommentModel(QAbstractListModel):
         if comments == pI.OperationResults.FAILURE:
             util.showError("Could not get any comments for topic" \
                     " {}".format(str(topic)))
-            util.printError("Could not get any comments for topic" \
+            util.printErr("Could not get any comments for topic" \
                     " {}".format(str(topic)))
             self.endResetModel()
             return
