@@ -322,9 +322,17 @@ class CommentDelegate(QStyledItemDelegate):
 
     def checkSizes(self):
 
+        """ Computes the sizes of comment elements, and emits the
+        `sizeHintChanged` signal if that is the case. """
+
         indices = self.sizeHints.keys()
         for index in indices:
             comment = index.model().data(index, Qt.DisplayRole)
+            # the comment does not exist anymore
+            if comment is None:
+                del self.sizeHints[index]
+                return
+
             newHeight = self.calcCommentSize(comment).height()
             oldHeight = None
             if self.sizeHints[index] is not None: # prevent errors due to race conditions

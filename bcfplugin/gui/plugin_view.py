@@ -36,6 +36,8 @@ class CommentView(QListView):
     @Slot()
     def mouseEntered(self, index):
 
+        """ Display a delete button if the mouse hovers over a comment """
+
         if self.delBtn is not None:
             self.deleteDelBtn()
 
@@ -49,9 +51,7 @@ class CommentView(QListView):
 
         buttonFont = deleteButton.font()
         fontMetric = QFontMetrics(buttonFont)
-        minWidth = fontMetric.width(btnText)
-        minHeight = fontMetric.height()
-        btnMinSize = QSize(minWidth, minHeight)
+        btnMinSize = fontMetric.boundingRect(btnText).size()
         deleteButton.setMinimumSize(btnMinSize)
 
         itemRect = self.rectForIndex(index)
@@ -69,7 +69,12 @@ class CommentView(QListView):
         """ If the current comment links to a viewpoint then select that
         viewpoint in viewpointsList.  """
 
-        viewpoint = current.model().referencedViewpoint(current)
+        model = current.model()
+        if model is None:
+            # no topic is selected, so no comments are loaded
+            return
+
+        viewpoint = model.referencedViewpoint(current)
         if viewpoint is not None:
             self.specialCommentSelected.emit(viewpoint)
 
