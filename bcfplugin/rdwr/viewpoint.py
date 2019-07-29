@@ -1,3 +1,4 @@
+from copy import deepcopy
 from enum import Enum
 from typing import List, Dict
 from uuid import UUID
@@ -50,6 +51,25 @@ class Bitmap(Hierarchy, State, XMLName):
             self.normal.containingObject = self
         if self.upVector is not None:
             self.upVector.containingObject = self
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id, memo)
+        cpyformat = deepcopy(self.format, memo)
+        cpyreference = deepcopy(self.reference, memo)
+        cpylocation = deepcopy(self.location, memo)
+        cpynormal = deepcopy(self.normal, memo)
+        cpyupvector = deepcopy(self.upVector, memo)
+        cpyheight = deepcopy(self.height, memo)
+
+        cpy = Bitmap(cpyformat, cpyreference, cpylocation, cpynormal,
+                cpyupvector, cpyheight)
+        cpy.state = self.state
+        return cpy
 
 
     def __eq__(self, other):
@@ -133,6 +153,20 @@ class Camera(Hierarchy, State, XMLName):
             self.upVector.containingObject = self
 
 
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyviewpoint = deepcopy(self.viewPoint, memo)
+        cpydirection = deepcopy(self.direction, memo)
+        cpyupvector = deepcopy(self.upvector, memo)
+
+        cpy = Camera(cpyviewpoint, cpydirection, cpyupvector)
+        cpy.state = self.state
+        return cpy
+
+
     def __eq__(self, other):
 
         """
@@ -190,6 +224,22 @@ class PerspectiveCamera(Camera, XMLName):
         self.fieldOfView = fieldOfView
 
 
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyviewpoint = deepcopy(self.viewPoint, memo)
+        cpydirection = deepcopy(self.direction, memo)
+        cpyupvector = deepcopy(self.upVector, memo)
+        cpyfieldofview = deepcopy(self.fieldOfView, memo)
+
+        cpy = PerspectiveCamera(cpyviewpoint, cpydirection, cpyupvector,
+                cpyfieldofview)
+        cpy.state = self.state
+        return cpy
+
+
     def __eq__(self, other):
 
         """
@@ -241,6 +291,22 @@ class OrthogonalCamera(Camera, XMLName):
         self.viewWorldScale = viewWorldScale
 
 
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyviewpoint = deepcopy(self.viewPoint, memo)
+        cpydirection = deepcopy(self.direction, memo)
+        cpyupvector = deepcopy(self.upVector, memo)
+        cpyviewworldscale = deepcopy(self.viewWorldScale, memo)
+
+        cpy = OrthogonalCamera(cpyviewpoint, cpydirection, cpyupvector,
+                cpyviewworldscale)
+        cpy.state = self.state
+        return cpy
+
+
     def __eq__(self, other):
 
         """
@@ -284,6 +350,20 @@ class Component(Hierarchy, State, XMLName):
         self.ifcId = ifcId
         self.originatingSystem = originatingSystem
         self.authoringtoolId = authoringtoolId
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyifcid = deepcopy(self.ifcId)
+        cpyoriginatingsystem = deepcopy(self.originatingSystem)
+        cpyauthoringtoolid = deepcopy(self.authoringtoolId)
+
+        cpy = Component(cpyifcid, cpyoriginatingsystem, cpyauthoringtoolid)
+        cpy.state = self.state
+        return cpy
 
 
     def __eq__(self, other):
@@ -352,6 +432,19 @@ class ComponentColour(Hierarchy, State, XMLName):
         listSetContainingElement(self.components, self)
 
 
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpycolour = deepcopy(self.colour, memo)
+        cpycomponents = deepcopy(self.components, memo)
+
+        cpy = ComponentColour(cpycolour, cpycomponents)
+        cpy.state = self.state
+        return cpy
+
+
     def __eq__(self, other):
 
         """
@@ -387,6 +480,20 @@ class ViewSetupHints(Hierarchy, State, XMLName):
         self.openingsVisible = openingsVisible
         self.spaceBoundariesVisible = spaceBoundariesVisible
         self.spacesVisible = spacesVisible
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyopenings = deepcopy(self.openingsVisible, memo)
+        cpyspacebound = deepcopy(self.spaceBoundariesVisible, memo)
+        cpyspaces = deepcopy(self.spacesVisible, memo)
+
+        cpy = ViewSetupHints(cpyopenings, cpyspacebound, cpyspaces)
+        cpy.state = self.state
+        return cpy
 
 
     def __eq__(self, other):
@@ -446,6 +553,24 @@ class Components(Hierarchy, State, XMLName):
         listSetContainingElement(self.selection, self)
         listSetContainingElement(self.colouring, self)
         listSetContainingElement(self.visibilityExceptions, self)
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyviewsetuphints = deepcopy(self.viewSetuphints, memo)
+        cpyselection = deepcopy(self.selection, memo)
+        cpyvisibilitydefault = deepcopy(self.visibilityDefault, memo)
+        cpyvisibilityexceptions = deepcopy(self.visibilityExceptions, memo)
+        cpycolouring = deepcopy(self.colouring, memo)
+
+        cpy = Components(cpyvisibilitydefault, cpyvisibilityexceptions,
+                cpyselection, cpyviewsetuphints, cpycolouring)
+        cpy.state = self.state
+        return cpy
+
 
     def __eq__(self, other):
 
@@ -565,6 +690,27 @@ class Viewpoint(Hierarchy, State, XMLName, Identifiable, XMLIdentifiable):
         listSetContainingElement(self.lines, self)
         listSetContainingElement(self.bitmaps, self)
         listSetContainingElement(self.clippingPlanes, self)
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id, memo)
+        cpyguid = deepcopy(self.xmlId, memo)
+        cpycomponents = deepcopy(self.components, memo)
+        cpyocamera = deepcopy(self.oCamera, memo)
+        cpypcamera = deepcopy(self.pCamera, memo)
+        cpylines = deepcopy(self.lines, memo)
+        cpyclippingplanes = deepcopy(self.clippingPlanes, memo)
+        cpybitmaps = deepcopy(self.bitmaps, memo)
+
+        cpy = Viewpoint(cpyguid, cpycomponents, cpyocamera, cpypcamera,
+                cpylines, cpyclippingplanes, cpybitmaps)
+        cpy.id = cpyid
+        cpy.state = self.state
+        return cpy
 
 
     def __eq__(self, other):

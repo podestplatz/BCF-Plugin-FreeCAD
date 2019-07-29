@@ -15,6 +15,8 @@ import rdwr.reader as reader
 import rdwr.writer as writer
 import rdwr.project as p
 import rdwr.markup as m
+from rdwr.modification import (ModificationDate, ModificationAuthor,
+        ModificationType)
 from rdwr.viewpoint import Viewpoint, OrthogonalCamera, PerspectiveCamera
 from rdwr.topic import Topic, DocumentReference, BimSnippet
 from rdwr.markup import Comment, Header, HeaderFile, ViewpointReference, Markup
@@ -64,6 +66,8 @@ def _handleProjectUpdate(errMsg, backup):
     If the update went through successful then the backup is deleted. Otherwise
     the current state is rolled back.
     """
+
+    global curProject
 
     errorenousUpdate = writer.processProjectUpdates()
     if errorenousUpdate is not None:
@@ -144,8 +148,8 @@ def deleteObject(object):
     if realObject is None:
         return OperationResults.FAILURE
 
-    util.debug("Object id of deleted object: {}".format(id(realObject)))
-
+    util.debug("Deleting element {} from {}".format(realObject.__class__,
+        curProject.__class__))
     realObject.state = State.States.DELETED
     writer.addProjectUpdate(curProject, realObject, None)
     result = _handleProjectUpdate("Object could not be deleted from "\
@@ -154,7 +158,7 @@ def deleteObject(object):
     # `result == None` if the update could not be processed.
     if result ==  OperationResults.FAILURE:
         curProject = projectBackup
-        errMsg = "Couldn't delete {} from the file.".format(result[1])
+        errMsg = "Couldn't delete {} from the file.".format(object)
         util.printErr(errMsg)
         return OperationResults.FAILURE
 
@@ -1029,11 +1033,13 @@ def modifyElement(element, author=""):
     realElement.state = State.States.DELETED
     writer.addProjectUpdate(curProject, realElement, None)
 
+    util.debug("Setting state of {} to equal {}".format(realElement, element))
     # copy the state of the given element to the real element
     for property, value in vars(element).items():
         setattr(realElement, property, copy.deepcopy(value))
+        util.debug("Set comment.{}={}".format(property, value))
 
-    # if topic was modified update `modDate` and `modAuthor`
+    # if topic/comment was modified update `modDate` and `modAuthor`
     if isinstance(realElement, Topic) or isinstance(realElement, Comment):
         if author == "":
             # Rollback and delete the latest update
@@ -1044,9 +1050,13 @@ def modifyElement(element, author=""):
             return OperationResults.FAILURE
 
         setModDateAuthor(realElement, author, False)
+        util.debug("ModAuthor: {}; ModDate: {}".format(realElement.modAuthor,
+            realElement.modDate))
 
+    util.debug("Add {} as new project update".format(realElement))
     realElement.state = State.States.ADDED
     writer.addProjectUpdate(curProject, realElement, None)
+    realElement.state = State.States.ORIGINAL
     return _handleProjectUpdate("Could not modify element {}".format(element.xmlName),
             projectBackup)
 

@@ -148,8 +148,11 @@ def getFileOfElement(element):
 
     debug("retrieving hierarchy of {}".format(element))
     elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
-    if not elementHierarchy: # element is not addable
+    if not elementHierarchy: # element cannot be modified
+        debug("Could not find a hierarchy {}")
         return None
+
+    debug("Hierarchy is {}".format(elementHierarchy))
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
     if "Viewpoint" in strHierarchy:
@@ -362,7 +365,13 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
 
     xmlPathExpression = "./"
     for element in elementHierarchy:
-        xmlPathExpression += "/" + element.xmlName
+        debug("element is of type: {}".format(type(element)))
+        if issubclass(type(element), p.Attribute):
+            xmlPathExpression += "[@{}='{}']".format(element.xmlName,
+                    element.value)
+        else:
+            xmlPathExpression += "/" + element.xmlName
+
         if issubclass(type(element), iI.XMLIdentifiable):
             # add guid for deterministicness
             xmlPathExpression += "[@Guid='{}']".format(element.xmlId)
@@ -747,6 +756,9 @@ def deleteElement(element):
     and their accompanying viewpoint references are also deleted.
     """
 
+    elementHierarchy = element.getHierarchyList()
+    debug("Hierarchy of element {}".format(elementHierarchy))
+
     debug("Deleting element {}".format(element))
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
@@ -866,8 +878,16 @@ def addProjectUpdate(project: p.Project, element, prevVal):
     """
 
     global projectUpdates
+
     projectCpy = c.deepcopy(project)
+    # copy element and morph it into the hierarchy of the copied project
     elementCpy = c.deepcopy(element)
+    oldElement = projectCpy.searchObject(element)
+    elementCpy.containingObject = oldElement.containingObject
+
+    if elementCpy is None:
+        raise RuntimeError("Could not find element id {} in project"\
+                " {}".format(element.id, projectCpy))
     prevValCpy = None
     if prevVal is not None:
         prevValCpy = copy.deepcopy(prevVal)
@@ -929,6 +949,9 @@ def handleDeleteElement(element, oldVal):
     """
 
     try:
+        elementHierarchy = element.getHierarchyList()
+        debug("Hierarchy of element {}".format(elementHierarchy))
+
         deleteElement(element)
     except ValueError as err:
         msg = ("Element {} could not be deleted. Reverting to previous "\
@@ -1025,12 +1048,17 @@ def processProjectUpdates():
             else:
                 errorenousUpdate = update
                 break
+
         if updateType == iS.State.States.DELETED:
+            elementHierarchy = element.getHierarchyList()
+            debug("Hierarchy of element {}".format(elementHierarchy))
+
             if handleDeleteElement(element, oldVal):
                 processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
+
         if updateType == iS.State.States.MODIFIED:
             if handleModifyElement(element, oldVal):
                 processedUpdates.append(update)

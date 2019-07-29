@@ -1,7 +1,9 @@
 import xml.etree.ElementTree as ET
+from copy import deepcopy
 from uuid import UUID
 from datetime import datetime, date
 from typing import List # used for custom type annotations
+
 from rdwr.uri import Uri
 from rdwr.modification import (ModificationDate, ModificationAuthor, ModificationType)
 from rdwr.topic import Topic
@@ -40,6 +42,69 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
         self._time = SimpleElement(time, "Date", None, self)
         self._reference = SimpleElement(reference, "Reference", "", self)
 
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id, memo)
+        cpyIfcProjectId = deepcopy(self._ifcProjectId, memo)
+        cpyIfcSpatStrEl = deepcopy(self._ifcSpatialStructureElement, memo)
+        cpyIsExternal = deepcopy(self._external, memo)
+        cpyfilename = deepcopy(self._filename, memo)
+        cpytime = deepcopy(self._time, memo)
+        cpyreference = deepcopy(self._reference, memo)
+
+        cpy = HeaderFile()
+        cpy.state = self.state
+        cpy._ifcProjectId = cpyIfcProjectId
+        cpy._ifcSpatialStructureElement = cpyIfcSpatStrEl
+        cpy._external = cpyIsExternal
+        cpy._filename = cpyfilename
+        cpy._time = cpytime
+        cpy._reference = cpyreference
+        cpy.id = cpyid
+
+        members = [ cpy._ifcProjectId, cpy._ifcSpatialStructureElement,
+                cpy._external, cpy._filename, cpy._time, cpy._reference ]
+        listSetContainingElement(members, cpy)
+
+        return cpy
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        if type(self) != type(other):
+            return False
+
+        return (self.ifcProjectId == other.ifcProjectId and
+                self.ifcSpatialStructureElement ==
+                other.ifcSpatialStructureElement and
+                self.external == other.external and
+                self.filename == other.filename and
+                self.time == other.time and
+                self.reference == other.reference)
+
+
+    def __str__(self):
+        ret_str = ("ContainingElement(\n"\
+                "isExternal: {}\n"\
+                "ifcSpatialStructureElement: {}\n"\
+                "ifcProject: {}\n"\
+                "filename: {}\n"\
+                "time: {}\n"\
+                "reference: {})").format(self.external,
+                        self.ifcSpatialStructureElement,
+                        self.ifcProjectId,
+                        self.filename,
+                        self.time,
+                        self.reference)
+        return ret_str
 
 
     @property
@@ -89,23 +154,6 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
     @time.setter
     def time(self, newVal):
         self._time.value = newVal
-
-    def __eq__(self, other):
-
-        """
-        Returns true if every variable member of both classes are the same
-        """
-
-        if type(self) != type(other):
-            return False
-
-        return (self.ifcProjectId == other.ifcProjectId and
-                self.ifcSpatialStructureElement ==
-                other.ifcSpatialStructureElement and
-                self.external == other.external and
-                self.filename == other.filename and
-                self.time == other.time and
-                self.reference == other.reference)
 
 
     def getEtElement(self, elem):
@@ -163,22 +211,6 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
         return stateList
 
 
-    def __str__(self):
-        ret_str = ("ContainingElement(\n"\
-                "isExternal: {}\n"\
-                "ifcSpatialStructureElement: {}\n"\
-                "ifcProject: {}\n"\
-                "filename: {}\n"\
-                "time: {}\n"\
-                "reference: {})").format(self.external,
-                        self.ifcSpatialStructureElement,
-                        self.ifcProjectId,
-                        self.filename,
-                        self.time,
-                        self.reference)
-        return ret_str
-
-
     def searchObject(self, object):
 
         if not issubclass(type(object), Identifiable):
@@ -218,6 +250,21 @@ class Header(Hierarchy, State, XMLName, Identifiable):
         # Hierarchy
         for f in files:
             f.containingObject = self
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id)
+
+        cpy = Header(deepcopy(self.files, memo))
+        cpy.id = cpyid
+        cpy.state = self.state
+
+        return cpy
+
 
     def getStateList(self):
 
@@ -287,6 +334,73 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         self._index = SimpleElement(index, "Index", -1, self)
         self._viewpoint = None
 
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id, memo)
+        cpyxmlid = deepcopy(self.xmlId, memo)
+        cpyfile = deepcopy(self._file, memo)
+        cpysnapshot = deepcopy(self._snapshot, memo)
+        cpyindex = deepcopy(self._index, memo)
+        cpyviewpoint = deepcopy(self._viewpoint, memo)
+
+        cpy = ViewpointReference(cpyxmlid)
+        cpy.state = self.state
+        cpy._file = cpyfile
+        cpy._snapshot = cpysnapshot
+        cpy._index = cpyindex
+        cpy.viewpoint = cpyviewpoint
+        cpy.id = cpyid
+
+        members = [ cpy._file, cpy._snapshot, cpy._index, cpy.viewpoint ]
+        listSetContainingElement(members, cpy)
+
+        return cpy
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        if other is None:
+            return False
+
+        if type(self) != type(other):
+            return False
+
+        if DEBUG:
+            if self.xmlId != other.xmlId:
+                print("Viewpoint: id is different {} {}".format(self.xmlId,
+                    other.xmlId))
+            if self.file != other.file:
+                print("Viewpoint: file is different {} {}".format(
+                    self.file, other.file))
+            if self.snapshot != other.snapshot:
+                print("Viewpoint: snapshot is different {} {}".format(
+                    self.snapshot, other.snapshot))
+            if self.index != other.index:
+                print("Viewpoint: index is different {} {}".format(
+                    self.index, other.index))
+
+        return (self.xmlId == other.xmlId and
+                self.file == other.file and
+                self.snapshot == other.snapshot and
+                self.index == other.index and
+                self.viewpoint == other.viewpoint)
+
+
+    def __str__(self):
+        ret_str = ("ViewpointReference(id='{}', file='{}', snapshot='{}',"\
+                        " index='{}')").format(self.xmlId, self.file, self.snapshot,
+                        self.index)
+        return ret_str
+
+
     @property
     def file(self):
         return self._file.value
@@ -331,46 +445,6 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         else:
             raise ValueError("The new value has to be of type `Viewpoint`."\
                 " Erroneous type: {}".format(type(newVal)))
-
-
-    def __eq__(self, other):
-
-        """
-        Returns true if every variable member of both classes are the same
-        """
-
-        if other is None:
-            return False
-
-        if type(self) != type(other):
-            return False
-
-        if DEBUG:
-            if self.xmlId != other.xmlId:
-                print("Viewpoint: id is different {} {}".format(self.xmlId,
-                    other.xmlId))
-            if self.file != other.file:
-                print("Viewpoint: file is different {} {}".format(
-                    self.file, other.file))
-            if self.snapshot != other.snapshot:
-                print("Viewpoint: snapshot is different {} {}".format(
-                    self.snapshot, other.snapshot))
-            if self.index != other.index:
-                print("Viewpoint: index is different {} {}".format(
-                    self.index, other.index))
-
-        return (self.xmlId == other.xmlId and
-                self.file == other.file and
-                self.snapshot == other.snapshot and
-                self.index == other.index and
-                self.viewpoint == other.viewpoint)
-
-
-    def __str__(self):
-        ret_str = ("ViewpointReference(id='{}', file='{}', snapshot='{}',"\
-                        " index='{}')").format(self.xmlId, self.file, self.snapshot,
-                        self.index)
-        return ret_str
 
 
     def getEtElement(self, elem):
@@ -464,51 +538,41 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         self._modAuthor = ModificationAuthor(modAuthor, self,
                 ModificationType.MODIFICATION)
 
-        # set containingObject of complex members
-        if self.viewpoint is not None:
-            self.viewpoint.containingObject = self
 
+    def __deepcopy__(self, memo):
 
-    @property
-    def date(self):
-        return self._date.value
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
 
-    @date.setter
-    def date(self, newVal):
-        self._date.date = newVal
+        cpyid = deepcopy(self.id, memo)
+        cpyguid = deepcopy(self.xmlId, memo)
+        cpycomment = deepcopy(self._comment, memo)
+        cpyviewpoint = deepcopy(self.viewpoint, memo)
+        cpydate = deepcopy(self._date, memo)
+        cpyauthor = deepcopy(self._author, memo)
+        cpymoddate = deepcopy(self._modDate, memo)
+        cpymodauthor = deepcopy(self._modAuthor, memo)
 
-    @property
-    def author(self):
-        return self._author.value
+        cpy = Comment(cpyguid, None, None, None)
+        cpy._comment = cpycomment
+        cpy._date = cpydate
+        cpy._author = cpyauthor
+        cpy._modDate = cpymoddate
+        cpy._modAuthor = cpymodauthor
+        cpy.viewpoint = cpyviewpoint
+        cpy.id = cpyid
+        cpy.state = self.state
 
-    @author.setter
-    def author(self, newVal):
-        self._author.author = newVal
+        members = [cpy._comment, cpy._date, cpy._author, cpy._modDate,
+                cpy._modAuthor]
+        if cpy.viewpoint is not None:
+            members.append(cpy.viewpoint)
 
-    @property
-    def modDate(self):
-        return self._modDate.value
+        debug("Containing object of modAuthor = {}, self = {}".format(
+            id(self._modAuthor.containingObject), id(self)))
 
-    @modDate.setter
-    def modDate(self, newVal):
-        self._modDate.date = newVal
-
-    @property
-    def modAuthor(self):
-        return self._modAuthor.value
-
-    @modAuthor.setter
-    def modAuthor(self, newVal):
-        debug("setting modAuthor to {}".format(newVal))
-        self._modAuthor.author = newVal
-
-    @property
-    def comment(self):
-        return self._comment.value
-
-    @comment.setter
-    def comment(self, newVal):
-        self._comment.value = newVal
+        listSetContainingElement(members, cpy)
+        return cpy
 
 
     def __eq__(self, other):
@@ -567,6 +631,48 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
                 " {}").format(ret_str, self.modDate.strftime(dateFormat))
 
         return ret_str
+
+
+    @property
+    def date(self):
+        return self._date.value
+
+    @date.setter
+    def date(self, newVal):
+        self._date.date = newVal
+
+    @property
+    def author(self):
+        return self._author.value
+
+    @author.setter
+    def author(self, newVal):
+        self._author.author = newVal
+
+    @property
+    def modDate(self):
+        return self._modDate.value
+
+    @modDate.setter
+    def modDate(self, newVal):
+        self._modDate.date = newVal
+
+    @property
+    def modAuthor(self):
+        return self._modAuthor.value
+
+    @modAuthor.setter
+    def modAuthor(self, newVal):
+        debug("setting modAuthor to {}".format(newVal))
+        self._modAuthor.author = newVal
+
+    @property
+    def comment(self):
+        return self._comment.value
+
+    @comment.setter
+    def comment(self, newVal):
+        self._comment.value = newVal
 
 
     def getEtElement(self, elem):
@@ -667,6 +773,28 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
             self.topic.containingObject = self
         if self.header is not None:
             self.header.containingObject = self
+
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id, memo)
+        cpytopic = deepcopy(self.topic, memo)
+        cpyheader = deepcopy(self.header, memo)
+        cpycomments = deepcopy(self.comments, memo)
+        cpyviewpoints = deepcopy(self.viewpoints, memo)
+
+        cpy = Markup(cpytopic, cpyheader, cpycomments, cpyviewpoints)
+        cpy.id = cpyid
+        cpy.state = self.state
+        listSetContainingElement(cpy.comments, cpy)
+        listSetContainingElement(cpy.viewpoints, cpy)
+        members = [ cpy.topic, cpy.header ]
+        listSetContainingElement(members, cpy)
+
+        return cpy
 
 
     def __eq__(self, other):

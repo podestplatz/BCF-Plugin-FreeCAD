@@ -187,6 +187,10 @@ def debug(msg):
         print(debugmsg)
 
 
+def printMembers(element):
+    for property, value in vars(element).items():
+        debug("{}.{}={}".format(element.__class__.__name__, property, value))
+
 
 def getCurrentQScreen():
 

@@ -643,8 +643,7 @@ def readBcfFile(bcfFile: str):
     ### Check version ###
     versionFilePath = os.path.join(bcfExtractedPath, "bcf.version")
     if not os.path.exists(versionFilePath):
-        util.printErr("No bcf.version file found in {}. This file is not optional.",
-                file=sys.stderr)
+        util.printErr("No bcf.version file found in {}. This file is not optional.")
         return None
     error = validateFile(versionFilePath, versionSchemaPath, bcfFile)
     if error != "":
