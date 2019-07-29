@@ -3,6 +3,12 @@ import sys
 excPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, excPath)
 
+FREECAD = False
+""" Set by BCFPlugin.py when running inside FreeCAD """
+
+GUI = False
+""" Set by BCFPlugin.py when running in Gui mode """
+
 import util
 
 __all__ = ["programmaticInterface.py", "ui"]
@@ -55,11 +61,13 @@ try:
 except:
     pass
 else:
-    util.FREECAD = True
+    FreeCAD.Console.PrintMessage("set util.FREECAD\n")
+    FREECAD = True
     if FreeCAD.GuiUp:
+        FreeCAD.Console.PrintMessage("set util.GUI\n")
         import FreeCADGui as FGui
-        from PySide import QtCore, QtGui
-        util.GUI = True
+        #from PySide import QtCore, QtGui
+        GUI = True
 
 
 frontend = None

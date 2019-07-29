@@ -1,7 +1,14 @@
 import sys
-import util
+import bcfplugin.util as util
+from bcfplugin import FREECAD, GUI
 
-def setup():
+def setup_gui():
+
+    import gui.plugin_panel as panel
+    panel.launch_ui()
+
+
+def setup_nonGui():
     help_str = """
 This module lets you to operate on BCF files. Therefore multiple modules
 can be imported:
@@ -13,11 +20,7 @@ can be imported:
       to the desired path. Most important function is:
       bcf.writer.addUpdate(project: Project, element, prevVal)
 
-The internal data structure implements interfaces that make it easy to operate
-on a project. So have a look into ./interfaces if you are interested.
-TODO: add documentation on the interfaces part.
-            """
-    #print(help_str)
+"""
     if not check_dependencies():
         return
 
@@ -39,6 +42,15 @@ TODO: add documentation on the interfaces part.
         files.append(plugin.getRelevantIfcFiles(topic))
     util.printInfo(files)
 
+
+def start():
+
+    sys.path.append("../")
+
+    if GUI:
+        setup_gui()
+    else:
+        setup_nonGui()
 
 """
 If run in the command line a little help shall be printed on what the user is
