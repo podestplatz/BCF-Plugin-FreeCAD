@@ -168,7 +168,10 @@ class CommentModel(QAbstractListModel):
 
     def data(self, index, role=Qt.DisplayRole):
 
-        if not index.isValid() or (role != Qt.DisplayRole and
+        if not index.isValid() or index.row() >= len(self.items):
+            return None
+
+        if (role != Qt.DisplayRole and
                 role != Qt.EditRole and role != Qt.ForegroundRole):
             return None
 
@@ -402,9 +405,9 @@ class SnapshotModel(QAbstractListModel):
         snapshots = pI.getSnapshots(self.currentTopic)
         if snapshots == pI.OperationResults.FAILURE:
             self.snapshotList = []
-        else:
-            self.snapshotList = snapshots
+            return
 
+        self.snapshotList = snapshots
         # clear the image buffer
         self.snapshotImgs = [None]*len(snapshots)
         self.endResetModel()
