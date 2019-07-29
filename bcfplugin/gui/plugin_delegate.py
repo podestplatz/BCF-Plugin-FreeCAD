@@ -270,7 +270,13 @@ class CommentDelegate(QStyledItemDelegate):
         authorTextHeight = authorFontMetric.height()
 
         commentWidth = commentBoundRect.width()
-        authorDateWidth = authorFontMetric.width(comment[1] + comment[2]) + 10
+        authorDateWidth = 0
+        if comment[1] is not None:
+            authorDateWidth = authorFontMetric.width(comment[1] + comment[2]) + self._authorDateQSeparation
+            authorDateWidth += self._authorDateQSeparation
+        else:
+            authorDateWidth = authorFontMetric.width(comment[2])
+
         # +1 is the separation line that is drawn
         # commentTextHeight / 2 is the offset from the comment text towards the
         # separation line
