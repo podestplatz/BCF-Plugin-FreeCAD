@@ -1,9 +1,9 @@
+from copy import copy
+import bcfplugin.util as util
+
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
-
-from copy import copy
-import bcfplugin.util as util
 
 
 emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"

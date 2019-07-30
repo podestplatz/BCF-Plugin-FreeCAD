@@ -6,6 +6,8 @@ import shutil
 from enum import Enum
 from urllib.error import URLError
 
+from bcfplugin import TMPDIR as tempDir
+
 from PySide2.QtWidgets import QMessageBox, QApplication
 
 
@@ -89,8 +91,7 @@ schemaDir = "schemas"
 """ Holds the paths of the schema files in the plugin directory. Gets set during runtime """
 schemaPaths = {} # during runtime this will be a map like __schemaUrls
 
-""" Working directory, here the extracted BCF file is stored """
-tempDir = None
+
 def getSystemTmp(createNew: bool = False):
 
     """ Creates a temporary directory on first call or if `createNew` is set.
@@ -101,6 +102,7 @@ def getSystemTmp(createNew: bool = False):
     global tempDir
 
     if createNew or tempDir is None:
+        print("Create new temp dir")
         tempDir = tempfile.TemporaryDirectory()
 
     return tempDir.name

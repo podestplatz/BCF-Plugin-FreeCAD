@@ -3,9 +3,33 @@ import sys
 excPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, excPath)
 
-import util
-
 __all__ = ["programmaticInterface.py", "ui"]
+
+TMPDIR = None
+""" Temp directory used by the plugin as working directory """
+
+FREECAD = False
+GUI = False
+
+def printErr(msg):
+
+    global FREECAD
+
+    if FREECAD:
+        FreeCAD.Console.PrintError(msg)
+    else:
+        print(msg, file=sys.stderr)
+
+
+def printInfo(msg):
+
+    global FREECAD
+
+    if FREECAD:
+        FreeCAD.Console.PrintInfo(msg)
+    else:
+        print(msg)
+
 
 def check_dependencies():
     available = True
@@ -30,12 +54,12 @@ def check_dependencies():
             available = False
 
     if not available:
-        util.printErr("Could not find the module `xmlschema`. Install it through"\
+        printErr("Could not find the module `xmlschema`. Install it through"\
                 " pip\n\tpip install {}\nYou also might want to"\
                 " install it in a virtual environment. To create and initialise"\
                 " said env execute\n\tpython -m venv <NAME>\n\tsource"\
                 " ./<NAME>/bin/activate".format(pkg))
-        util.printInfo("If you already have it installed inside a virtual environment" \
+        printInfo("If you already have it installed inside a virtual environment" \
                 ", no problem we just need to modify the `sys.path` variable a"\
                 " bit. python inside FreeCAD, unfortunately, is not aware by" \
                 " default, of a virtual environment. To do that you have to " \
@@ -55,11 +79,14 @@ try:
 except:
     pass
 else:
+    import util
     util.FREECAD = True
+    FREECAD = True
     if FreeCAD.GuiUp:
         import FreeCADGui as FGui
         from PySide import QtCore, QtGui
         util.GUI = True
+        GUI = True
 
 
 frontend = None
