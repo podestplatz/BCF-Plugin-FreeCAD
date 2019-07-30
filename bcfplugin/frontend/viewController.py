@@ -26,6 +26,10 @@ except:
     draftAvailable = False
 
 
+class CamType(Enum):
+    ORTHOGONAL = 1
+    PERSPECTIVE = 2
+
 pCamClassTypeId = coin.SoPerspectiveCamera_getClassTypeId
 oCamClassTypeId = coin.SoOrthographicCamera_getClassTypeId
 
@@ -45,6 +49,15 @@ selectionBackup = list()
 
 colBackup = list()
 """ List of tuples containing the view object and its previous colour """
+
+class CamBackup:
+    position = None
+    orientation = None
+    height = 0.0
+    heightAngle = 0.0
+    camType = CamType.ORTHOGONAL
+camBackup = None
+""" Backup of the camera settings before a viewpoint was applied. """
 
 
 class Unit(Enum):
@@ -162,6 +175,11 @@ def setCamera(camViewpoint: vector.Point,
 
     rotation = getRotation(fDirVector, fUpVector)
 
+    if camBackup is None:
+        camBackup = CamBackup()
+        camBackup.position = cam.position.getValue()
+        camBackup.orientation = cam.orientation.getValue()
+
     cam.orientation.setValue(rotation.Q)
     cam.position.setValue(fPosition)
 
@@ -178,6 +196,10 @@ def setPCamera(camSettings: PerspectiveCamera):
     SoPerspectiveCamera.
     """
 
+    backup = True
+    if camBackup is not None:
+        backup = False
+
     view = FreeCADGui.ActiveDocument.ActiveView
     cam = view.getCameraNode()
 
@@ -191,6 +213,10 @@ def setPCamera(camSettings: PerspectiveCamera):
     angle = degreeToRadians(camSettings.fieldOfView)
     util.printInfo("Setting the fieldOfView = {} radians ({}"\
             " degrees)".format(angle, camSettings.fieldOfView))
+
+    if backup:
+        camBackup.heightAngle = cam.heightAngle.getValue()
+        camBackup.camType = CamType.PERSPECTIVE
     cam.heightAngle.setValue(angle)
 
 
@@ -204,6 +230,10 @@ def setOCamera(camSettings: OrthogonalCamera):
     SoOrthographicCamera.
     """
 
+    backup = True
+    if camBackup is not None:
+        backup = False
+
     view = FreeCADGui.ActiveDocument.ActiveView
     cam = view.getCameraNode()
 
@@ -214,6 +244,10 @@ def setOCamera(camSettings: OrthogonalCamera):
 
     setCamera(camSettings.viewPoint, camSettings.direction, camSettings.upVector)
     util.printInfo("Camera type {}".format(view.getCameraType()))
+
+    if backup:
+        camBackup.height = cam.height.getValue()
+        camBackup.camType = CamType.ORTHOGONAL
     cam.height.setValue(camSettings.viewWorldScale)
 
 
@@ -565,3 +599,15 @@ def resetView():
     for (vObj, col) in colBackups:
         vObj.ShapeColor = col
     colBackups = list()
+
+    # reset camera settings
+    cam = FreeCADGui.ActiveDocument.ActiveView.getCameraNode()
+    cam.orientation.setValue(camBackup.orientation)
+    cam.position.setValue(camBackup.position)
+    if cam.camType == CamType.PERSPECTIVE:
+        view.setCameraType("Perspective")
+        cam.heightAngle.setValue(camBackup.heightAngle)
+    elif cam.camType == CamType.ORTHOGONAL:
+        view.setCameraType("Orthogonal")
+        cam.height.setValue(camBackup.height)
+    camBackup = None

@@ -25,6 +25,7 @@ from rdwr.interfaces.identifiable import Identifiable
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
 from rdwr.interfaces.xmlname import XMLName
+from frontend.viewController import CamType
 
 if util.GUI:
     import frontend.viewController as vCtrl
@@ -53,10 +54,6 @@ class OperationResults(Enum):
     SUCCESS = 1
     FAILURE = 2
 
-
-class CamType(Enum):
-    ORTHOGONAL = 1
-    PERSPECTIVE = 2
 
 
 def _handleProjectUpdate(errMsg, backup):
