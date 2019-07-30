@@ -166,6 +166,8 @@ def setCamera(camViewpoint: vector.Point,
     does not make any checks in that direction.
     """
 
+    global camBackup
+
     cam = FreeCADGui.ActiveDocument.ActiveView.getCameraNode()
 
     fPosition = FreeCAD.Vector(camViewpoint.x, camViewpoint.y, camViewpoint.z)
@@ -200,6 +202,8 @@ def setPCamera(camSettings: PerspectiveCamera):
     SoPerspectiveCamera.
     """
 
+    global camBackup
+
     backup = True
     if camBackup is not None:
         backup = False
@@ -233,6 +237,8 @@ def setOCamera(camSettings: OrthogonalCamera):
     The view to world scale is set by setting the value `height` in
     SoOrthographicCamera.
     """
+
+    global camBackup
 
     backup = True
     if camBackup is not None:
@@ -325,6 +331,8 @@ def createLines(lines: List[Line]):
 def createClippingPlane(clip: ClippingPlane):
 
     """ Creates a clipping plane `clip` on the scene graph of FreeCADGui """
+
+    global clipPlanes
 
     if (clip is None or
             clip.direction is None or
@@ -531,6 +539,8 @@ def backupSelection():
 
     """ Create a list of all objects currently selected. """
 
+    global selectionBackup
+
     # only backup if the backup is empty, otherwise the following scenario could
     # happen:
     #  1. user applies a viewpoint -> selection gets backed up
@@ -581,13 +591,18 @@ def resetView():
         - elements that got created (lines, clippingPlanes) are removed
     """
 
+    global camBackup
+    global clipPlanes
+    global bcfGroup
+    global selectionBackup
+
     # remove the bcfGroup with all its contents
     if bcfGroup is not None:
         doc.removeObject(bcfGroup.Name)
     bcfGroup = None
 
     # remove the clipping planes
-    sceneGraph = gui.ActiveView.getSceneGraph()
+    sceneGraph = FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
     for clipplane in clipPlanes:
         sceneGraph.removeChild(clipplane)
     clipPlanes = list()

@@ -226,7 +226,7 @@ class MyMainWindow(QWidget):
         self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
         self.viewpointList.doubleClicked.connect(self.viewpointsModel.activateViewpoint)
         self.viewpointList.doubleClicked.connect(self.viewpointResetBtn.show)
-        self.viewpointResetBtn.clicked.connect(self.ViewpointsListModel.resetViewp)
+        self.viewpointResetBtn.clicked.connect(self.viewpointsModel.resetView)
         self.viewpointResetBtn.clicked.connect(self.viewpointResetBtn.hide)
 
         self.setLayout(self.mainLayout)
