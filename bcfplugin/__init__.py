@@ -5,11 +5,15 @@ sys.path.insert(0, excPath)
 
 __all__ = ["programmaticInterface.py", "ui"]
 
+FREECAD = False
+""" Set by BCFPlugin.py when running inside FreeCAD """
+
+GUI = False
+""" Set by BCFPlugin.py when running in Gui mode """
+
 TMPDIR = None
 """ Temp directory used by the plugin as working directory """
 
-FREECAD = False
-GUI = False
 
 def printErr(msg):
 
@@ -79,13 +83,10 @@ try:
 except:
     pass
 else:
-    import util
-    util.FREECAD = True
     FREECAD = True
     if FreeCAD.GuiUp:
+        FreeCAD.Console.PrintMessage("set util.GUI\n")
         import FreeCADGui as FGui
-        from PySide import QtCore, QtGui
-        util.GUI = True
         GUI = True
 
 

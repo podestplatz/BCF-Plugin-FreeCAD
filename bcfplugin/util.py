@@ -5,17 +5,10 @@ import tempfile
 import shutil
 from enum import Enum
 from urllib.error import URLError
-
-from bcfplugin import TMPDIR as tempDir
+from bcfplugin import FREECAD, GUI
+from bcfplugin import TMPDIR as tmpDir
 
 from PySide2.QtWidgets import QMessageBox, QApplication
-
-
-FREECAD = False
-""" Set by BCFPlugin.py when running inside FreeCAD """
-
-GUI = False
-""" Set by BCFPlugin.py when running in Gui mode """
 
 errorFile = None
 """ File to print errors to """
@@ -201,17 +194,21 @@ def getCurrentQScreen():
 
     global qApp
 
-    if qApp == None:
-        qApp = QApplication.instance()
+    if GUI and False:
+        import FreeCADGui
+        return FreeCADGui.getMainWindow()
 
-    # check if the application is running alongside a Qt Gui at all
-    if qApp == None:
+    # if running entirely outside of FreeCAD use QApplication to get the screen
+    elif not FREECAD or GUI:
+        from PySide2.QtWidgets import QMessageBox, QApplication
+
+        desktop = QApplication.desktop()
+        screenNumber = desktop.screenNumber()
+
+        return QApplication.screens()[screenNumber]
+
+    else:
         return None
-
-    desktop = qApp.desktop()
-    screenNumber = desktop.screenNumber()
-
-    return qApp.screens()[screenNumber]
 
 
 def isAuthorSet():
