@@ -40,6 +40,12 @@ that get created by functions inside this file """
 clipPlanes = list()
 """ List of all currently active clipping planes """
 
+selectionBackup = list()
+""" List of all objects that were selected before viewpoint application """
+
+colBackup = list()
+""" List of tuples containing the view object and its previous colour """
+
 
 class Unit(Enum):
     METER = 1
@@ -415,9 +421,16 @@ def colourComponents(colourings: List[ComponentColour], ifcObjects = None):
     Returns the number of objects whose colours could be set (i.e.: the number
     of objects that were found with a IfcUID that matched an entry of
     `colourings`.
+
+    All shape colours will be backed up before being changed. However they will
+    only be backed up if no backup exists already. For the why please see the
+    documentation of function `backupSelection()`.
     """
 
     util.printInfo("Colouring components")
+    backup = True
+    if len(colBackup) != 0:
+        backup = False
 
     if ifcObjects is None:
         ifcObjects = getIfcObjects()
@@ -432,11 +445,14 @@ def colourComponents(colourings: List[ComponentColour], ifcObjects = None):
         for component in colouring.components:
             cIfcId = component.ifcId
 
+            # colour object if it has an ifcId <=> obj \in ifcObjects
             if cIfcId in ifcObjects:
                 obj = ifcObjects[cIfcId]
                 # view object
                 vObj = obj.Document.getObject(obj.Name).ViewObject
                 if hasattr(vObj, "ShapeColor"):
+                    if backup:
+                        colBackup.append((vObj, vObj.ShapeColor))
                     vObj.ShapeColor = colTuple
                     util.printInfo("Setting color of obj ({}) to"\
                             " {}".format(vObj, colTuple))
@@ -473,6 +489,20 @@ def applyVisibilitySettings(defaultVisibility: bool,
     return True
 
 
+def backupSelection():
+
+    """ Create a list of all objects currently selected. """
+
+    # only backup if the backup is empty, otherwise the following scenario could
+    # happen:
+    #  1. user applies a viewpoint -> selection gets backed up
+    #  2. user applies another viewpoint -> selection gets backed up
+    #     but now the selection is the one applied by step one, which is not the
+    #     intended behavior
+    if len(selectionBackup) == 0:
+        selectionBackup = FreeCADGui.Selection.getCompleteSelection()
+
+
 def selectComponents(components: List[Component], ifcObjects = None):
 
     """ Selects every object that the same IfcUID as a component in `components`
@@ -487,6 +517,7 @@ def selectComponents(components: List[Component], ifcObjects = None):
 
     util.printInfo("Walking through components {} to select".format(components))
     selectionCnt = 0
+    backupSelection()
     FreeCADGui.Selection.clearSelection()
     for component in components:
         ifcUID = component.ifcId
@@ -502,5 +533,35 @@ def selectComponents(components: List[Component], ifcObjects = None):
     return selectionCnt
 
 
+def resetView():
 
+    """ Resets the view to the state it was before application of the viewpoint.
 
+    Things that will be reset:
+        - the selection will be reversed
+        - the colours of the objects will be set to the previous state
+        - elements that got created (lines, clippingPlanes) are removed
+    """
+
+    # remove the bcfGroup with all its contents
+    if bcfGroup is not None:
+        doc.removeObject(bcfGroup.Name)
+    bcfGroup = None
+
+    # remove the clipping planes
+    sceneGraph = gui.ActiveView.getSceneGraph()
+    for clipplane in clipPlanes:
+        sceneGraph.removeChild(clipplane)
+    clipPlanes = list()
+
+    # select objects from before
+    selection = FreeCADGui.selection
+    selection.clearSelection()
+    for obj in selectionBackup:
+        selection.addSelection(obj)
+    selectionBackup = []
+
+    # reset colors to the previous state
+    for (vObj, col) in colBackups:
+        vObj.ShapeColor = col
+    colBackups = list()
