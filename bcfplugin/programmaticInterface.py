@@ -887,15 +887,24 @@ def setModDateAuthor(element, author="", addUpdate=True):
 
     """ Update the modAuthor and modDate members of element """
 
+    # timestamp used as modification datetime
     modDate = utc.localize(datetime.datetime.now())
 
     oldDate = element.modDate
     element.modDate = modDate
 
+    # set the modAuthor if `author` is set
     if author != "" and author is not None:
         oldAuthor = element.modAuthor
         element.modAuthor = author
+    # if author is left empty, the previous modification author will be
+    # overwritten
+    elif author == "" or author is None:
+        # print info if the author is not set
+        util.printInfo("Author is not set.")
+        element.modAuthor = element._modAuthor.defaultValue
 
+    # add the author/date modification as update to the writers module
     if addUpdate:
         element._modDate.state = State.States.MODIFIED
         writer.addProjectUpdate(curProject, element._modDate, oldDate)
@@ -923,11 +932,6 @@ def modifyComment(comment: Comment, newText: str, author: str):
         util.printInfo("newText is empty. Deleting comment now.")
         deleteObject(comment)
         return OperationResults.SUCCESS
-
-    if author == "":
-        util.printInfo("Author is not set. Won't update a comment without an"\
-                " author")
-        return OperationResults.FAILURE
 
     if not isProjectOpen():
         return OperationResults.FAILURE
@@ -1039,16 +1043,6 @@ def modifyElement(element, author=""):
 
     # if topic was modified update `modDate` and `modAuthor`
     if isinstance(realElement, Topic) or isinstance(realElement, Comment):
-        """
-        if author == "":
-            # Rollback and delete the latest update
-            util.printErr("Author is not set, but {} is updated. For a"\
-                    " proper update supply an author!")
-            curProject = projectBackup
-            writer.projectUpdates.pop(len(writer.projectUpdates)-1)
-            return OperationResults.FAILURE
-        """
-
         setModDateAuthor(realElement, author, False)
 
     realElement.state = State.States.ADDED
