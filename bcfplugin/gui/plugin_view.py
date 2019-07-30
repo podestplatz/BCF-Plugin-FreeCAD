@@ -224,6 +224,10 @@ class MyMainWindow(QWidget):
                 self.snStack.setCurrentIndex(1))
         self.commentList.specialCommentSelected.connect(self.viewpointList.selectViewpoint)
         self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
+        self.viewpointList.doubleClicked.connect(self.viewpointsModel.activateViewpoint)
+        self.viewpointList.doubleClicked.connect(self.viewpointResetBtn.show)
+        self.viewpointResetBtn.clicked.connect(self.ViewpointsListModel.resetViewp)
+        self.viewpointResetBtn.clicked.connect(self.viewpointResetBtn.hide)
 
         self.setLayout(self.mainLayout)
 
@@ -330,23 +334,24 @@ class MyMainWindow(QWidget):
         self.snStack.addWidget(self.snapshotList)
         self.snStack.addWidget(self.viewpointList)
 
+        self.viewpointResetBtn = QPushButton("Reset View")
+        self.viewpointResetBtn.hide()
+
         self.snStackSwitcher = QComboBox()
         self.snStackSwitcher.addItem(tr("Snapshot Bar"))
         self.snStackSwitcher.addItem(tr("Viewpoint List"))
 
         self.snGroupLayout.addWidget(self.snStackSwitcher)
         self.snGroupLayout.addWidget(self.snStack)
+        self.snGroupLayout.addWidget(self.viewpointResetBtn)
 
         return snGroup
 
 
-    def createViewpointGroup(self):
-        #TODO: implement
-        pass
-
-
     @Slot()
     def openedProjectUiHandler(self):
+
+        print("setting up view")
 
         self.projectLabel.setText(model.getProjectName())
         self.projectButton.setText("Open other")

@@ -41,6 +41,10 @@ clipPlanes = list()
 """ List of all currently active clipping planes """
 
 
+class CamType(Enum):
+    ORTHOGONAL = 1
+    PERSPECTIVE = 2
+
 class Unit(Enum):
     METER = 1
     MMETER = 2

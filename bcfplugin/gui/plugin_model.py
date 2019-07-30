@@ -12,6 +12,7 @@ import bcfplugin.util as util
 from uuid import uuid4
 from bcfplugin.rdwr.topic import Topic
 from bcfplugin.rdwr.markup import Comment
+from bcfplugin.frontend.viewController import CamType
 
 
 def openProjectBtnHandler(file):
@@ -508,6 +509,31 @@ class ViewpointsListModel(QAbstractListModel):
 
         self._iconSize = size
         self.calcSizes()
+
+
+    @Slot(QModelIndex)
+    def activateViewpoint(self, index):
+
+        if not index.isValid() or index.row() >= len(self.viewpoints):
+            return False
+
+        vpRef = self.viewpoints[index.row()]
+        camType = None
+        if vpRef.viewpoint.oCamera is not None:
+            camType = CamType.ORTHOGONAL
+        elif vpRef.viewpoint.pCamera is not None:
+            camType = CamType.PERSPECTIVE
+
+        pI.activateViewpoint(vpRef.viewpoint, camType)
+
+
+    @Slot()
+    def resetView(self):
+
+        """ Reset the view of FreeCAD to the state before the first viewpoint
+        was applied """
+
+        pI.resetView()
 
 
 class TopicMetricsModel(QAbstractTableModel):

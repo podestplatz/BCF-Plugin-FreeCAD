@@ -25,8 +25,10 @@ from rdwr.interfaces.identifiable import Identifiable
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
 from rdwr.interfaces.xmlname import XMLName
+from bcfplugin.frontend.viewController import CamType
+from bcfplugin import FREECAD, GUI
 
-if util.GUI:
+if GUI:
     import frontend.viewController as vCtrl
 
 __all__ = [ "CamType", "deleteObject", "openProject",
@@ -52,11 +54,6 @@ Gui = None
 class OperationResults(Enum):
     SUCCESS = 1
     FAILURE = 2
-
-
-class CamType(Enum):
-    ORTHOGONAL = 1
-    PERSPECTIVE = 2
 
 
 def _handleProjectUpdate(errMsg, backup):
@@ -372,7 +369,7 @@ def openIfcFile(path: str):
                 "exists")
         return OperationResults.FAILURE
 
-    if not util.FREECAD:
+    if not FREECAD:
         util.printErr("I am not running inside FreeCAD. {} can only be opened"\
                 "inside FreeCAD")
         return OperationResults.FAILURE
@@ -447,7 +444,7 @@ def activateViewpoint(viewpoint: Viewpoint,
 
     """ Sets the camera view the model from the specified viewpoint."""
 
-    if not (util.GUI and util.FREECAD):
+    if not (GUI and FREECAD):
         util.printErr("Application is running either not inside FreeCAD or without"\
                 " GUI. Thus cannot set camera position")
         return OperationResults.FAILURE
@@ -491,6 +488,19 @@ def activateViewpoint(viewpoint: Viewpoint,
             vCtrl.createClippingPlane(clip)
 
 
+def resetView():
+
+    """ Reset FreeCAD's view to the state it was prior to activating the
+    first viewpoint """
+
+    if not (GUI and FREECAD):
+        util.printErr("Application is running either not inside FreeCAD or without"\
+                " GUI. Thus cannot set camera position")
+        return OperationResults.FAILURE
+
+    vCtrl.resetView()
+
+
 def addCurrentViewpoint(topic: Topic):
 
     """ Reads the current view settings and adds them as viewpoint to `topic`
@@ -504,7 +514,7 @@ def addCurrentViewpoint(topic: Topic):
     global curProject
     projectBackup = copy.deepcopy(curProject)
 
-    if not (util.GUI and util.FREECAD):
+    if not (GUI and FREECAD):
         util.printErr("Application is running either not inside FreeCAD or without"\
                 " GUI. Thus cannot set camera position")
         return OperationResults.FAILURE
