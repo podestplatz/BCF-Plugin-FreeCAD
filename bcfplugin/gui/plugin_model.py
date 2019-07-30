@@ -683,13 +683,11 @@ class AdditionalDocumentsModel(QAbstractTableModel):
 
     def rowCount(self, parent = QModelIndex()):
 
-        util.debug("called")
         return len(self.documents)
 
 
     def columnCount(self, parent = QModelIndex()):
 
-        util.debug("called")
         return 3 # external, description, reference
 
 
