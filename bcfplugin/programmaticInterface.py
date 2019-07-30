@@ -112,8 +112,6 @@ def isProjectOpen():
     """
 
     if curProject is None:
-        util.printErr("No project is open. Please open a project before trying to"\
-            " retrieve topics")
         return False
     return True
 
@@ -146,6 +144,10 @@ def deleteObject(object):
 
     realObject = curProject.searchObject(object)
     if realObject is None:
+        # No rollback has to be done here, since the state of the project is not
+        # changed anyways.
+        util.printErr("Object {} could not be found in project {}".format(
+            object.__class__, curProject.__class__))
         return OperationResults.FAILURE
 
     util.debug("Deleting element {} from {}".format(realObject.__class__,
@@ -889,20 +891,31 @@ def setModDateAuthor(element, author="", addUpdate=True):
 
     """ Update the modAuthor and modDate members of element """
 
+    # timestamp used as modification datetime
     modDate = utc.localize(datetime.datetime.now())
 
     oldDate = element.modDate
     element.modDate = modDate
 
-    oldAuthor = element.modAuthor
-    element.modAuthor = author
+    # set the modAuthor if `author` is set
+    if author != "" and author is not None:
+        oldAuthor = element.modAuthor
+        element.modAuthor = author
+    # if author is left empty, the previous modification author will be
+    # overwritten
+    elif author == "" or author is None:
+        # print info if the author is not set
+        util.printInfo("Author is not set.")
+        element.modAuthor = element._modAuthor.defaultValue
 
+    # add the author/date modification as update to the writers module
     if addUpdate:
         element._modDate.state = State.States.MODIFIED
         writer.addProjectUpdate(curProject, element._modDate, oldDate)
 
-        element._modAuthor.state = State.States.MODIFIED
-        writer.addProjectUpdate(curProject, element._modAuthor, oldDate)
+        if author != "" and author is not None:
+            element._modAuthor.state = State.States.MODIFIED
+            writer.addProjectUpdate(curProject, element._modAuthor, oldDate)
 
 
 def modifyComment(comment: Comment, newText: str, author: str):
@@ -923,11 +936,6 @@ def modifyComment(comment: Comment, newText: str, author: str):
         util.printInfo("newText is empty. Deleting comment now.")
         deleteObject(comment)
         return OperationResults.SUCCESS
-
-    if author == "":
-        util.printInfo("Author is not set. Won't update a comment without an"\
-                " author")
-        return OperationResults.FAILURE
 
     if not isProjectOpen():
         return OperationResults.FAILURE
@@ -1041,14 +1049,6 @@ def modifyElement(element, author=""):
 
     # if topic/comment was modified update `modDate` and `modAuthor`
     if isinstance(realElement, Topic) or isinstance(realElement, Comment):
-        if author == "":
-            # Rollback and delete the latest update
-            util.printErr("Author is not set, but {} is updated. For a"\
-                    " proper update supply an author!")
-            curProject = projectBackup
-            writer.projectUpdates.pop(len(writer.projectUpdates)-1)
-            return OperationResults.FAILURE
-
         setModDateAuthor(realElement, author, False)
         util.debug("ModAuthor: {}; ModDate: {}".format(realElement.modAuthor,
             realElement.modDate))

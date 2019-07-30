@@ -6,7 +6,7 @@ from copy import copy
 import bcfplugin.util as util
 
 
-emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
 commentRegex = "[a-zA-Z0-9.,\-\/ ]* -- {}".format(emailRegex)
 dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
 
@@ -65,6 +65,8 @@ class CommentDelegate(QStyledItemDelegate):
         self._separationLineQThickness = None
         self._verticalOffset = 1
         self._verticalQOffset = None
+        self._authorDateSeparation = 1
+        self._authorDateQSeparation = None
         self._maxCommentHeight = None
         self.computeSizes()
 
@@ -84,6 +86,7 @@ class CommentDelegate(QStyledItemDelegate):
         self._separationLineQThickness = self._separationLineThickness * ppm
         self._verticalQOffset = self._verticalOffset * ppm
         self._maxCommentHeight = screen.size().height()
+        self._authorDateQSeparation = self._authorDateSeparation * ppm
 
 
     def drawComment(self, comment, painter, option, fontMetric, leftX, topY, brush):
@@ -128,7 +131,10 @@ class CommentDelegate(QStyledItemDelegate):
         painter.setFont(self.authorFont)
         painter.drawText(start, comment[1])
 
-        dateStart = QPoint(end.x() + 10, end.y())
+        dateStart = QPoint(end.x(), end.y())
+        if comment[1] is not None and len(comment[1]) > 0:
+            dateStart.setX(dateStart.x() + self._authorDateQSeparation)
+
         painter.drawText(dateStart, comment[2])
 
 
@@ -264,7 +270,13 @@ class CommentDelegate(QStyledItemDelegate):
         authorTextHeight = authorFontMetric.height()
 
         commentWidth = commentBoundRect.width()
-        authorDateWidth = authorFontMetric.width(comment[1] + comment[2]) + 10
+        authorDateWidth = 0
+        if comment[1] is not None:
+            authorDateWidth = authorFontMetric.width(comment[1] + comment[2]) + self._authorDateQSeparation
+            authorDateWidth += self._authorDateQSeparation
+        else:
+            authorDateWidth = authorFontMetric.width(comment[2])
+
         # +1 is the separation line that is drawn
         # commentTextHeight / 2 is the offset from the comment text towards the
         # separation line

@@ -477,10 +477,10 @@ topicList='{}')""".format(str(self.xmlId),
 
         if memberName == "":
             msg = ("The name referencing {} in its parent {} could"\
-                    " not be found").format(object, parent)
+                    " not be found").format(object.__class__, parent.__class__)
             debug(msg)
-            util.printErr(msg)
-            return False
+            printErr(msg)
+            return None
 
         # remove the object fom the list
         if isList:
