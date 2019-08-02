@@ -205,7 +205,7 @@ def buildComment(commentDict: Dict):
     if modifiedDate is not None:
         modifiedDate = dateutil.parser.parse(modifiedDate)
 
-    commentString = commentDict["Comment"]
+    commentString = commentDict["Comment"] if commentDict["Comment"] else ""
 
     viewpointRef = getOptionalFromDict(commentDict, "Viewpoint", None)
     if viewpointRef:
