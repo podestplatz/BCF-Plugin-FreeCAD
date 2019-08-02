@@ -1092,6 +1092,10 @@ def modifyElement(element, author=""):
     util.debug("Setting state of {} to equal {}".format(realElement, element))
     # copy the state of the given element to the real element
     for property, value in vars(element).items():
+        if property == "containingObject":
+            util.debug("Set comment.{}={}".format(property,
+                realElement.containingObject.__class__))
+            continue
         setattr(realElement, property, copy.deepcopy(value))
         util.debug("Set comment.{}={}".format(property, value))
 
