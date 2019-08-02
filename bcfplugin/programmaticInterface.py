@@ -33,7 +33,8 @@ __all__ = [ "CamType", "deleteObject", "openProject",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint", "addCurrentViewpoint",
         "addComment", "addFile", "addLabel", "addDocumentReference", "addTopic",
-        "copyFileToProject", "modifyComment", "modifyElement", "saveProject"
+        "copyFileToProject", "modifyComment", "modifyElement", "saveProject",
+        "getTopicFromUUID"
         ]
 
 utc = pytz.UTC
@@ -1013,6 +1014,33 @@ def getTopic(element):
         return topicCpy
     else:
         return None
+
+
+def getTopicFromUUID(uid: UUID):
+
+    global curProject
+
+    if not isProjectOpen():
+        util.printErr("The project is not open. Open a project before"\
+                " trying to retrieve a topic by UUID.")
+        return OperationResults.FAILURE
+
+    if not isinstance(uid, UUID):
+        util.printErr("uid is not of type UUID. Can only get topic by UUID.")
+        return OperationResults.FAILURE
+
+    match = None
+    topics = [ item.topic for item in curProject.topicList ]
+    for topic in topics:
+        if topic.xmlId == uid:
+            match = copy.deepcopy(topic)
+            break
+
+    if match is None:
+        util.printErr("Could not find a topic to that uid: {}".format(str(uid)))
+        return OperationResults.FAILURE
+
+    return match
 
 
 def modifyElement(element, author=""):

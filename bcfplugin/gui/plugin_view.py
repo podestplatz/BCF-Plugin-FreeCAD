@@ -228,6 +228,7 @@ class MyMainWindow(QWidget):
         self.projectOpened.connect(self.commentList.deleteDelBtn)
         self.projectOpened.connect(self.snapshotModel.resetItems)
         self.projectOpened.connect(self.viewpointsModel.resetItems)
+        self.projectOpened.connect(self.relTopModel.resetItems)
         self.projectOpened.connect(lambda: self.snStack.setCurrentIndex(0))
         self.projectOpened.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
         self.commentList.doubleClicked.connect(
@@ -239,6 +240,7 @@ class MyMainWindow(QWidget):
         self.topicCbModel.selectionChanged.connect(self.topicDetailsBtn.show)
         self.topicCbModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
+        self.topicCbModel.selectionChanged.connect(self.relTopModel.resetItems)
         self.topicCbModel.selectionChanged.connect(lambda: self.snStack.setCurrentIndex(0))
         self.topicCbModel.selectionChanged.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
         self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
@@ -303,9 +305,11 @@ class MyMainWindow(QWidget):
         self.topicDetailsBtn = QPushButton("Details")
         self.topicDetailsBtn.hide()
 
+        # setup models for topic details window
         self.topicDetailsModel = model.TopicMetricsModel()
         self.topicDetailsDelegate = delegate.TopicMetricsDelegate()
         self.addDocumentsModel = model.AdditionalDocumentsModel()
+        self.relTopModel = model.RelatedTopicsModel()
 
         self.topicHLayout = QHBoxLayout(topicGroup)
         self.topicHLayout.addWidget(self.topicLabel)
@@ -459,6 +463,14 @@ class MyMainWindow(QWidget):
         addDocTable.setModel(self.addDocumentsModel)
         addDocGroupLayout.addWidget(addDocTable)
         layout.addWidget(addDocGroup)
+
+        relTopGroup = QGroupBox()
+        relTopGroup.setTitle("Related Topics")
+        relTopGroupLayout = QVBoxLayout(relTopGroup)
+        relTopList = QListView()
+        relTopList.setModel(self.relTopModel)
+        relTopGroupLayout.addWidget(relTopList)
+        layout.addWidget(relTopGroup)
 
         metricsWindow.show()
 
