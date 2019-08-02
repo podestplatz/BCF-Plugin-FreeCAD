@@ -47,7 +47,6 @@ def openAuthorsDialog(parent):
 
 class CommentDelegate(QStyledItemDelegate):
 
-    invalidInput = Signal((QModelIndex,))
 
     def __init__(self, parent = None):
 
@@ -73,69 +72,6 @@ class CommentDelegate(QStyledItemDelegate):
         # storage of the size hints. used to intelligently emit the
         # sizeHintChanged signal
         self.sizeHints = {}
-
-
-    def computeSizes(self):
-
-        screen = util.getCurrentQScreen()
-        # pixels per millimeter
-        ppm = screen.logicalDotsPerInch() / util.MMPI
-
-        self._commentYQOffset = self._commentYOffset * ppm
-        self._commentXQOffset  = self._commentXOffset * ppm
-        self._separationLineQThickness = self._separationLineThickness * ppm
-        self._verticalQOffset = self._verticalOffset * ppm
-        self._maxCommentHeight = screen.size().height()
-        self._authorDateQSeparation = self._authorDateSeparation * ppm
-
-
-    def drawComment(self, comment, painter, option, fontMetric, leftX, topY, brush):
-
-        painter.save()
-        pen = painter.pen()
-        pen.setColor(brush.color())
-        painter.setPen(pen)
-        #painter.setFont(self.commentFont)
-
-        commentBoundRect = self.getCommentRect(comment, option)
-        commentBoundRect.setX(leftX + self._commentXQOffset)
-        commentBoundRect.setY(commentBoundRect.y() + self._commentYQOffset)
-        commentBoundRect.setWidth(commentBoundRect.width() -
-                self._commentXQOffset)
-        commentBoundRect.setHeight(commentBoundRect.height() +
-                self._verticalQOffset)
-
-        painter.drawText(commentBoundRect,
-                Qt.TextWordWrap | Qt.AlignLeft,
-                comment[0])
-
-        painter.restore()
-        return commentBoundRect.bottomLeft(), commentBoundRect.height()
-
-
-    def drawSeparationLine(self, painter, pen, start: QPoint, width):
-
-        end = QPoint(start.x() + width,
-                start.y() + self._separationLineQThickness)
-        separationRect = QRect(start, end)
-        painter.fillRect(separationRect, QColor("lightGray"))
-
-
-    def drawAuthorDate(self, comment,
-            painter, pen,
-            start: QPoint, end: QPoint):
-
-        fontMetric = QFontMetrics(self.authorFont)
-        pen.setColor(QColor("#666699"))
-        painter.setPen(pen)
-        painter.setFont(self.authorFont)
-        painter.drawText(start, comment[1])
-
-        dateStart = QPoint(end.x(), end.y())
-        if comment[1] is not None and len(comment[1]) > 0:
-            dateStart.setX(dateStart.x() + self._authorDateQSeparation)
-
-        painter.drawText(dateStart, comment[2])
 
 
     def paint(self, painter, option, index):
@@ -240,18 +176,6 @@ class CommentDelegate(QStyledItemDelegate):
         return size
 
 
-    def updateFonts(self, baseFont):
-
-        """ Set the internal fonts to baseFont and update their sizes """
-
-        self.commentFont = copy(baseFont)
-        self.commentFont.setBold(True)
-        self.commentFont.setPointSize(self.baseFontSize)
-
-        self.authorFont = copy(baseFont)
-        self.authorFont.setPointSize(self.baseFontSize - 4)
-
-
     def calcCommentSize(self, comment, option = None):
 
         """ Calculate the size of a comment element.
@@ -323,6 +247,81 @@ class CommentDelegate(QStyledItemDelegate):
         rect.setHeight(self._maxCommentHeight)
 
         return rect
+
+
+    def computeSizes(self):
+
+        screen = util.getCurrentQScreen()
+        # pixels per millimeter
+        ppm = screen.logicalDotsPerInch() / util.MMPI
+
+        self._commentYQOffset = self._commentYOffset * ppm
+        self._commentXQOffset  = self._commentXOffset * ppm
+        self._separationLineQThickness = self._separationLineThickness * ppm
+        self._verticalQOffset = self._verticalOffset * ppm
+        self._maxCommentHeight = screen.size().height()
+        self._authorDateQSeparation = self._authorDateSeparation * ppm
+
+
+    def drawComment(self, comment, painter, option, fontMetric, leftX, topY, brush):
+
+        painter.save()
+        pen = painter.pen()
+        pen.setColor(brush.color())
+        painter.setPen(pen)
+        #painter.setFont(self.commentFont)
+
+        commentBoundRect = self.getCommentRect(comment, option)
+        commentBoundRect.setX(leftX + self._commentXQOffset)
+        commentBoundRect.setY(commentBoundRect.y() + self._commentYQOffset)
+        commentBoundRect.setWidth(commentBoundRect.width() -
+                self._commentXQOffset)
+        commentBoundRect.setHeight(commentBoundRect.height() +
+                self._verticalQOffset)
+
+        painter.drawText(commentBoundRect,
+                Qt.TextWordWrap | Qt.AlignLeft,
+                comment[0])
+
+        painter.restore()
+        return commentBoundRect.bottomLeft(), commentBoundRect.height()
+
+
+    def drawSeparationLine(self, painter, pen, start: QPoint, width):
+
+        end = QPoint(start.x() + width,
+                start.y() + self._separationLineQThickness)
+        separationRect = QRect(start, end)
+        painter.fillRect(separationRect, QColor("lightGray"))
+
+
+    def drawAuthorDate(self, comment,
+            painter, pen,
+            start: QPoint, end: QPoint):
+
+        fontMetric = QFontMetrics(self.authorFont)
+        pen.setColor(QColor("#666699"))
+        painter.setPen(pen)
+        painter.setFont(self.authorFont)
+        painter.drawText(start, comment[1])
+
+        dateStart = QPoint(end.x(), end.y())
+        if comment[1] is not None and len(comment[1]) > 0:
+            dateStart.setX(dateStart.x() + self._authorDateQSeparation)
+
+        painter.drawText(dateStart, comment[2])
+
+
+    def updateFonts(self, baseFont):
+
+        """ Set the internal fonts to baseFont and update their sizes """
+
+        self.commentFont = copy(baseFont)
+        self.commentFont.setBold(True)
+        self.commentFont.setPointSize(self.baseFontSize)
+
+        self.authorFont = copy(baseFont)
+        self.authorFont.setPointSize(self.baseFontSize - 4)
 
 
     @Slot()

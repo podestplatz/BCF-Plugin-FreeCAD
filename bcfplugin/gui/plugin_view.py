@@ -6,7 +6,6 @@ from PySide2.QtGui import *
 from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
         QDir, QPoint, QSize)
 
-
 import bcfplugin.gui.plugin_model as model
 import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
@@ -62,6 +61,7 @@ class CommentView(QListView):
         x = itemRect.width() - deleteButton.geometry().width()
         y = itemRect.y() + (itemRect.height() -
                 deleteButton.geometry().height()) / 2
+        util.debug("DeleteButton y start: {}".format(y))
         deleteButton.move(x, y)
 
         deleteButton.show()
@@ -81,6 +81,15 @@ class CommentView(QListView):
         viewpoint = model.referencedViewpoint(current)
         if viewpoint is not None:
             self.specialCommentSelected.emit(viewpoint)
+
+
+    def resizeEvent(self, event):
+
+        """ Propagates the new width of the widget to the delegate """
+
+        newSize = self.size()
+        self.itemDelegate().setWidth(newSize.width())
+        QListView.resizeEvent(self, event)
 
 
     @Slot()
@@ -104,15 +113,6 @@ class CommentView(QListView):
             self.deleteDelBtn()
         else:
             util.showError("Could not delete comment.")
-
-
-    def resizeEvent(self, event):
-
-        """ Propagates the new width of the widget to the delegate """
-
-        newSize = self.size()
-        self.itemDelegate().setWidth(newSize.width())
-        QListView.resizeEvent(self, event)
 
 
 class SnapshotView(QListView):
@@ -161,20 +161,6 @@ class ViewpointsListView(QListView):
         QListView.__init__(self, parent)
 
 
-    def findViewpoint(self, desired: Viewpoint):
-
-        index = -1
-        for i in range(0, self.model().rowCount()):
-            index = self.model().createIndex(i, 0)
-            data = self.model().data(index, Qt.DisplayRole)
-
-            if str(desired.id) in data:
-                index = i
-                break
-
-        return index
-
-
     @Slot(Viewpoint)
     def selectViewpoint(self, viewpoint: Viewpoint):
 
@@ -193,6 +179,20 @@ class ViewpointsListView(QListView):
         result = self.model().activateViewpoint(index)
         if result:
             rstBtn.show()
+
+
+    def findViewpoint(self, desired: Viewpoint):
+
+        index = -1
+        for i in range(0, self.model().rowCount()):
+            index = self.model().createIndex(i, 0)
+            data = self.model().data(index, Qt.DisplayRole)
+
+            if str(desired.id) in data:
+                index = i
+                break
+
+        return index
 
 
 class MyMainWindow(QWidget):
@@ -222,17 +222,24 @@ class MyMainWindow(QWidget):
         self.snapshotArea.hide()
         self.mainLayout.addWidget(self.snapshotArea)
 
+        # handlers for an opened project
         self.projectOpened.connect(self.topicCbModel.projectOpened)
         self.projectOpened.connect(self.openedProjectUiHandler)
+        # reset models for every opened project
         self.projectOpened.connect(self.commentModel.resetItems)
         self.projectOpened.connect(self.commentList.deleteDelBtn)
         self.projectOpened.connect(self.snapshotModel.resetItems)
         self.projectOpened.connect(self.viewpointsModel.resetItems)
         self.projectOpened.connect(self.relTopModel.resetItems)
+        # reset both the combobox and the stacked widget beneath to the first
+        # index for an opened project
         self.projectOpened.connect(lambda: self.snStack.setCurrentIndex(0))
         self.projectOpened.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
+        # create editor for a double left click on a comment
         self.commentList.doubleClicked.connect(
                 lambda idx: self.commentList.edit(idx))
+        # reset ui after a topic switch, to not display any artifacts from the
+        # previous topic
         self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.commentList.deleteDelBtn)
         self.topicCbModel.selectionChanged.connect(self.snapshotModel.resetItems)
@@ -241,17 +248,21 @@ class MyMainWindow(QWidget):
         self.topicCbModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.relTopModel.resetItems)
+        # reset both the combobox and the stacked widget beneath to the first
+        # index for a topic switch
         self.topicCbModel.selectionChanged.connect(lambda: self.snStack.setCurrentIndex(0))
         self.topicCbModel.selectionChanged.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
+        # connect the stacked widget with the combobox
         self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
-        # comment, referencing a viewpoint, selected => select corresponding
-        #viewpoint
+        # select a viewpoint if a referncing comment is selected
         self.commentList.specialCommentSelected.connect(lambda x:
                 self.snStack.setCurrentIndex(1))
         self.commentList.specialCommentSelected.connect(lambda x:
                 self.snStackSwitcher.setCurrentIndex(1))
         self.commentList.specialCommentSelected.connect(self.viewpointList.selectViewpoint)
+        # open the topic metrics window
         self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
+        # activate a viewpoint using viewController.py
         self.viewpointList.doubleClicked.connect(lambda x:
                 self.viewpointList.activateViewpoint(x, self.viewpointResetBtn))
         self.viewpointResetBtn.clicked.connect(self.viewpointsModel.resetView)
@@ -332,7 +343,6 @@ class MyMainWindow(QWidget):
 
         self.commentDelegate = delegate.CommentDelegate()
         self.commentList.setItemDelegate(self.commentDelegate)
-        self.commentDelegate.invalidInput.connect(self.commentList.edit)
 
         self.commentLayout.addWidget(self.commentList)
 
