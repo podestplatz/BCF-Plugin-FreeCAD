@@ -12,6 +12,7 @@ import bcfplugin.util as util
 from uuid import uuid4
 from bcfplugin.rdwr.topic import Topic
 from bcfplugin.rdwr.markup import Comment
+from bcfplugin.frontend.viewController import CamType
 
 
 def openProjectBtnHandler(file):
@@ -510,6 +511,34 @@ class ViewpointsListModel(QAbstractListModel):
         self.calcSizes()
 
 
+    @Slot(QModelIndex)
+    def activateViewpoint(self, index):
+
+        if not index.isValid() or index.row() >= len(self.viewpoints):
+            return False
+
+        vpRef = self.viewpoints[index.row()]
+        camType = None
+        if vpRef.viewpoint.oCamera is not None:
+            camType = CamType.ORTHOGONAL
+        elif vpRef.viewpoint.pCamera is not None:
+            camType = CamType.PERSPECTIVE
+
+        result = pI.activateViewpoint(vpRef.viewpoint, camType)
+        if result == pI.OperationResults.FAILURE:
+            return False
+        return True
+
+
+    @Slot()
+    def resetView(self):
+
+        """ Reset the view of FreeCAD to the state before the first viewpoint
+        was applied """
+
+        pI.resetView()
+
+
 class TopicMetricsModel(QAbstractTableModel):
 
     """ Model for the table that shows metrics of the topic.
@@ -568,7 +597,7 @@ class TopicMetricsModel(QAbstractTableModel):
 
         if orientation == Qt.Horizontal:
             if section == 0:
-                header = "Key"
+                header = "Property"
             elif section == 1:
                 header = "Value"
 
@@ -723,4 +752,89 @@ class AdditionalDocumentsModel(QAbstractTableModel):
                 header = "Uri"
 
         return header
+
+
+
+class RelatedTopicsModel(QAbstractListModel):
+
+
+    def __init__(self, parent = None):
+
+        QAbstractListModel.__init__(self, parent)
+        # holds a list of all topic objects referenced by the "relatedTopics"
+        # list inside the current topic object `topic`
+        self.relTopics = list()
+        self.topic = None
+
+
+    @Slot()
+    def resetItems(self, topic = None):
+
+        self.beginResetModel()
+
+        if topic is None:
+            self.relTopics = list()
+            self.topic = None
+
+        else:
+            self.createRelatedTopicsList(topic)
+            self.topic = topic
+
+        self.endResetModel()
+
+
+    def flags(self, index):
+
+        """ The resulting list shall only be read only.
+
+        In the future however it is possible to also let the user add related
+        topics.
+        """
+
+        flgs = Qt.ItemIsEnabled
+        flgs |= Qt.ItemIsSelectable
+
+        return flgs
+
+
+    def rowCount(self, parent = QModelIndex()):
+
+        return len(self.relTopics)
+
+
+    def data(self, index, role = Qt.DisplayRole):
+
+        if not index.isValid():
+            return None
+
+        if index.row() >= len(self.relTopics):
+            util.printInfo("A too large index was passed! Please report the"\
+                    " steps you did as issue on the plugin's github page.")
+            return None
+
+        if role != Qt.DisplayRole:
+            return None
+
+        idx = index.row()
+        topicTitle = self.relTopics[idx].title
+
+        return topicTitle
+
+
+    def createRelatedTopicsList(self, topic):
+
+        if topic is None:
+            return False
+
+        relatedTopics = topic.relatedTopics
+        for t in relatedTopics:
+            # in this list only the uid of a topic is stored
+            tUId = t.value
+            util.debug("Getting topic to: {}:{}".format(tUId, tUId.__class__))
+            match = pI.getTopicFromUUID(tUId)
+            if match != pI.OperationResults.FAILURE:
+                self.relTopics.append(match)
+                util.debug("Got a match {}".format(match.title))
+            else:
+                util.debug("Got nothing back")
 

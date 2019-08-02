@@ -92,13 +92,13 @@ def getSystemTmp(createNew: bool = False):
     On subsequent calls the temp dir that was created latest is returned
     """
 
-    global tempDir
+    global tmpDir
 
-    if createNew or tempDir is None:
+    if createNew or tmpDir is None:
         print("Create new temp dir")
-        tempDir = tempfile.TemporaryDirectory()
+        tmpDir = tempfile.TemporaryDirectory()
 
-    return tempDir.name
+    return tmpDir.name
 
 
 def printErr(msg, toFile=False):

@@ -25,16 +25,16 @@ from rdwr.interfaces.identifiable import Identifiable
 from rdwr.interfaces.hierarchy import Hierarchy
 from rdwr.interfaces.state import State
 from rdwr.interfaces.xmlname import XMLName
-
-if util.GUI:
-    import frontend.viewController as vCtrl
+from bcfplugin.frontend.viewController import CamType
+from bcfplugin import FREECAD, GUI
 
 __all__ = [ "CamType", "deleteObject", "openProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint", "addCurrentViewpoint",
         "addComment", "addFile", "addLabel", "addDocumentReference", "addTopic",
-        "copyFileToProject", "modifyComment", "modifyElement", "saveProject"
+        "copyFileToProject", "modifyComment", "modifyElement", "saveProject",
+        "getTopicFromUUID"
         ]
 
 utc = pytz.UTC
@@ -48,15 +48,17 @@ App = None
 Gui = None
 """ Alias for the FreeCADGui module """
 
+if GUI:
+    import frontend.viewController as vCtrl
+    import FreeCADGui as Gui
+
+if FREECAD:
+    import FreeCAD as App
+
 
 class OperationResults(Enum):
     SUCCESS = 1
     FAILURE = 2
-
-
-class CamType(Enum):
-    ORTHOGONAL = 1
-    PERSPECTIVE = 2
 
 
 def _handleProjectUpdate(errMsg, backup):
@@ -372,7 +374,7 @@ def openIfcFile(path: str):
                 "exists")
         return OperationResults.FAILURE
 
-    if not util.FREECAD:
+    if not FREECAD:
         util.printErr("I am not running inside FreeCAD. {} can only be opened"\
                 "inside FreeCAD")
         return OperationResults.FAILURE
@@ -447,9 +449,15 @@ def activateViewpoint(viewpoint: Viewpoint,
 
     """ Sets the camera view the model from the specified viewpoint."""
 
-    if not (util.GUI and util.FREECAD):
+    if not (GUI and FREECAD):
         util.printErr("Application is running either not inside FreeCAD or without"\
-                " GUI. Thus cannot set camera position")
+                " Gui. Thus cannot set camera position")
+        return OperationResults.FAILURE
+
+    if (Gui.ActiveDocument is None or
+            Gui.ActiveDocument.ActiveView is None):
+        util.printErr("There is no document or view active. Thus cannot apply"\
+                " any viewpoint settings.")
         return OperationResults.FAILURE
 
     # Apply camera settings
@@ -491,6 +499,19 @@ def activateViewpoint(viewpoint: Viewpoint,
             vCtrl.createClippingPlane(clip)
 
 
+def resetView():
+
+    """ Reset FreeCAD's view to the state it was prior to activating the
+    first viewpoint """
+
+    if not (GUI and FREECAD):
+        util.printErr("Application is running either not inside FreeCAD or without"\
+                " GUI. Thus cannot set camera position")
+        return OperationResults.FAILURE
+
+    vCtrl.resetView()
+
+
 def addCurrentViewpoint(topic: Topic):
 
     """ Reads the current view settings and adds them as viewpoint to `topic`
@@ -504,7 +525,7 @@ def addCurrentViewpoint(topic: Topic):
     global curProject
     projectBackup = copy.deepcopy(curProject)
 
-    if not (util.GUI and util.FREECAD):
+    if not (GUI and FREECAD):
         util.printErr("Application is running either not inside FreeCAD or without"\
                 " GUI. Thus cannot set camera position")
         return OperationResults.FAILURE
@@ -995,6 +1016,33 @@ def getTopic(element):
         return None
 
 
+def getTopicFromUUID(uid: UUID):
+
+    global curProject
+
+    if not isProjectOpen():
+        util.printErr("The project is not open. Open a project before"\
+                " trying to retrieve a topic by UUID.")
+        return OperationResults.FAILURE
+
+    if not isinstance(uid, UUID):
+        util.printErr("uid is not of type UUID. Can only get topic by UUID.")
+        return OperationResults.FAILURE
+
+    match = None
+    topics = [ item.topic for item in curProject.topicList ]
+    for topic in topics:
+        if topic.xmlId == uid:
+            match = copy.deepcopy(topic)
+            break
+
+    if match is None:
+        util.printErr("Could not find a topic to that uid: {}".format(str(uid)))
+        return OperationResults.FAILURE
+
+    return match
+
+
 def modifyElement(element, author=""):
 
     """ Replace the old element in the data model with element.
@@ -1044,6 +1092,10 @@ def modifyElement(element, author=""):
     util.debug("Setting state of {} to equal {}".format(realElement, element))
     # copy the state of the given element to the real element
     for property, value in vars(element).items():
+        if property == "containingObject":
+            util.debug("Set comment.{}={}".format(property,
+                realElement.containingObject.__class__))
+            continue
         setattr(realElement, property, copy.deepcopy(value))
         util.debug("Set comment.{}={}".format(property, value))
 

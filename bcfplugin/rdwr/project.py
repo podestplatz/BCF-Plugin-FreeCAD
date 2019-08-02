@@ -198,7 +198,9 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
             cpyitem = deepcopy(item, memo)
             tmpList.append(cpyitem)
 
-        cpy = SimpleList(tmpList, xmlName = cpyxmlname, defaultValue = cpydflvalue)
+        cpy = SimpleList([ i.value for i in tmpList ],
+                xmlName = cpyxmlname,
+                defaultValue = cpydflvalue)
         # set the ids of the copied list items. They get reset in the
         # constructor
         for (newitem, cpyitem) in zip(cpy, tmpList):
