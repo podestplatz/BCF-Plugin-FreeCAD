@@ -36,7 +36,11 @@ class CommentView(QListView):
     @Slot()
     def mouseEntered(self, index):
 
-        """ Display a delete button if the mouse hovers over a comment """
+        """ Display a delete button if the mouse hovers over a comment.
+
+        The button is then wired to a dynamically created clicked handler. This
+        handler will be passed the index of the hovered over element as
+        parameter. """
 
         if self.delBtn is not None:
             self.deleteDelBtn()
@@ -79,13 +83,20 @@ class CommentView(QListView):
             self.specialCommentSelected.emit(viewpoint)
 
 
+    @Slot()
     def deleteDelBtn(self):
 
-        self.delBtn.deleteLater()
-        self.delBtn = None
+        """ Delete the comment delete button from the view. """
+
+        if self.delBtn is not None:
+            self.delBtn.deleteLater()
+            self.delBtn = None
 
 
     def deleteElement(self, index):
+
+        """ Handler for deleting a comment when the comment delete button was
+        pressed """
 
         util.debug("Deleting element at index {}".format(index.row()))
         success = index.model().removeRow(index)
@@ -214,22 +225,29 @@ class MyMainWindow(QWidget):
         self.projectOpened.connect(self.topicCbModel.projectOpened)
         self.projectOpened.connect(self.openedProjectUiHandler)
         self.projectOpened.connect(self.commentModel.resetItems)
+        self.projectOpened.connect(self.commentList.deleteDelBtn)
         self.projectOpened.connect(self.snapshotModel.resetItems)
         self.projectOpened.connect(self.viewpointsModel.resetItems)
         self.projectOpened.connect(lambda: self.snStack.setCurrentIndex(0))
+        self.projectOpened.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
         self.commentList.doubleClicked.connect(
                 lambda idx: self.commentList.edit(idx))
         self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
+        self.topicCbModel.selectionChanged.connect(self.commentList.deleteDelBtn)
         self.topicCbModel.selectionChanged.connect(self.snapshotModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.viewpointsModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.topicDetailsBtn.show)
         self.topicCbModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
         self.topicCbModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
+        self.topicCbModel.selectionChanged.connect(lambda: self.snStack.setCurrentIndex(0))
+        self.topicCbModel.selectionChanged.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
         self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
         # comment, referencing a viewpoint, selected => select corresponding
         #viewpoint
         self.commentList.specialCommentSelected.connect(lambda x:
                 self.snStack.setCurrentIndex(1))
+        self.commentList.specialCommentSelected.connect(lambda x:
+                self.snStackSwitcher.setCurrentIndex(1))
         self.commentList.specialCommentSelected.connect(self.viewpointList.selectViewpoint)
         self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
         self.viewpointList.doubleClicked.connect(lambda x:
