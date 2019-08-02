@@ -176,6 +176,14 @@ class ViewpointsListView(QListView):
             self.setCurrentIndex(matches[0])
 
 
+    @Slot(QModelIndex, QPushButton)
+    def activateViewpoint(self, index, rstBtn):
+
+        result = self.model().activateViewpoint(index)
+        if result:
+            rstBtn.show()
+
+
 class MyMainWindow(QWidget):
 
     projectOpened = Signal()
@@ -224,8 +232,8 @@ class MyMainWindow(QWidget):
                 self.snStack.setCurrentIndex(1))
         self.commentList.specialCommentSelected.connect(self.viewpointList.selectViewpoint)
         self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
-        self.viewpointList.doubleClicked.connect(self.viewpointsModel.activateViewpoint)
-        self.viewpointList.doubleClicked.connect(self.viewpointResetBtn.show)
+        self.viewpointList.doubleClicked.connect(lambda x:
+                self.viewpointList.activateViewpoint(x, self.viewpointResetBtn))
         self.viewpointResetBtn.clicked.connect(self.viewpointsModel.resetView)
         self.viewpointResetBtn.clicked.connect(self.viewpointResetBtn.hide)
 

@@ -473,6 +473,8 @@ def colourComponents(colourings: List[ComponentColour], ifcObjects = None):
     documentation of function `backupSelection()`.
     """
 
+    global colBackup
+
     util.printInfo("Colouring components")
     backup = True
     if len(colBackup) != 0:
@@ -595,6 +597,7 @@ def resetView():
     global clipPlanes
     global bcfGroup
     global selectionBackup
+    global colBackup
 
     # remove the bcfGroup with all its contents
     if bcfGroup is not None:
@@ -608,25 +611,26 @@ def resetView():
     clipPlanes = list()
 
     # select objects from before
-    selection = FreeCADGui.selection
+    selection = FreeCADGui.Selection
     selection.clearSelection()
     for obj in selectionBackup:
         selection.addSelection(obj)
     selectionBackup = []
 
     # reset colors to the previous state
-    for (vObj, col) in colBackups:
+    for (vObj, col) in colBackup:
         vObj.ShapeColor = col
-    colBackups = list()
+    colBackup = list()
 
     # reset camera settings
-    cam = FreeCADGui.ActiveDocument.ActiveView.getCameraNode()
+    view = FreeCADGui.ActiveDocument.ActiveView
+    cam = view.getCameraNode()
     cam.orientation.setValue(camBackup.orientation)
     cam.position.setValue(camBackup.position)
-    if cam.camType == CamType.PERSPECTIVE:
+    if camBackup.camType == CamType.PERSPECTIVE:
         view.setCameraType("Perspective")
         cam.heightAngle.setValue(camBackup.heightAngle)
-    elif cam.camType == CamType.ORTHOGONAL:
+    elif camBackup.camType == CamType.ORTHOGONAL:
         view.setCameraType("Orthogonal")
         cam.height.setValue(camBackup.height)
     camBackup = None

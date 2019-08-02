@@ -28,9 +28,6 @@ from rdwr.interfaces.xmlname import XMLName
 from bcfplugin.frontend.viewController import CamType
 from bcfplugin import FREECAD, GUI
 
-if GUI:
-    import frontend.viewController as vCtrl
-
 __all__ = [ "CamType", "deleteObject", "openProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
@@ -49,6 +46,13 @@ App = None
 
 Gui = None
 """ Alias for the FreeCADGui module """
+
+if GUI:
+    import frontend.viewController as vCtrl
+    import FreeCADGui as Gui
+
+if FREECAD:
+    import FreeCAD as App
 
 
 class OperationResults(Enum):
@@ -446,7 +450,13 @@ def activateViewpoint(viewpoint: Viewpoint,
 
     if not (GUI and FREECAD):
         util.printErr("Application is running either not inside FreeCAD or without"\
-                " GUI. Thus cannot set camera position")
+                " Gui. Thus cannot set camera position")
+        return OperationResults.FAILURE
+
+    if (Gui.ActiveDocument is None or
+            Gui.ActiveDocument.ActiveView is None):
+        util.printErr("There is no document or view active. Thus cannot apply"\
+                " any viewpoint settings.")
         return OperationResults.FAILURE
 
     # Apply camera settings

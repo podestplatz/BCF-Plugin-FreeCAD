@@ -524,7 +524,10 @@ class ViewpointsListModel(QAbstractListModel):
         elif vpRef.viewpoint.pCamera is not None:
             camType = CamType.PERSPECTIVE
 
-        pI.activateViewpoint(vpRef.viewpoint, camType)
+        result = pI.activateViewpoint(vpRef.viewpoint, camType)
+        if result == pI.OperationResults.FAILURE:
+            return False
+        return True
 
 
     @Slot()
