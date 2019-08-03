@@ -12,11 +12,11 @@ import bcfplugin.util as util
 from bcfplugin.rdwr.viewpoint import Viewpoint
 
 
-def tr(text):
+def tr(self, text):
 
     """ Placeholder for the Qt translate function. """
 
-    return text
+    return self.tr(text)
 
 
 class CommentView(QListView):
@@ -47,7 +47,7 @@ class CommentView(QListView):
         options = QStyleOptionViewItem()
         options.initFrom(self)
 
-        btnText = "Delete"
+        btnText = self.tr("Delete")
         deleteButton = QPushButton(self)
         deleteButton.setText(btnText)
         deleteButton.clicked.connect(lambda: self.deleteElement(index))
@@ -164,12 +164,10 @@ class ViewpointsListView(QListView):
     @Slot(Viewpoint)
     def selectViewpoint(self, viewpoint: Viewpoint):
 
-        util.debug("Hello now I should select an element right?")
         start = self.model().createIndex(0, 0)
         searchValue = str(viewpoint.file) + " (" + str(viewpoint.id) + ")"
         matches = self.model().match(start, Qt.DisplayRole, searchValue)
         if len(matches) > 0:
-            util.debug("Is it element: {}".format(matches[0].row()))
             self.setCurrentIndex(matches[0])
 
 
@@ -281,16 +279,16 @@ class MyMainWindow(QWidget):
         self.projectLayout = QHBoxLayout(projectGroup)
         self.projectLayout.setObjectName("projectLayout")
 
-        self.projectLabel = QLabel("Open Project")
+        self.projectLabel = QLabel(self.tr("Open Project"))
         self.projectLabel.setObjectName("projectLabel")
         self.projectLayout.addWidget(self.projectLabel)
 
-        self.projectSaveButton = QPushButton("Save")
+        self.projectSaveButton = QPushButton(self.tr("Save"))
         self.projectSaveButton.setObjectName("projectSaveButton")
         self.projectSaveButton.clicked.connect(self.saveProjectHandler)
         self.projectSaveButton.hide()
 
-        self.projectButton = QPushButton("Open")
+        self.projectButton = QPushButton(self.tr("Open"))
         self.projectButton.setObjectName("projectButton")
         self.projectButton.clicked.connect(self.openProjectBtnHandler)
         self.projectButton.clicked.connect(self.projectSaveButton.show)
@@ -306,14 +304,14 @@ class MyMainWindow(QWidget):
         topicGroup = QGroupBox()
         topicGroup.setObjectName("topicGroup")
 
-        self.topicLabel = QLabel("Topic: ")
+        self.topicLabel = QLabel(self.tr("Topic: "))
 
         self.topicCb = QComboBox()
         self.topicCbModel = model.TopicCBModel()
         self.topicCb.setModel(self.topicCbModel)
         self.topicCb.currentIndexChanged.connect(self.topicCbModel.newSelection)
 
-        self.topicDetailsBtn = QPushButton("Details")
+        self.topicDetailsBtn = QPushButton(self.tr("Details"))
         self.topicDetailsBtn.hide()
 
         # setup models for topic details window
@@ -346,7 +344,7 @@ class MyMainWindow(QWidget):
 
         self.commentLayout.addWidget(self.commentList)
 
-        self.commentPlaceholder = "Enter a new comment here"
+        self.commentPlaceholder = self.tr("Enter a new comment here")
         self.commentValidator = QRegExpValidator()
         self.commentValidator.setRegExp(delegate.commentRegex)
         self.newCommentEdit = QLineEdit()
@@ -374,12 +372,12 @@ class MyMainWindow(QWidget):
         self.snStack.addWidget(self.snapshotList)
         self.snStack.addWidget(self.viewpointList)
 
-        self.viewpointResetBtn = QPushButton("Reset View")
+        self.viewpointResetBtn = QPushButton(self.tr("Reset View"))
         self.viewpointResetBtn.hide()
 
         self.snStackSwitcher = QComboBox()
-        self.snStackSwitcher.addItem(tr("Snapshot Bar"))
-        self.snStackSwitcher.addItem(tr("Viewpoint List"))
+        self.snStackSwitcher.addItem(self.tr("Snapshot Bar"))
+        self.snStackSwitcher.addItem(self.tr("Viewpoint List"))
 
         self.snGroupLayout.addWidget(self.snStackSwitcher)
         self.snGroupLayout.addWidget(self.snStack)
@@ -394,7 +392,7 @@ class MyMainWindow(QWidget):
         print("setting up view")
 
         self.projectLabel.setText(model.getProjectName())
-        self.projectButton.setText("Open other")
+        self.projectButton.setText(self.tr("Open other"))
         self.topicGroup.show()
         self.commentGroup.show()
         self.snapshotArea.show()
@@ -435,7 +433,7 @@ class MyMainWindow(QWidget):
         text = self.newCommentEdit.text()
         success = self.commentModel.addComment((text, util.getAuthor()))
         if not success:
-            util.showError("Could not add a new comment")
+            util.showError(self.tr("Could not add a new comment"))
             return
 
         # delete comment on successful addition
@@ -467,7 +465,7 @@ class MyMainWindow(QWidget):
         layout.addWidget(topicMetrics)
 
         addDocGroup = QGroupBox()
-        addDocGroup.setTitle("Additional Documents")
+        addDocGroup.setTitle(addDocGroup.tr("Additional Documents"))
         addDocGroupLayout = QVBoxLayout(addDocGroup)
         addDocTable = QTableView()
         addDocTable.setModel(self.addDocumentsModel)
@@ -477,7 +475,7 @@ class MyMainWindow(QWidget):
         layout.addWidget(addDocGroup)
 
         relTopGroup = QGroupBox()
-        relTopGroup.setTitle("Related Topics")
+        relTopGroup.setTitle(relTopGroup.tr("Related Topics"))
         relTopGroupLayout = QVBoxLayout(relTopGroup)
         relTopList = QListView()
         relTopList.setModel(self.relTopModel)
