@@ -14,6 +14,45 @@ from bcfplugin.rdwr.topic import Topic
 from bcfplugin.rdwr.markup import Comment
 from bcfplugin.frontend.viewController import CamType
 
+emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
+
+authorsDialog = None
+authorsLineEdit = None
+@Slot()
+def setAuthor():
+
+    global authorsDialog
+    global authorsLineEdit
+
+    author = authorsLineEdit.text()
+    authorsDialog.author = author
+    authorsDialog.done(0)
+
+
+def openAuthorsDialog(parent):
+
+    global authorsDialog
+    global authorsLineEdit
+
+    authorsDialog = QDialog(parent)
+    authorsDialog.setWindowTitle("Enter your e-Mail")
+
+    form = QFormLayout()
+    emailValidator = QRegExpValidator()
+    emailValidator.setRegExp(emailRegex)
+
+    authorsLineEdit = QLineEdit(parent)
+    authorsLineEdit.setValidator(emailValidator)
+    authorsLineEdit.editingFinished.connect(setAuthor)
+
+    form.addRow("E-Mail:", authorsLineEdit)
+    authorsDialog.setLayout(form)
+    authorsDialog.exec()
+
+    author = authorsDialog.author
+    util.debug("We got something very nice {}".format(author))
+    util.setAuthor(author)
+
 
 def openProjectBtnHandler(file):
 
@@ -281,6 +320,21 @@ class CommentModel(QAbstractListModel):
             return None
 
         return self.items[index.row()].viewpoint
+
+
+    def getAuthor(self):
+
+        util.debug("This is the current temp directory:"\
+                " {}".format(util.getSystemTmp()))
+
+        modAuthor = None
+        if util.isAuthorSet():
+            modAuthor = util.getAuthor()
+        else:
+            openAuthorsDialog(None)
+            modAuthor = util.getAuthor()
+
+        return modAuthor
 
 
 class SnapshotModel(QAbstractListModel):

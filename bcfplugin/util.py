@@ -101,6 +101,18 @@ def getSystemTmp(createNew: bool = False):
     return tmpDir.name
 
 
+def deleteTmp():
+
+    """ Delete the temporary directory with all its contents """
+
+    global tmpDir
+
+    if tmpDir is not None:
+        print("deleting temporary directory {}".format(tmpDir.name))
+        del tmpDir
+        tmpDir = None
+
+
 def printErr(msg, toFile=False):
 
     """ Print msg to stderr """

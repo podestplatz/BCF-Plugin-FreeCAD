@@ -1,4 +1,5 @@
 from copy import copy
+from bcfplugin import TMPDIR
 import bcfplugin.util as util
 
 from PySide2.QtWidgets import *
@@ -6,44 +7,9 @@ from PySide2.QtGui import *
 from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
 
 
-emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
-commentRegex = "[a-zA-Z0-9.,\-\/ ]* -- {}".format(emailRegex)
 dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
-
-authorsDialog = None
-authorsLineEdit = None
-@Slot()
-def setAuthor():
-
-    global authorsDialog
-    global authorsLineEdit
-
-    author = authorsLineEdit.text()
-    util.setAuthor(author)
-    authorsDialog.close()
-
-
-def openAuthorsDialog(parent):
-
-    global authorsDialog
-    global authorsLineEdit
-
-    authorsDialog = QDialog(parent)
-    authorsDialog.setWindowTitle("Enter your e-Mail")
-
-    form = QFormLayout()
-    emailValidator = QRegExpValidator()
-    emailValidator.setRegExp(emailRegex)
-
-    authorsLineEdit = QLineEdit(parent)
-    authorsLineEdit.setValidator(emailValidator)
-    authorsLineEdit.editingFinished.connect(setAuthor)
-
-    form.addRow("E-Mail:", authorsLineEdit)
-    authorsDialog.setLayout(form)
-    authorsDialog.setModal(True)
-    authorsDialog.exec()
-
+author = ""
+""" Holds the entered email address of the author """
 
 class CommentDelegate(QStyledItemDelegate):
 
@@ -56,7 +22,7 @@ class CommentDelegate(QStyledItemDelegate):
         self.updateFonts(self.commentFont)
         self.widgetWidth = 0
 
-        self._commentYOffset = 2 #TODO relate it to the actual screensize
+        self._commentYOffset = 2
         self._commentYQOffset = None
         self._commentXOffset = 2
         self._commentXQOffset = None
@@ -122,14 +88,9 @@ class CommentDelegate(QStyledItemDelegate):
 
         """ Makes the comment and the author available in a QLineEdit """
 
-        modAuthor = ""
-        if util.isAuthorSet():
-            modAuthor = util.getAuthor()
-        else:
-            openAuthorsDialog(None)
-            modAuthor = util.getAuthor()
+        global author
 
-        util.debug("The email you entered is: {}".format(modAuthor))
+        author = index.model().getAuthor()
 
         comment = index.model().data(index, Qt.EditRole)
         editor = QLineEdit(comment[0], parent)

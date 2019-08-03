@@ -59,9 +59,9 @@ class CommentView(QListView):
 
         itemRect = self.rectForIndex(index)
         x = itemRect.width() - deleteButton.geometry().width()
-        y = itemRect.y() + (itemRect.height() -
+        vOffset = self.verticalOffset() # scroll offset
+        y = itemRect.y() - vOffset + (itemRect.height() -
                 deleteButton.geometry().height()) / 2
-        util.debug("DeleteButton y start: {}".format(y))
         deleteButton.move(x, y)
 
         deleteButton.show()
@@ -265,6 +265,9 @@ class MyMainWindow(QWidget):
                 self.viewpointList.activateViewpoint(x, self.viewpointResetBtn))
         self.viewpointResetBtn.clicked.connect(self.viewpointsModel.resetView)
         self.viewpointResetBtn.clicked.connect(self.viewpointResetBtn.hide)
+        # delete delete button if the view is scrolled
+        self.commentList.verticalScrollBar().valueChanged.connect(lambda x:
+                self.commentList.deleteDelBtn())
 
         self.setLayout(self.mainLayout)
 
@@ -345,8 +348,6 @@ class MyMainWindow(QWidget):
         self.commentLayout.addWidget(self.commentList)
 
         self.commentPlaceholder = self.tr("Enter a new comment here")
-        self.commentValidator = QRegExpValidator()
-        self.commentValidator.setRegExp(delegate.commentRegex)
         self.newCommentEdit = QLineEdit()
         self.newCommentEdit.returnPressed.connect(self.checkAndAddComment)
         self.newCommentEdit.setPlaceholderText(self.commentPlaceholder)
@@ -415,7 +416,6 @@ class MyMainWindow(QWidget):
     @Slot()
     def checkAndAddComment(self):
 
-        util.debug("Pressed enter on the input")
         editor = self.newCommentEdit
         text = editor.text()
 
@@ -446,7 +446,7 @@ class MyMainWindow(QWidget):
         dflPath = self.openFilePath
         filename = QFileDialog.getSaveFileName(self, self.tr("Save BCF File"),
                 dflPath,  self.tr("BCF Files (*.bcf *.bcfzip)"))
-        if filename != "":
+        if filename[0] != "":
             util.debug("Got a file to write to: {}.".format(filename))
             model.saveProject(filename[0])
 
@@ -485,6 +485,30 @@ class MyMainWindow(QWidget):
         layout.addWidget(relTopGroup)
 
         metricsWindow.show()
+
+
+    def closeEvent(self):
+
+        self.showExitSaveDialog()
+        util.debug("Deleting temporary directory {}".format(util.getSystemTmp()))
+        util.deleteTmp()
+
+
+    def showExitSaveDialog(self):
+
+        dialog = QDialog(self)
+        buttons = QDialogButtonBox(QDialogButtonBox.Save |
+                QDialogButtonBox.Close, dialog)
+        label = QLabel(self.tr("Save before closing?"))
+
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(label)
+        layout.addWidget(buttons)
+        dialog.setLayout(layout)
+
+        buttons.accepted.connect(self.saveProjectHandler)
+        buttons.rejected.connect(lambda: dialog.done(0))
+        dialog.exec()
 
 
 if __name__ == "__main__":
