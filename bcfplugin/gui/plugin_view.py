@@ -472,6 +472,8 @@ class MyMainWindow(QWidget):
         addDocTable = QTableView()
         addDocTable.setModel(self.addDocumentsModel)
         addDocGroupLayout.addWidget(addDocTable)
+        if self.addDocumentsModel.rowCount() == 0:
+            addDocTable.hide()
         layout.addWidget(addDocGroup)
 
         relTopGroup = QGroupBox()
@@ -480,6 +482,8 @@ class MyMainWindow(QWidget):
         relTopList = QListView()
         relTopList.setModel(self.relTopModel)
         relTopGroupLayout.addWidget(relTopList)
+        if self.relTopModel.rowCount() == 0:
+            relTopList.hide()
         layout.addWidget(relTopGroup)
 
         metricsWindow.show()
