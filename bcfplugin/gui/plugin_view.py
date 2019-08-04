@@ -494,6 +494,12 @@ class MyMainWindow(QWidget):
         util.deleteTmp()
 
 
+    def closeSaveProject(self, dialog):
+
+        self.saveProjectHandler()
+        dialog.done(0)
+
+
     def showExitSaveDialog(self):
 
         dialog = QDialog(self)
@@ -506,7 +512,7 @@ class MyMainWindow(QWidget):
         layout.addWidget(buttons)
         dialog.setLayout(layout)
 
-        buttons.accepted.connect(self.saveProjectHandler)
+        buttons.accepted.connect(lambda: self.closeSaveProject(dialog))
         buttons.rejected.connect(lambda: dialog.done(0))
         dialog.exec()
 
