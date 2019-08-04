@@ -84,6 +84,45 @@ schemaDir = "schemas"
 """ Holds the paths of the schema files in the plugin directory. Gets set during runtime """
 schemaPaths = {} # during runtime this will be a map like __schemaUrls
 
+tmpPathFileName = "bcfplugin-tmp.txt"
+""" Holds the path to the file that contains just the path to the created
+temporary directory """
+
+tmpPathFilePath = ""
+
+def getTmpPathFilePath():
+
+    global tmpPathFileName
+
+    # get platform specific temporary directory
+    sysTmp = tempfile.gettempdir()
+    tmpPathFilePath = os.path.join(sysTmp, tmpPathFileName)
+
+    return tmpPathFilePath
+
+
+def storeTmpPath(tmpPath):
+
+    global tmpPathFilePath
+
+    # get platform specific temporary directory
+    tmpPathFilePath = getTmpPathFilePath()
+
+    with open(tmpPathFilePath, "w") as f:
+        f.write(tmpPath)
+
+
+def readTmpPath():
+
+    global tmpPathFilePath
+
+    tmpDir = ""
+    tmpPathFilePath = getTmpPathFilePath()
+    with open(tmpPathFilePath, "r") as f:
+        tmpDir = f.read()
+
+    return tmpDir
+
 
 def getSystemTmp(createNew: bool = False):
 
@@ -92,25 +131,36 @@ def getSystemTmp(createNew: bool = False):
     On subsequent calls the temp dir that was created latest is returned
     """
 
+    global tmpPathFilePath
     global tmpDir
 
-    if createNew or tmpDir is None:
+    tmpDir = ""
+    tmpPathFilePath = getTmpPathFilePath()
+    if not os.path.exists(tmpPathFilePath):
         print("Create new temp dir")
-        tmpDir = tempfile.TemporaryDirectory()
+        tmpDir = tempfile.mkdtemp()
+        storeTmpPath(tmpDir)
 
-    return tmpDir.name
+    else:
+        tmpDir = readTmpPath()
+
+    print("Returning tempdir {}".format(tmpDir))
+    return tmpDir
 
 
 def deleteTmp():
 
     """ Delete the temporary directory with all its contents """
 
-    global tmpDir
+    global tmpPathFilePath
 
-    if tmpDir is not None:
-        print("deleting temporary directory {}".format(tmpDir.name))
-        del tmpDir
-        tmpDir = None
+    tmpDir = readTmpPath()
+    tmpFile = getTmpPathFilePath()
+    if tmpDir != "":
+        print("Deleting temporary directory: {}".format(tmpDir))
+        print("Deleting temporary file: {}".format(tmpFile))
+        shutil.rmtree(tmpDir)
+        os.remove(tmpFile)
 
 
 def printErr(msg, toFile=False):

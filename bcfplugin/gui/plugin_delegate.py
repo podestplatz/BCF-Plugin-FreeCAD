@@ -8,8 +8,48 @@ from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
 
 
 dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
+emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
+
 author = ""
 """ Holds the entered email address of the author """
+
+authorsDialog = None
+authorsLineEdit = None
+@Slot()
+def setAuthor():
+
+    global authorsDialog
+    global authorsLineEdit
+
+    author = authorsLineEdit.text()
+    authorsDialog.author = author
+    authorsDialog.done(0)
+
+
+def openAuthorsDialog(parent):
+
+    global authorsDialog
+    global authorsLineEdit
+
+    authorsDialog = QDialog(parent)
+    authorsDialog.setWindowTitle("Enter your e-Mail")
+
+    form = QFormLayout()
+    emailValidator = QRegExpValidator()
+    emailValidator.setRegExp(emailRegex)
+
+    authorsLineEdit = QLineEdit(parent)
+    authorsLineEdit.setValidator(emailValidator)
+    authorsLineEdit.editingFinished.connect(setAuthor)
+
+    form.addRow("E-Mail:", authorsLineEdit)
+    authorsDialog.setLayout(form)
+    authorsDialog.exec()
+
+    author = authorsDialog.author
+    util.debug("We got something very nice {}".format(author))
+    util.setAuthor(author)
+
 
 class CommentDelegate(QStyledItemDelegate):
 
@@ -90,7 +130,12 @@ class CommentDelegate(QStyledItemDelegate):
 
         global author
 
-        author = index.model().getAuthor()
+        modAuthor = ""
+        if util.isAuthorSet():
+            modAuthor = util.getAuthor()
+        else:
+            openAuthorsDialog(None)
+            modAuthor = util.getAuthor()
 
         comment = index.model().data(index, Qt.EditRole)
         editor = QLineEdit(comment[0], parent)
