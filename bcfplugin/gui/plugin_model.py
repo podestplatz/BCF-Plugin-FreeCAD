@@ -360,6 +360,11 @@ class SnapshotModel(QAbstractListModel):
 
         self.beginResetModel()
 
+        if topic is None:
+            self.snapshotList = []
+            self.endResetModel()
+            return
+
         self.currentTopic = topic
         snapshots = pI.getSnapshots(self.currentTopic)
         if snapshots == pI.OperationResults.FAILURE:
