@@ -6,7 +6,7 @@ import shutil
 from enum import Enum
 from urllib.error import URLError
 from bcfplugin import FREECAD, GUI
-from bcfplugin import TMPDIR as tmpDir
+from bcfplugin import TMPDIR
 
 from PySide2.QtWidgets import QMessageBox, QApplication
 
@@ -136,7 +136,7 @@ def getSystemTmp(createNew: bool = False):
 
     global tmpPathFilePath
     global tmpPathFileName
-    global tmpDir
+    global TMPDIR
 
     tmpDir = ""
     tmpPathFilePath = getTmpFilePath(tmpPathFileName)
@@ -148,7 +148,8 @@ def getSystemTmp(createNew: bool = False):
     else:
         tmpDir = readTmpPath()
 
-    print("Returning tempdir {}".format(tmpDir))
+    TMPDIR = tmpDir
+    print("Returning TMPDIR {}".format(TMPDIR))
     return tmpDir
 
 

@@ -101,7 +101,12 @@ class ModificationDate(p.SimpleElement):
 
     def __str__(self):
 
-        ret_str = self.value.strftime(self.dateFormat)
+        ret_str = ""
+        if self.value is not None:
+            ret_str = self.value.strftime(self.dateFormat)
+        else:
+            ret_str = "Not set"
+
         return ret_str
 
 
