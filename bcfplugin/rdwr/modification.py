@@ -1,11 +1,11 @@
 from copy import deepcopy
 from enum import Enum
 from datetime import datetime
-from rdwr.interfaces.hierarchy import Hierarchy
-from rdwr.interfaces.state import State
-from rdwr.interfaces.identifiable import Identifiable
+from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
+from bcfplugin.rdwr.interfaces.state import State
+from bcfplugin.rdwr.interfaces.identifiable import Identifiable
 
-import rdwr.project as p
+import bcfplugin.rdwr.project as p
 
 
 class ModificationType(Enum):

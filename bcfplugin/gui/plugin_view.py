@@ -9,6 +9,7 @@ from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
 import bcfplugin.gui.plugin_model as model
 import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
+from bcfplugin import DIRTY
 from bcfplugin.rdwr.viewpoint import Viewpoint
 
 
@@ -489,7 +490,9 @@ class MyMainWindow(QWidget):
 
     def closeEvent(self):
 
-        self.showExitSaveDialog()
+        if util.getDirtyBit():
+            self.showExitSaveDialog()
+
         util.debug("Deleting temporary directory {}".format(util.getSystemTmp()))
         util.deleteTmp()
 

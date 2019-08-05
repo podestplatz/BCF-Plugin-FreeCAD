@@ -14,6 +14,9 @@ GUI = False
 TMPDIR = None
 """ Temp directory used by the plugin as working directory """
 
+DIRTY = False
+""" Denotes whether there are unwritten changes in the data model """
+
 
 def printErr(msg):
 

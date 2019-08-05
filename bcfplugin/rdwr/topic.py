@@ -6,17 +6,17 @@ from uuid import UUID
 from datetime import date
 from xmlschema import XMLSchema
 
-import util
-from util import DEBUG, debug
-from rdwr.modification import (ModificationDate, ModificationAuthor,
+import bcfplugin.util
+from bcfplugin.util import DEBUG, debug
+from bcfplugin.rdwr.modification import (ModificationDate, ModificationAuthor,
         ModificationType)
-from rdwr.uri import Uri
-from rdwr.project import (Attribute, SimpleElement, SimpleList,
+from bcfplugin.rdwr.uri import Uri
+from bcfplugin.rdwr.project import (Attribute, SimpleElement, SimpleList,
         searchListObject, listSetContainingElement)
-from rdwr.interfaces.hierarchy import Hierarchy
-from rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
-from rdwr.interfaces.state import State
-from rdwr.interfaces.xmlname import XMLName
+from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
+from bcfplugin.rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
+from bcfplugin.rdwr.interfaces.state import State
+from bcfplugin.rdwr.interfaces.xmlname import XMLName
 
 
 class DocumentReference(Hierarchy, State, XMLName, Identifiable):

@@ -29,6 +29,9 @@ AUTHOR_FILE = "author.txt"
 """ Name of the authors file, in which the email address will be stored once per
 session """
 
+DIRTY_FILE = "bcfplugin_dirty.txt"
+""" Name of the file containing the dirty bit """
+
 
 
 class Verbosity(Enum):
@@ -90,23 +93,22 @@ temporary directory """
 
 tmpPathFilePath = ""
 
-def getTmpPathFilePath():
-
-    global tmpPathFileName
+def getTmpFilePath(filename):
 
     # get platform specific temporary directory
     sysTmp = tempfile.gettempdir()
-    tmpPathFilePath = os.path.join(sysTmp, tmpPathFileName)
+    filepath = os.path.join(sysTmp, filename)
 
-    return tmpPathFilePath
+    return filepath
 
 
 def storeTmpPath(tmpPath):
 
     global tmpPathFilePath
+    global tmpPathFileName
 
     # get platform specific temporary directory
-    tmpPathFilePath = getTmpPathFilePath()
+    tmpPathFilePath = getTmpFilePath(tmpPathFileName)
 
     with open(tmpPathFilePath, "w") as f:
         f.write(tmpPath)
@@ -115,9 +117,10 @@ def storeTmpPath(tmpPath):
 def readTmpPath():
 
     global tmpPathFilePath
+    global tmpPathFileName
 
     tmpDir = ""
-    tmpPathFilePath = getTmpPathFilePath()
+    tmpPathFilePath = getTmpFilePath(tmpPathFileName)
     with open(tmpPathFilePath, "r") as f:
         tmpDir = f.read()
 
@@ -132,10 +135,11 @@ def getSystemTmp(createNew: bool = False):
     """
 
     global tmpPathFilePath
+    global tmpPathFileName
     global tmpDir
 
     tmpDir = ""
-    tmpPathFilePath = getTmpPathFilePath()
+    tmpPathFilePath = getTmpFilePath(tmpPathFileName)
     if not os.path.exists(tmpPathFilePath):
         print("Create new temp dir")
         tmpDir = tempfile.mkdtemp()
@@ -153,9 +157,10 @@ def deleteTmp():
     """ Delete the temporary directory with all its contents """
 
     global tmpPathFilePath
+    global tmpPathFileName
 
     tmpDir = readTmpPath()
-    tmpFile = getTmpPathFilePath()
+    tmpFile = getTmpFilePath(tmpPathFileName)
     if tmpDir != "":
         print("Deleting temporary directory: {}".format(tmpDir))
         print("Deleting temporary file: {}".format(tmpFile))
@@ -469,6 +474,36 @@ def doesFileExistInProject(file: str):
     fileAbsPath = os.path.join(tempdir, file)
     return os.path.exists(fileAbsPath)
 
+
+def setDirty(bit: bool):
+
+    global DIRTY_FILE
+
+    filepath = getTmpFilePath(DIRTY_FILE)
+
+    with open(filepath, "w") as f:
+        if bit:
+            f.write("True")
+        else:
+            f.write("False")
+
+
+def getDirtyBit():
+
+    global DIRTY_FILE
+
+    filepath = getTmpFilePath(DIRTY_FILE)
+    if not os.path.exists(filepath):
+        return False
+
+    bit = False
+    with open(filepath, "r") as f:
+        content = f.read()
+        if content == "True":
+            bit = True
+        else:
+            bit = False
+    return bit
 
 class cd:
 

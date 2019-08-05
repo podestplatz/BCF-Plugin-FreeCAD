@@ -4,17 +4,17 @@ from uuid import UUID
 from datetime import datetime, date
 from typing import List # used for custom type annotations
 
-from rdwr.uri import Uri
-from rdwr.modification import (ModificationDate, ModificationAuthor, ModificationType)
-from rdwr.topic import Topic
-from rdwr.project import (SimpleElement, Attribute,
+from bcfplugin.rdwr.uri import Uri
+from bcfplugin.rdwr.modification import (ModificationDate, ModificationAuthor, ModificationType)
+from bcfplugin.rdwr.topic import Topic
+from bcfplugin.rdwr.project import (SimpleElement, Attribute,
         listSetContainingElement, searchListObject)
-from rdwr.viewpoint import (Viewpoint)
+from bcfplugin.rdwr.viewpoint import (Viewpoint)
 from util import debug, DEBUG
-from rdwr.interfaces.state import State
-from rdwr.interfaces.hierarchy import Hierarchy
-from rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
-from rdwr.interfaces.xmlname import XMLName
+from bcfplugin.rdwr.interfaces.state import State
+from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
+from bcfplugin.rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
+from bcfplugin.rdwr.interfaces.xmlname import XMLName
 
 
 class HeaderFile(Hierarchy, State, XMLName, Identifiable):

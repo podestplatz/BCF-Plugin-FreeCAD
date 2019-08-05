@@ -1,8 +1,8 @@
 import xml.etree.ElementTree as ET
 from copy import deepcopy
-from rdwr.interfaces.hierarchy import Hierarchy
-from rdwr.interfaces.state import State
-from rdwr.interfaces.xmlname import XMLName
+from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
+from bcfplugin.rdwr.interfaces.state import State
+from bcfplugin.rdwr.interfaces.xmlname import XMLName
 
 
 class ThreeDVector(Hierarchy, State, XMLName):

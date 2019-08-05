@@ -4,11 +4,11 @@ from copy import deepcopy
 
 from uuid import UUID
 from util import debug, printErr
-from rdwr.uri import Uri
-from rdwr.interfaces.hierarchy import Hierarchy
-from rdwr.interfaces.state import State
-from rdwr.interfaces.xmlname import XMLName
-from rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
+from bcfplugin.rdwr.uri import Uri
+from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
+from bcfplugin.rdwr.interfaces.state import State
+from bcfplugin.rdwr.interfaces.xmlname import XMLName
+from bcfplugin.rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
 
 
 def listSetContainingElement(itemList, containingObject):
@@ -424,19 +424,27 @@ topicList='{}')""".format(str(self.xmlId),
 
     def searchObject(self, object):
 
+        """ Searches this object and its members for one that matches
+        `object.id`.
+
+        The search algorithm, effectively implemented, is a depth first search. """
+
         if not issubclass(type(object), Identifiable):
             debug("object {} is not a subclass of Identifiable".format(object))
             return None
 
+        # check if itself is the wanted object
         id = object.id
         if self.id == id:
             return self
 
+        # search all non-list members
         members = [self._name, self._extSchemaSrc]
         searchResult = searchListObject(object, members)
         if searchResult is not None:
             return searchResult
 
+        # search the list members
         searchResult = searchListObject(object, self.topicList)
         if searchResult is not None:
             return searchResult

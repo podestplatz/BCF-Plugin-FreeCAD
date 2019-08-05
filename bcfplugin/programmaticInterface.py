@@ -11,20 +11,20 @@ from typing import List, Tuple
 from uuid import uuid4, UUID
 
 import util
-import rdwr.reader as reader
-import rdwr.writer as writer
-import rdwr.project as p
-import rdwr.markup as m
-from rdwr.modification import (ModificationDate, ModificationAuthor,
+import bcfplugin.rdwr.reader as reader
+import bcfplugin.rdwr.writer as writer
+import bcfplugin.rdwr.project as p
+import bcfplugin.rdwr.markup as m
+from bcfplugin.rdwr.modification import (ModificationDate, ModificationAuthor,
         ModificationType)
-from rdwr.viewpoint import Viewpoint, OrthogonalCamera, PerspectiveCamera
-from rdwr.topic import Topic, DocumentReference, BimSnippet
-from rdwr.markup import Comment, Header, HeaderFile, ViewpointReference, Markup
-from rdwr.uri import Uri
-from rdwr.interfaces.identifiable import Identifiable
-from rdwr.interfaces.hierarchy import Hierarchy
-from rdwr.interfaces.state import State
-from rdwr.interfaces.xmlname import XMLName
+from bcfplugin.rdwr.viewpoint import Viewpoint, OrthogonalCamera, PerspectiveCamera
+from bcfplugin.rdwr.topic import Topic, DocumentReference, BimSnippet
+from bcfplugin.rdwr.markup import Comment, Header, HeaderFile, ViewpointReference, Markup
+from bcfplugin.rdwr.uri import Uri
+from bcfplugin.rdwr.interfaces.identifiable import Identifiable
+from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
+from bcfplugin.rdwr.interfaces.state import State
+from bcfplugin.rdwr.interfaces.xmlname import XMLName
 from bcfplugin.frontend.viewController import CamType
 from bcfplugin import FREECAD, GUI
 

@@ -11,15 +11,15 @@ if __name__ == "__main__":
 import copy as c
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as MD
-import util as util
-from util import DEBUG, debug
-import rdwr.reader as reader
-import rdwr.interfaces.hierarchy as iH
-import rdwr.interfaces.state as iS
-import rdwr.interfaces.identifiable as iI
-import rdwr.markup as m
-import rdwr.project as p
-import rdwr.uri as u
+from bcfplugin.util import DEBUG, debug
+import bcfplugin.util as util
+import bcfplugin.rdwr.reader as reader
+import bcfplugin.rdwr.interfaces.hierarchy as iH
+import bcfplugin.rdwr.interfaces.state as iS
+import bcfplugin.rdwr.interfaces.identifiable as iI
+import bcfplugin.rdwr.markup as m
+import bcfplugin.rdwr.project as p
+import bcfplugin.rdwr.uri as u
 
 
 projectFileName = "project.bcfp"
@@ -894,6 +894,7 @@ def addProjectUpdate(project: p.Project, element, prevVal):
 
     if element.state != iS.State.States.ORIGINAL:
         projectUpdates.append((projectCpy, elementCpy, prevValCpy))
+        util.setDirty(True)
     else:
         raise ValueError("Element is in its original state. Cannot be added as"\
                 " update")
@@ -1034,6 +1035,7 @@ def processProjectUpdates():
 
     global projectUpdates
 
+    debug("length of project updates: {}".format(len(projectUpdates)))
     # list of all updates that were successfully processed
     processedUpdates = list()
     # holds the update that failed to be able to revert back
@@ -1042,24 +1044,31 @@ def processProjectUpdates():
         element = update[1]
         oldVal = update[2]
         updateType = element.state
+
+        debug("State of element: {}".format(updateType))
+        debug("type(updateType) = {}".format(type(updateType)))
+        debug("type(ADDED) = {}".format(type(iS.State.States.ADDED)))
+        debug("State == ADDED: {}".format(updateType is iS.State.States.ADDED))
         if  updateType == iS.State.States.ADDED:
+            debug("Adding an element")
             if handleAddElement(element, oldVal):
                 processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
 
+        debug("State == DELETED: {}".format(updateType is iS.State.States.DELETED))
         if updateType == iS.State.States.DELETED:
-            elementHierarchy = element.getHierarchyList()
-            debug("Hierarchy of element {}".format(elementHierarchy))
-
+            debug("Deleting an element")
             if handleDeleteElement(element, oldVal):
                 processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
 
+        debug("State == MODIFIED: {}".format(updateType is iS.State.States.MODIFIED))
         if updateType == iS.State.States.MODIFIED:
+            debug("Modifying an element")
             if handleModifyElement(element, oldVal):
                 processedUpdates.append(update)
             else:
@@ -1116,6 +1125,7 @@ def zipToBcfFile(bcfRootPath, dstFile):
         with zipfile.ZipFile(dstFile, "w") as zipFile:
             recursiveZipping("./", zipFile)
 
+    util.setDirty(False)
     return dstFile
 
 
@@ -1137,30 +1147,3 @@ def createNewBcfFile(name):
 
     return project
 
-
-################## UNUSED ##################
-def compileChanges(project: p.Project):
-
-    """
-    This function crawls through the complete object structure below project and
-    looks for objects whose state is different from `iS.State.States.ORIGINAL`.
-    Elements that are flagged with `iS.State.States.ADDED` are put into the list
-    `addedObjects`.
-    Elements that are flagged with `iS.State.States.DELETED` are put into the
-    list `deletedObjects`.
-    Elements that are flagges with `iS.State.States.MODIFIED` are put into the
-    list `modifiedObjects`.
-    These lists are then, in a subsequent step, processed and written to file.
-    """
-
-    stateList = project.getStateList()
-    for item in stateList:
-        if item[0] == iS.State.States.ADDED:
-            addedObjects.append(item[1])
-        elif item[0] == iS.State.States.MODIFIED:
-            modifiedObjects.append(item[1])
-        elif item[0] == iS.State.States.DELETED:
-            deletedObjects.append(item[1])
-        else: # Last option would be original state, which should not be contained in the list anyways
-            pass
-###############################################

@@ -11,14 +11,14 @@ if __name__ == "__main__":
     print(sys.path)
 import util as util
 from util import debug, DEBUG
-from rdwr.project import Project
-from rdwr.uri import Uri as Uri
-from rdwr.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
-from rdwr.topic import (Topic, BimSnippet, DocumentReference)
-from rdwr.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
+from bcfplugin.rdwr.project import Project
+from bcfplugin.rdwr.uri import Uri as Uri
+from bcfplugin.rdwr.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
+from bcfplugin.rdwr.topic import (Topic, BimSnippet, DocumentReference)
+from bcfplugin.rdwr.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         ComponentColour, PerspectiveCamera, OrthogonalCamera, BitmapFormat,
         Bitmap)
-from rdwr.threedvector import (Point, Line, Direction, ClippingPlane)
+from bcfplugin.rdwr.threedvector import (Point, Line, Direction, ClippingPlane)
 
 # BCF standard versions that can be read in
 SUPPORTED_VERSIONS = ["2.1"]
