@@ -28,7 +28,7 @@ from bcfplugin.rdwr.interfaces.xmlname import XMLName
 from bcfplugin.frontend.viewController import CamType
 from bcfplugin import FREECAD, GUI
 
-__all__ = [ "CamType", "deleteObject", "openProject",
+__all__ = [ "CamType", "deleteObject", "openProject", "closeProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint", "addCurrentViewpoint",
@@ -118,6 +118,14 @@ def isProjectOpen():
     return True
 
 
+def saveProject(dstFile):
+
+    """ Save the current state of the working directory to `dstfile` """
+
+    bcfRootPath = reader.bcfDir
+    writer.zipToBcfFile(bcfRootPath, dstFile)
+
+
 def openProject(bcfFile):
 
     """ Reads in the given bcfFile and makes it available to the plugin.
@@ -140,6 +148,30 @@ def openProject(bcfFile):
 
     curProject = project
     return OperationResults.SUCCESS
+
+
+def closeProject():
+
+    global curProject
+
+    if util.getDirtyBit():
+
+        answer = "x"
+        while answer not in "ny " and answer != "":
+            answer = input("Do you want to save your changes before exiting?"\
+                    "([y]|n)")
+
+        if answer == "y" or answer == " " or answer == "":
+            currentDir = os.path.dirname(os.path.abspath(__file__))
+            print("Current directory: {}".format(currentDir))
+            file = input("File to save to: ")
+            if os.path.isabs(file):
+                saveProject(file)
+            else:
+                saveProject(os.path.join(currentDir, file))
+
+    del curProject
+    util.deleteTmp()
 
 
 def _searchRealTopic(topic: Topic):
@@ -367,14 +399,6 @@ def setModDateAuthor(element, author="", addUpdate=True):
         if author != "" and author is not None:
             element._modAuthor.state = State.States.MODIFIED
             writer.addProjectUpdate(curProject, element._modAuthor, oldDate)
-
-
-def saveProject(dstFile):
-
-    """ Save the current state of the working directory to `dstfile` """
-
-    bcfRootPath = reader.bcfDir
-    writer.zipToBcfFile(bcfRootPath, dstFile)
 
 
 def getProjectName():
@@ -1173,6 +1197,5 @@ def modifyElement(element, author=""):
     realElement.state = State.States.ORIGINAL
     return _handleProjectUpdate("Could not modify element {}".format(element.xmlName),
             projectBackup)
-
 
 
