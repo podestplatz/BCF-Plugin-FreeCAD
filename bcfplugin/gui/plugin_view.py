@@ -203,6 +203,7 @@ class MyMainWindow(QWidget):
 
         self.mainLayout = QVBoxLayout()
         self.mainLayout.setObjectName("mainLayout")
+        self.setWindowTitle("BCF-Plugin")
 
         self.projectGroup = self.createProjectGroup()
         self.mainLayout.addWidget(self.projectGroup)
@@ -237,6 +238,9 @@ class MyMainWindow(QWidget):
         # create editor for a double left click on a comment
         self.commentList.doubleClicked.connect(
                 lambda idx: self.commentList.edit(idx))
+        # enable the new comment line edit
+        self.topicCbModel.selectionChanged.connect(lambda x:
+                self.newCommentEdit.setDisabled(False))
         # reset ui after a topic switch, to not display any artifacts from the
         # previous topic
         self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
@@ -352,6 +356,8 @@ class MyMainWindow(QWidget):
         self.newCommentEdit = QLineEdit()
         self.newCommentEdit.returnPressed.connect(self.checkAndAddComment)
         self.newCommentEdit.setPlaceholderText(self.commentPlaceholder)
+        self.newCommentEdit.setDisabled(True)
+
         self.commentLayout.addWidget(self.newCommentEdit)
 
         return commentGroup

@@ -161,12 +161,14 @@ def deleteTmp():
     global tmpPathFileName
 
     tmpDir = readTmpPath()
-    tmpFile = getTmpFilePath(tmpPathFileName)
+    tmpFiles = [ getTmpFilePath(tmpPathFileName), getTmpFilePath(DIRTY_FILE) ]
     if tmpDir != "":
         print("Deleting temporary directory: {}".format(tmpDir))
-        print("Deleting temporary file: {}".format(tmpFile))
         shutil.rmtree(tmpDir)
-        os.remove(tmpFile)
+        for tmpFile in tmpFiles:
+            if os.path.exists(tmpFile):
+                print("Deleting temporary file: {}".format(tmpFile))
+                os.remove(tmpFile)
 
 
 def printErr(msg, toFile=False):
