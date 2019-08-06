@@ -1,6 +1,7 @@
+import os
 import sys
-if __name__ == "__main__":
-    sys.path.append("../../")
+import platform
+import subprocess
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
@@ -525,6 +526,19 @@ class MyMainWindow(QWidget):
         buttons.rejected.connect(lambda: dialog.done(0))
         dialog.exec()
 
+
+    @Slot()
+    def openDocRef(self, index):
+
+        filePath = index.model().getFilePath(index)
+        if filePath is not None:
+            system = platform.system()
+            if system == "Darwin": # this my dear friend is macOS
+                subprocess.call(["open", filePath])
+            elif system == "Windows": # ... well, MS Windows
+                os.startfile(filePath)
+            else: # good old linux derivatives
+                subprocess.call(["xdg-open", filePath])
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

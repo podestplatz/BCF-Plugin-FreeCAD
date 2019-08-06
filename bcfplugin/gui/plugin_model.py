@@ -773,6 +773,25 @@ class AdditionalDocumentsModel(QAbstractTableModel):
         self.documents = topic.docRefs
 
 
+    def getFilePath(self, index):
+
+        if not index.isValid():
+            return None
+
+        if index.row() >= len(self.documents):
+            return None
+
+        doc = self.documents[index.row()]
+        path = doc.reference
+        if doc.external:
+            return path
+        else:
+            sysTmp = util.getSystemTmp()
+            #TODO: construct absolute working directory path out of the
+            # relative path `reference` and the working directory
+
+
+
 
 class RelatedTopicsModel(QAbstractListModel):
 
