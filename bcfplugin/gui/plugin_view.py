@@ -353,13 +353,14 @@ class MyMainWindow(QWidget):
         self.snapshotArea.hide()
         self.mainLayout.addWidget(self.snapshotArea)
 
+        # handlers for an opened project
+        self.projectOpened.connect(self.topicListModel.projectOpened)
         self.notificationLabel = createNotificationLabel()
         self.mainLayout.addWidget(self.notificationLabel)
 
         """ handlers for an opened project """
         # remove stretch added at the beginning
         self.projectOpened.connect(self.deleteStretch)
-        self.projectOpened.connect(self.topicCbModel.projectOpened)
         self.projectOpened.connect(self.openedProjectUiHandler)
         # reset models for every opened project
         self.projectOpened.connect(self.commentModel.resetItems)
@@ -367,30 +368,43 @@ class MyMainWindow(QWidget):
         self.projectOpened.connect(self.snapshotModel.resetItems)
         self.projectOpened.connect(self.viewpointsModel.resetItems)
         self.projectOpened.connect(self.relTopModel.resetItems)
+
         # reset both the combobox and the stacked widget beneath to the first
         # index for an opened project
         self.projectOpened.connect(lambda: self.snStack.setCurrentIndex(0))
         self.projectOpened.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
+        self.projectOpened.connect(self.hideCommentSnapshotGroup)
+        self.projectOpened.connect(self.replaceTopicNameLabel)
+
         # create editor for a double left click on a comment
         self.commentList.doubleClicked.connect(
                 lambda idx: self.commentList.edit(idx))
-        # enable the new comment line edit
-        self.topicCbModel.selectionChanged.connect(lambda x:
+
+        self.topicNameLabel.clicked.connect(self.hideCommentSnapshotGroup)
+        self.topicNameLabel.clicked.connect(self.replaceTopicNameLabel)
+
+        self.topicListModel.selectionChanged.connect(lambda x:
+                self.showCommentSnapshotGroup())
+        self.topicListModel.selectionChanged.connect(lambda x:
                 self.newCommentEdit.setDisabled(False))
+        self.topicListModel.selectionChanged.connect(lambda x:
+                self.replaceTopicList())
+        self.topicListModel.selectionChanged.connect(self.setTopicName)
+
         # reset ui after a topic switch, to not display any artifacts from the
         # previous topic
-        self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
-        self.topicCbModel.selectionChanged.connect(self.commentList.deleteDelBtn)
-        self.topicCbModel.selectionChanged.connect(self.snapshotModel.resetItems)
-        self.topicCbModel.selectionChanged.connect(self.viewpointsModel.resetItems)
-        self.topicCbModel.selectionChanged.connect(self.topicDetailsBtn.show)
-        self.topicCbModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
-        self.topicCbModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
-        self.topicCbModel.selectionChanged.connect(self.relTopModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.commentModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.commentList.deleteDelBtn)
+        self.topicListModel.selectionChanged.connect(self.snapshotModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.viewpointsModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.topicDetailsBtn.show)
+        self.topicListModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.relTopModel.resetItems)
         # reset both the combobox and the stacked widget beneath to the first
         # index for a topic switch
-        self.topicCbModel.selectionChanged.connect(lambda: self.snStack.setCurrentIndex(0))
-        self.topicCbModel.selectionChanged.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
+        self.topicListModel.selectionChanged.connect(lambda: self.snStack.setCurrentIndex(0))
+        self.topicListModel.selectionChanged.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
         # connect the stacked widget with the combobox
         self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
         # select a viewpoint if a referncing comment is selected
@@ -448,13 +462,20 @@ class MyMainWindow(QWidget):
 
         topicGroup = QGroupBox()
         topicGroup.setObjectName("topicGroup")
+        topicGroup.setTitle("Topic")
 
-        self.topicLabel = QLabel(self.tr("Topic: "))
+        self.topicNameLabel = QPushButton()
+        self.topicNameLabel.hide()
+        colPal = self.topicNameLabel.palette()
+        colPal.setColor(QPalette.Button, QColor.fromRgb(0xFF, 0xFF, 0xFF))
+        self.topicNameLabel.setAutoFillBackground(True)
+        self.topicNameLabel.setPalette(colPal)
+        self.topicNameLabel.update()
 
-        self.topicCb = QComboBox()
-        self.topicCbModel = model.TopicCBModel()
-        self.topicCb.setModel(self.topicCbModel)
-        self.topicCb.currentIndexChanged.connect(self.topicCbModel.newSelection)
+        self.topicList = QListView()
+        self.topicListModel = model.TopicCBModel()
+        self.topicList.setModel(self.topicListModel)
+        self.topicList.doubleClicked.connect(self.topicListModel.newSelection)
 
         self.topicDetailsBtn = QPushButton(self.tr("Details"))
         self.topicDetailsBtn.hide()
@@ -468,8 +489,8 @@ class MyMainWindow(QWidget):
         self.relTopModel = model.RelatedTopicsModel()
 
         self.topicHLayout = QHBoxLayout(topicGroup)
-        self.topicHLayout.addWidget(self.topicLabel)
-        self.topicHLayout.addWidget(self.topicCb)
+        self.topicHLayout.addWidget(self.topicList)
+        self.topicHLayout.addWidget(self.topicNameLabel)
         self.topicHLayout.addWidget(self.topicDetailsBtn)
         self.topicHLayout.addWidget(self.topicAddBtn)
 
@@ -542,6 +563,17 @@ class MyMainWindow(QWidget):
         self.projectLabel.setText(model.getProjectName())
         self.projectButton.setText(self.tr("Open other"))
         self.topicGroup.show()
+
+    @Slot()
+    def hideCommentSnapshotGroup(self):
+
+        self.commentGroup.hide()
+        self.snapshotArea.hide()
+
+
+    @Slot()
+    def showCommentSnapshotGroup(self):
+
         self.commentGroup.show()
         self.snapshotArea.show()
 
@@ -558,6 +590,27 @@ class MyMainWindow(QWidget):
             model.openProjectBtnHandler(filename[0])
             self.openFilePath = filename[0]
             self.projectOpened.emit()
+
+
+    @Slot()
+    def replaceTopicList(self):
+
+        self.topicNameLabel.show()
+        self.topicList.hide()
+
+
+    @Slot()
+    def replaceTopicNameLabel(self):
+
+        self.topicNameLabel.hide()
+        self.topicDetailsBtn.hide()
+        self.topicList.show()
+
+
+    @Slot()
+    def setTopicName(self, topic):
+
+        self.topicNameLabel.setText(topic.title)
 
 
     @Slot()
