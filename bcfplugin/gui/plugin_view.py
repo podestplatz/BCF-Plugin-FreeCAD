@@ -494,7 +494,7 @@ class MyMainWindow(QWidget):
         metricsWindow.show()
 
 
-    def closeEvent(self):
+    def closeEvent(self, event):
 
         if util.getDirtyBit():
             self.showExitSaveDialog()

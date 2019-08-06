@@ -11,7 +11,9 @@ from bcfplugin import TMPDIR
 
 from PySide2.QtWidgets import QMessageBox, QApplication
 
-errorFile = "bcfplugin_error.txt"
+PREFIX = "bcfplugin_"
+
+errorFile = "{}error.txt".format(PREFIX)
 """ File to print errors to """
 
 logInitialized = False
@@ -33,9 +35,20 @@ AUTHOR_FILE = "author.txt"
 """ Name of the authors file, in which the email address will be stored once per
 session """
 
-DIRTY_FILE = "bcfplugin_dirty.txt"
+DIRTY_FILE = "{}dirty.txt".format(PREFIX)
 """ Name of the file containing the dirty bit """
 
+""" Specifies the name of the directory in which the schema files are stored """
+schemaDir = "schemas"
+
+""" Holds the paths of the schema files in the plugin directory. Gets set during runtime """
+schemaPaths = {} # during runtime this will be a map like __schemaUrls
+
+tmpPathFileName = "{}tmp.txt".format(PREFIX)
+""" Holds the path to the file that contains just the path to the created
+temporary directory """
+
+tmpPathFilePath = ""
 
 
 class Verbosity(Enum):
@@ -86,16 +99,6 @@ __schemaUrls = {
             "",
             __schemaNames[Schema.VISINFO])}
 
-""" Specifies the name of the directory in which the schema files are stored """
-schemaDir = "schemas"
-""" Holds the paths of the schema files in the plugin directory. Gets set during runtime """
-schemaPaths = {} # during runtime this will be a map like __schemaUrls
-
-tmpPathFileName = "bcfplugin-tmp.txt"
-""" Holds the path to the file that contains just the path to the created
-temporary directory """
-
-tmpPathFilePath = ""
 
 def getTmpFilePath(filename):
 
@@ -141,12 +144,13 @@ def getSystemTmp(createNew: bool = False):
     global tmpPathFilePath
     global tmpPathFileName
     global TMPDIR
+    global PREFIX
 
     tmpDir = ""
     tmpPathFilePath = getTmpFilePath(tmpPathFileName)
     if not os.path.exists(tmpPathFilePath):
         print("Create new temp dir")
-        tmpDir = tempfile.mkdtemp()
+        tmpDir = tempfile.mkdtemp(prefix=PREFIX)
         storeTmpPath(tmpDir)
 
     else:
@@ -161,18 +165,19 @@ def deleteTmp():
 
     """ Delete the temporary directory with all its contents """
 
-    global tmpPathFilePath
-    global tmpPathFileName
+    global PREFIX
 
-    tmpDir = readTmpPath()
-    tmpFiles = [ getTmpFilePath(tmpPathFileName), getTmpFilePath(DIRTY_FILE) ]
-    if tmpDir != "":
-        print("Deleting temporary directory: {}".format(tmpDir))
-        shutil.rmtree(tmpDir)
-        for tmpFile in tmpFiles:
-            if os.path.exists(tmpFile):
-                print("Deleting temporary file: {}".format(tmpFile))
-                os.remove(tmpFile)
+    sysTmp = tempfile.gettempdir()
+    for fname in os.listdir(sysTmp):
+        if fname.startswith(PREFIX):
+            fpath = os.path.join(sysTmp, fname)
+            if os.path.isdir(fpath):
+                shutil.rmtree(fpath)
+            elif os.path.isfile(fpath):
+                os.remove(fpath)
+            else:
+                # special file, like socket
+                pass
 
 
 def printErr(msg, toFile=False):

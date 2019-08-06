@@ -97,4 +97,6 @@ frontend = None
 if not check_dependencies():
     raise ImportError
 
+import util
+util.deleteTmp()
 from programmaticInterface import *

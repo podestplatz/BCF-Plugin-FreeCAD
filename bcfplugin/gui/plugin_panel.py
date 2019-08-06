@@ -71,7 +71,7 @@ class BCFPluginPanel:
 
     def close(self):
 
-        self.form.closeEvent()
+        self.form.closeEvent(None)
 
 
     def reject(self):
