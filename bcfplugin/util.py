@@ -3,6 +3,7 @@ import sys
 import urllib.request
 import tempfile
 import shutil
+import logging
 from enum import Enum
 from urllib.error import URLError
 from bcfplugin import FREECAD, GUI
@@ -10,8 +11,11 @@ from bcfplugin import TMPDIR
 
 from PySide2.QtWidgets import QMessageBox, QApplication
 
-errorFile = None
+errorFile = "bcfplugin_error.txt"
 """ File to print errors to """
+
+logInitialized = False
+""" Logger object for errors """
 
 errorFilePath = ""
 """ Path of error file """
@@ -210,6 +214,15 @@ def printErrorList(errors, toFile=False):
 
     for error in errors:
         printErr(error, toFile)
+
+
+def printWarning(warning):
+
+    if FREECAD:
+        import FreeCAD
+        FreeCAD.Console.PrintWarning("{}\n".format(warning))
+    else:
+        print("[WARNING] {}".format(warning))
 
 
 def showError(msg):
@@ -507,6 +520,23 @@ def getDirtyBit():
         else:
             bit = False
     return bit
+
+
+def loggingReady():
+
+    return logInitialized
+
+
+def initializeErrorLog():
+
+    global logInitialized
+
+    if not logInitialized:
+        errFilePath = getTmpFilePath(errorFile)
+        logging.basicConfig(filename=errFilePath,
+                level=logging.ERROR)
+        logInitialized = True
+
 
 class cd:
 
