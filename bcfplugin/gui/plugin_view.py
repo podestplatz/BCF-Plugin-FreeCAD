@@ -22,6 +22,33 @@ def tr(self, text):
     return self.tr(text)
 
 
+def createNotificationLabel():
+
+    """ Creates a label intended to show raw text notifications. """
+
+    lbl = QLabel()
+    lbl.hide()
+
+    return lbl
+
+
+def showNotification(self, text):
+
+    """ Shows a notification with content `text` in `notificationLabel` of
+    `self`.
+
+    The label is shown for 2 1/2 seconds and then it is hidden again.
+    """
+
+    self.notificationLabel.setText(text)
+    self.notificationLabel.show()
+    if not hasattr(self, "notificationTimer"):
+        self.notificationTimer = QTimer()
+        self.notificationTimer.timeout.connect(lambda:
+                self.notificationLabel.hide())
+    self.notificationTimer.start(2500)
+
+
 class CommentView(QListView):
 
     specialCommentSelected = Signal((Viewpoint))
@@ -194,25 +221,6 @@ class ViewpointsListView(QListView):
                 break
 
         return index
-
-
-def createNotificationLabel():
-
-    lbl = QLabel()
-    lbl.hide()
-
-    return lbl
-
-
-def showNotification(self, text):
-
-    self.notificationLabel.setText(text)
-    self.notificationLabel.show()
-    if not hasattr(self, "notificationTimer"):
-        self.notificationTimer = QTimer()
-        self.notificationTimer.timeout.connect(lambda:
-                self.notificationLabel.hide())
-    self.notificationTimer.start(2500)
 
 
 class TopicMetricsDialog(QDialog):

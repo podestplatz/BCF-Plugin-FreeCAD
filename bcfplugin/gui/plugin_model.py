@@ -785,22 +785,17 @@ class AdditionalDocumentsModel(QAbstractTableModel):
         global bcfDir
 
         if not index.isValid():
-            util.debug("index not valid")
             return None
 
         if index.row() >= len(self.documents):
-            util.debug("index to great")
             return None
 
         doc = self.documents[index.row()]
         path = str(doc.reference)
         if not doc.external:
-            util.debug("The document is internal")
             sysTmp = util.getBcfDir()
-            util.debug("The bcfDir is {}".format(sysTmp))
             path = os.path.join(sysTmp, path)
 
-        util.debug("path {}".format(path))
         return path
 
 
