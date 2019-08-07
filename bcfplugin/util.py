@@ -140,7 +140,6 @@ def storeLine(file, text, lineno):
             if lines.index(line) == lineno - 1:
                 line = text
             f.write(appendLineBreak(line))
-            debug("Writing line '{}'".format(line))
 
 
 def storeTmpPath(tmpPath):
@@ -162,7 +161,6 @@ def readLine(file, lineno):
     line = ""
     with open(file, "r") as f:
         lines = [ line.rstrip() for line in f.readlines() ]
-        debug("Content of file {}: \n{}".format(file, lines))
         if len(lines) >= lineno:
             line = lines[lineno - 1]
         else:
@@ -186,14 +184,12 @@ def getSystemTmp(createNew: bool = False):
     fpath = getTmpFilePath(tmpFilePathsFileName)
     if not os.path.exists(fpath):
         tmpDir = tempfile.mkdtemp(prefix=PREFIX)
-        debug("Created new temp dir: {}".format(tmpDir))
         storeLine(fpath, tmpDir, 1)
 
     else:
         tmpDir = readLine(fpath, 1)
 
     TMPDIR = tmpDir
-    print("Returning TMPDIR {}".format(TMPDIR))
     return tmpDir
 
 
@@ -205,7 +201,6 @@ def setBcfDir(dir):
     # fpath is assumed to already exist when this function is called the first
     # time
 
-    debug("Setting bcf dir")
     storeLine(fpath, dir, 2)
 
 
@@ -306,8 +301,7 @@ def debug(msg):
     """
 
     allowedModules = [ "project.py", "programmaticInterface.py",
-            "plugin_view.py", "plugin_model.py", "plugin_delegate.py",
-            "interface_tests.py", "modification.py", "writer.py", "util.py" ]
+            "plugin_view.py", "plugin_model.py", "plugin_delegate.py"]
 
     if not (verbosity == Verbosity.EVERYTHING or
             verbosity == Verbosity.INFODEBUG):
