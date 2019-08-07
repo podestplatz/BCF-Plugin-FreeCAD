@@ -44,11 +44,9 @@ schemaDir = "schemas"
 """ Holds the paths of the schema files in the plugin directory. Gets set during runtime """
 schemaPaths = {} # during runtime this will be a map like __schemaUrls
 
-tmpPathFileName = "{}tmp.txt".format(PREFIX)
+tmpFilePathsFileName = "{}tmp.txt".format(PREFIX)
 """ Holds the path to the file that contains just the path to the created
 temporary directory """
-
-tmpPathFilePath = ""
 
 
 class Verbosity(Enum):
@@ -109,29 +107,68 @@ def getTmpFilePath(filename):
     return filepath
 
 
+def appendLineBreak(line):
+
+    if line.endswith("\n"):
+        return line
+    else:
+        return line + "\n"
+
+
+def storeLine(file, text, lineno):
+
+    """ Replaces the line at `lineno` with the specified `text` in the
+    specified `file`.
+
+    `lineno` starts at 1!
+    If the file does not contain as many lines as the value of `lineno` blank
+    lines are inserted."""
+
+    if not os.path.exists(file): # create the file if does not exist yet
+        with open(file, "w") as f: pass
+
+    lines = None
+    with open(file, "r") as f:
+        lines = f.readlines()
+
+    # it seems like an off by one error, but the last line will be replaced by
+    # `text` in the code below
+    lineDiff = lineno - len(lines)
+    lines = lines + [""]*(lineDiff if lineDiff >= 0 else 0)
+    with open(file, "w") as f:
+        for line in lines:
+            if lines.index(line) == lineno - 1:
+                line = text
+            f.write(appendLineBreak(line))
+            debug("Writing line '{}'".format(line))
+
+
 def storeTmpPath(tmpPath):
 
-    global tmpPathFilePath
-    global tmpPathFileName
+    global tmpFilePathsFileName
 
     # get platform specific temporary directory
-    tmpPathFilePath = getTmpFilePath(tmpPathFileName)
+    fpath = getTmpFilePath(tmpFilePathsFileName)
 
-    with open(tmpPathFilePath, "w") as f:
-        f.write(tmpPath)
+    storeLine(fpath, tmpPath, 1)
 
 
-def readTmpPath():
+def readLine(file, lineno):
 
-    global tmpPathFilePath
-    global tmpPathFileName
+    """ Reads the line at `lineno` from `file`.
 
-    tmpDir = ""
-    tmpPathFilePath = getTmpFilePath(tmpPathFileName)
-    with open(tmpPathFilePath, "r") as f:
-        tmpDir = f.read()
+    `lineno` starts at 1."""
 
-    return tmpDir
+    line = ""
+    with open(file, "r") as f:
+        lines = [ line.rstrip() for line in f.readlines() ]
+        debug("Content of file {}: \n{}".format(file, lines))
+        if len(lines) >= lineno:
+            line = lines[lineno - 1]
+        else:
+            line = None
+
+    return line
 
 
 def getSystemTmp(createNew: bool = False):
@@ -141,24 +178,45 @@ def getSystemTmp(createNew: bool = False):
     On subsequent calls the temp dir that was created latest is returned
     """
 
-    global tmpPathFilePath
-    global tmpPathFileName
+    global tmpFilePathsFileName
     global TMPDIR
     global PREFIX
 
     tmpDir = ""
-    tmpPathFilePath = getTmpFilePath(tmpPathFileName)
-    if not os.path.exists(tmpPathFilePath):
-        print("Create new temp dir")
+    fpath = getTmpFilePath(tmpFilePathsFileName)
+    if not os.path.exists(fpath):
         tmpDir = tempfile.mkdtemp(prefix=PREFIX)
-        storeTmpPath(tmpDir)
+        debug("Created new temp dir: {}".format(tmpDir))
+        storeLine(fpath, tmpDir, 1)
 
     else:
-        tmpDir = readTmpPath()
+        tmpDir = readLine(fpath, 1)
 
     TMPDIR = tmpDir
     print("Returning TMPDIR {}".format(TMPDIR))
     return tmpDir
+
+
+def setBcfDir(dir):
+
+    global tmpFilePathsFileName
+
+    fpath = getTmpFilePath(tmpFilePathsFileName)
+    # fpath is assumed to already exist when this function is called the first
+    # time
+
+    debug("Setting bcf dir")
+    storeLine(fpath, dir, 2)
+
+
+def getBcfDir():
+
+    global tmpFilePathsFileName
+
+    fpath = getTmpFilePath(tmpFilePathsFileName)
+    bcfDir = readLine(fpath, 2)
+
+    return bcfDir
 
 
 def deleteTmp():
@@ -249,7 +307,7 @@ def debug(msg):
 
     allowedModules = [ "project.py", "programmaticInterface.py",
             "plugin_view.py", "plugin_model.py", "plugin_delegate.py",
-            "interface_tests.py", "modification.py", "writer.py" ]
+            "interface_tests.py", "modification.py", "writer.py", "util.py" ]
 
     if not (verbosity == Verbosity.EVERYTHING or
             verbosity == Verbosity.INFODEBUG):

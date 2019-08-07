@@ -1,5 +1,6 @@
 import os
 import sys
+import importlib
 excPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, excPath)
 
@@ -17,6 +18,12 @@ TMPDIR = None
 DIRTY = False
 """ Denotes whether there are unwritten changes in the data model """
 
+PROJDIR = None
+""" The directory into which the bcf file is extracted to """
+
+dependencies = ["dateutil", "pytz", "pyperclip", "xmlschema"]
+""" Packages this plugin depends on. """
+
 
 def printErr(msg):
 
@@ -33,39 +40,28 @@ def printInfo(msg):
     global FREECAD
 
     if FREECAD:
-        FreeCAD.Console.PrintInfo(msg)
+        FreeCAD.Console.PrintMessage(msg)
     else:
         print(msg)
 
 
 def check_dependencies():
     available = True
-    try:
-        import dateutil
-    except:
-        pkg = "dateutil"
-        available = False
 
-    if available:
+    for dependency in dependencies:
         try:
-            import xmlschema
-        except:
-            pkg = "xmlschema"
+            importlib.import_module(dependency)
+        except Exception as e:
+            pkg = dependency
             available = False
-
-    if available:
-        try:
-            import pytz
-        except:
-            pkg = "pytz"
-            available = False
+            break
 
     if not available:
-        printErr("Could not find the module `xmlschema`. Install it through"\
+        printErr("Could not find the module `{}`. Install it through"\
                 " pip\n\tpip install {}\nYou also might want to"\
                 " install it in a virtual environment. To create and initialise"\
                 " said env execute\n\tpython -m venv <NAME>\n\tsource"\
-                " ./<NAME>/bin/activate".format(pkg))
+                " ./<NAME>/bin/activate".format(pkg, pkg))
         printInfo("If you already have it installed inside a virtual environment" \
                 ", no problem we just need to modify the `sys.path` variable a"\
                 " bit. python inside FreeCAD, unfortunately, is not aware by" \

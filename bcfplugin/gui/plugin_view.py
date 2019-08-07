@@ -1,11 +1,12 @@
 import os
 import sys
 import platform
+import pyperclip
 import subprocess
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
-        QDir, QPoint, QSize)
+        QDir, QPoint, QSize, QTimer)
 
 import bcfplugin.gui.plugin_model as model
 import bcfplugin.gui.plugin_delegate as delegate
@@ -195,6 +196,83 @@ class ViewpointsListView(QListView):
         return index
 
 
+def createNotificationLabel():
+
+    lbl = QLabel()
+    lbl.hide()
+
+    return lbl
+
+
+def showNotification(self, text):
+
+    self.notificationLabel.setText(text)
+    self.notificationLabel.show()
+    if not hasattr(self, "notificationTimer"):
+        self.notificationTimer = QTimer()
+        self.notificationTimer.timeout.connect(lambda:
+                self.notificationLabel.hide())
+    self.notificationTimer.start(2500)
+
+
+class TopicMetricsDialog(QDialog):
+
+    def __init__(self, parent = None):
+
+        QDialog.__init__(self, parent)
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.topicMetrics = QTableView()
+        self.topicMetrics.setModel(parent.topicDetailsModel)
+        self.topicMetrics.setItemDelegate(parent.topicDetailsDelegate)
+        self.layout.addWidget(self.topicMetrics)
+
+        self.addDocGroup = QGroupBox()
+        self.addDocGroup.setTitle(self.addDocGroup.tr("Additional Documents"))
+        self.addDocGroupLayout = QVBoxLayout(self.addDocGroup)
+        self.addDocTable = QTableView()
+        self.addDocTable.setModel(parent.addDocumentsModel)
+        self.addDocTable.doubleClicked.connect(self.openDocRef)
+        self.addDocGroupLayout.addWidget(self.addDocTable)
+        if parent.addDocumentsModel.rowCount() == 0:
+            self.addDocTable.hide()
+        self.layout.addWidget(self.addDocGroup)
+
+        self.relTopGroup = QGroupBox()
+        self.relTopGroup.setTitle(self.relTopGroup.tr("Related Topics"))
+        self.relTopGroupLayout = QVBoxLayout(self.relTopGroup)
+        self.relTopList = QListView()
+        self.relTopList.setModel(parent.relTopModel)
+        self.relTopGroupLayout.addWidget(self.relTopList)
+        if parent.relTopModel.rowCount() == 0:
+            self.relTopList.hide()
+        self.layout.addWidget(self.relTopGroup)
+
+        self.notificationLabel = createNotificationLabel()
+        # add it to the main windows members because it is accessed in
+        # openDocRef()
+        self.layout.addWidget(self.notificationLabel)
+
+
+    @Slot()
+    def openDocRef(self, index):
+
+        filePath = index.model().getFilePath(index)
+        if index.column() == 0:
+            if filePath is not None:
+                system = platform.system()
+                if system == "Darwin": # this my dear friend is macOS
+                    subprocess.call(["open", filePath])
+                elif system == "Windows": # ... well, MS Windows
+                    os.startfile(filePath)
+                else: # good old linux derivatives
+                    subprocess.call(["xdg-open", filePath])
+        else: # copy path to clipboard and notify the user about it
+            pyperclip.copy(index.model().data(index))
+            showNotification(self, "Copied path to clipboard.")
+
+
 class MyMainWindow(QWidget):
 
     projectOpened = Signal()
@@ -222,6 +300,9 @@ class MyMainWindow(QWidget):
         self.snapshotArea = self.createSnapshotGroup()
         self.snapshotArea.hide()
         self.mainLayout.addWidget(self.snapshotArea)
+
+        self.notificationLabel = createNotificationLabel()
+        self.mainLayout.addWidget(self.notificationLabel)
 
         # handlers for an opened project
         self.projectOpened.connect(self.topicCbModel.projectOpened)
@@ -462,36 +543,7 @@ class MyMainWindow(QWidget):
     @Slot()
     def showTopicMetrics(self):
 
-        metricsWindow = QDialog(self)
-
-        layout = QVBoxLayout()
-        metricsWindow.setLayout(layout)
-
-        topicMetrics = QTableView()
-        topicMetrics.setModel(self.topicDetailsModel)
-        topicMetrics.setItemDelegate(self.topicDetailsDelegate)
-        layout.addWidget(topicMetrics)
-
-        addDocGroup = QGroupBox()
-        addDocGroup.setTitle(addDocGroup.tr("Additional Documents"))
-        addDocGroupLayout = QVBoxLayout(addDocGroup)
-        addDocTable = QTableView()
-        addDocTable.setModel(self.addDocumentsModel)
-        addDocGroupLayout.addWidget(addDocTable)
-        if self.addDocumentsModel.rowCount() == 0:
-            addDocTable.hide()
-        layout.addWidget(addDocGroup)
-
-        relTopGroup = QGroupBox()
-        relTopGroup.setTitle(relTopGroup.tr("Related Topics"))
-        relTopGroupLayout = QVBoxLayout(relTopGroup)
-        relTopList = QListView()
-        relTopList.setModel(self.relTopModel)
-        relTopGroupLayout.addWidget(relTopList)
-        if self.relTopModel.rowCount() == 0:
-            relTopList.hide()
-        layout.addWidget(relTopGroup)
-
+        metricsWindow = TopicMetricsDialog(self)
         metricsWindow.show()
 
 
@@ -526,19 +578,6 @@ class MyMainWindow(QWidget):
         buttons.rejected.connect(lambda: dialog.done(0))
         dialog.exec()
 
-
-    @Slot()
-    def openDocRef(self, index):
-
-        filePath = index.model().getFilePath(index)
-        if filePath is not None:
-            system = platform.system()
-            if system == "Darwin": # this my dear friend is macOS
-                subprocess.call(["open", filePath])
-            elif system == "Windows": # ... well, MS Windows
-                os.startfile(filePath)
-            else: # good old linux derivatives
-                subprocess.call(["xdg-open", filePath])
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

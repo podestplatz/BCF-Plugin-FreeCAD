@@ -122,7 +122,7 @@ def saveProject(dstFile):
 
     """ Save the current state of the working directory to `dstfile` """
 
-    bcfRootPath = reader.bcfDir
+    bcfRootPath = util.getBcfDir()
     writer.zipToBcfFile(bcfRootPath, dstFile)
 
 
@@ -343,7 +343,7 @@ def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
 
     srcFileName = os.path.basename(path)
     dstFileName = srcFileName if destName == "" else destName
-    destPath = reader.bcfDir
+    destPath = util.getBcfDir()
     if topic is not None:
         realTopic = _searchRealTopic(topic)
         if realTopic is None:
@@ -533,7 +533,7 @@ def getSnapshots(topic: Topic):
     markup = realTopic.containingObject
     snapshots = markup.getSnapshotFileList()
 
-    topicDir = os.path.join(reader.bcfDir, str(realTopic.xmlId))
+    topicDir = os.path.join(util.getBcfDir(), str(realTopic.xmlId))
     return [ os.path.join(topicDir, snapshot) for snapshot in snapshots ]
 
 

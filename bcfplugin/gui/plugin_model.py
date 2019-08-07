@@ -14,6 +14,7 @@ from bcfplugin.rdwr.topic import Topic
 from bcfplugin.rdwr.markup import Comment
 from bcfplugin.frontend.viewController import CamType
 
+
 def openProjectBtnHandler(file):
 
     """ Handler of the "Open" button for a project """
@@ -715,7 +716,7 @@ class AdditionalDocumentsModel(QAbstractTableModel):
 
     def columnCount(self, parent = QModelIndex()):
 
-        return 3 # external, description, reference
+        return 2 # external, description, reference
 
 
     def data(self, index, role = Qt.DisplayRole):
@@ -728,9 +729,17 @@ class AdditionalDocumentsModel(QAbstractTableModel):
             if index.column() == 0:
                 ret_val = self.documents[index.row()].description
             elif index.column() == 1:
-                ret_val = self.documents[index.row()].external
-            elif index.column() == 2:
                 ret_val = str(self.documents[index.row()].reference)
+
+        path = self.getFilePath(index)
+        isPath = os.path.exists(path)
+        if role == Qt.ForegroundRole:
+            brush = QBrush(QColor("black"))
+            if index.column() == 0:
+                if isPath:
+                    brush = QBrush(QColor("blue"))
+
+            ret_val = brush
 
         return ret_val
 
@@ -745,9 +754,7 @@ class AdditionalDocumentsModel(QAbstractTableModel):
             if section == 0:
                 header = "Description"
             elif section == 1:
-                header = "is external?"
-            elif section == 2:
-                header = "Uri"
+                header = "Path"
 
         return header
 
@@ -775,22 +782,26 @@ class AdditionalDocumentsModel(QAbstractTableModel):
 
     def getFilePath(self, index):
 
+        global bcfDir
+
         if not index.isValid():
+            util.debug("index not valid")
             return None
 
         if index.row() >= len(self.documents):
+            util.debug("index to great")
             return None
 
         doc = self.documents[index.row()]
-        path = doc.reference
-        if doc.external:
-            return path
-        else:
-            sysTmp = util.getSystemTmp()
-            #TODO: construct absolute working directory path out of the
-            # relative path `reference` and the working directory
+        path = str(doc.reference)
+        if not doc.external:
+            util.debug("The document is internal")
+            sysTmp = util.getBcfDir()
+            util.debug("The bcfDir is {}".format(sysTmp))
+            path = os.path.join(sysTmp, path)
 
-
+        util.debug("path {}".format(path))
+        return path
 
 
 class RelatedTopicsModel(QAbstractListModel):

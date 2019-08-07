@@ -683,7 +683,7 @@ def addElement(element):
         raise NotImplementedError("Writing of bcf.version"\
                 " is not supported")
 
-    bcfPath = reader.bcfDir
+    bcfPath = util.getBcfDir()
     topicPath = ""
     if not addToProject:
         topicDir = getTopicDir(element)
@@ -766,7 +766,7 @@ def deleteElement(element):
         raise ValueError("For {} no file can be found to delete from"\
             "".format(element.__class__.__name__))
 
-    bcfPath = reader.bcfDir
+    bcfPath = util.getBcfDir()
     # path of the topic `element` is contained in
     topicPath = os.path.join(bcfPath, getTopicDir(element))
     # filepath of the file `element` is contained in
@@ -845,7 +845,7 @@ def modifyElement(element, previousValue):
         raise ValueError("For {} no file can be found that contains it."\
             "file".format(element))
 
-    bcfPath = reader.bcfDir
+    bcfPath = util.getBcfDir()
     # path of the topic `element` is contained in
     topicPath = os.path.join(bcfPath, getTopicDir(element))
     # filepath of the file `element` is contained in
@@ -1141,7 +1141,7 @@ def createNewBcfFile(name):
     newTmpDir = util.getSystemTmp(createNew = True)
 
     newBcfDir = os.path.join(newTmpDir, name)
-    reader.bcfDir = newBcfDir
+    util.setBcfDir(newBcfDir)
     os.mkdir(newBcfDir)
     addElement(project)
 

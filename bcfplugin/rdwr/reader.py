@@ -24,10 +24,6 @@ from bcfplugin.rdwr.threedvector import (Point, Line, Direction, ClippingPlane)
 # BCF standard versions that can be read in
 SUPPORTED_VERSIONS = ["2.1"]
 
-# path to the extracted BCF file
-# gets set by readBcfFile()
-bcfDir = ""
-
 if DEBUG:
     import pprint
 
@@ -637,8 +633,6 @@ def readBcfFile(bcfFile: str):
     is returned.
     """
 
-    global bcfDir
-
     tmpDir = util.getSystemTmp()
     (projectSchemaPath, extensionsSchemaPath,\
         markupSchemaPath, versionSchemaPath,\
@@ -728,8 +722,9 @@ def readBcfFile(bcfFile: str):
         # add the finished markup object to the project
         proj.topicList.append(markup)
 
-    bcfDir = bcfExtractedPath
-    debug("reader.readBcfFile(): BCF file is open at {}".format(bcfDir))
+    util.setBcfDir(bcfExtractedPath)
+    debug("reader.readBcfFile(): BCF file is open at"\
+            " {}".format(bcfExtractedPath))
     return proj
 
 
