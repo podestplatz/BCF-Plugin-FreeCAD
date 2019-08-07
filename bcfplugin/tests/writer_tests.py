@@ -977,7 +977,7 @@ class ProjectTests(unittest.TestCase):
         testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
         p = reader.readBcfFile(testFile)
 
-        projectPath = os.path.join(reader.bcfDir, writer.projectFileName)
+        projectPath = os.path.join(util.getBcfDir(), writer.projectFileName)
         os.remove(projectPath)
         writer.addElement(p)
 
