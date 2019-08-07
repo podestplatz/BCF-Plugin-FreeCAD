@@ -28,6 +28,22 @@ if DEBUG:
     import pprint
 
 
+def modifyVisinfoSchema(schema):
+
+    """ Alters the FieldOfView restrictions put upon a perspective camera.
+
+    According to the standard applications supporting version 2.1 should be
+    able to support fieldOfView values between 0 and 360 degrees.
+    """
+
+    # set maximum value
+    schema.__dict__["types"].__dict__["target_dict"]["FieldOfView"].__dict__["validators"][1].value = 360
+    # set minimum value
+    schema.__dict__["types"].__dict__["target_dict"]["FieldOfView"].__dict__["validators"][0].value = 0
+
+    return schema
+
+
 def readFile(path: str):
 
     """
@@ -557,6 +573,7 @@ def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
     """
 
     vpSchema = XMLSchema(viewpointSchemaPath)
+    vpSchema = modifyVisinfoSchema(vpSchema)
     (vpDict, errors) = vpSchema.to_dict(viewpointFilePath, validation="lax")
     writeValidationErrorList([ str(err) for err in errors ])
 
