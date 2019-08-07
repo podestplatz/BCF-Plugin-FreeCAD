@@ -3,20 +3,21 @@ import sys
 import urllib.request
 import tempfile
 import shutil
+import logging
 from enum import Enum
 from urllib.error import URLError
+from bcfplugin import FREECAD, GUI
+from bcfplugin import TMPDIR
 
 from PySide2.QtWidgets import QMessageBox, QApplication
 
+PREFIX = "bcfplugin_"
 
-FREECAD = False
-""" Set by BCFPlugin.py when running inside FreeCAD """
-
-GUI = False
-""" Set by BCFPlugin.py when running in Gui mode """
-
-errorFile = None
+errorFile = "{}error.txt".format(PREFIX)
 """ File to print errors to """
+
+logInitialized = False
+""" Logger object for errors """
 
 errorFilePath = ""
 """ Path of error file """
@@ -34,6 +35,18 @@ AUTHOR_FILE = "author.txt"
 """ Name of the authors file, in which the email address will be stored once per
 session """
 
+DIRTY_FILE = "{}dirty.txt".format(PREFIX)
+""" Name of the file containing the dirty bit """
+
+""" Specifies the name of the directory in which the schema files are stored """
+schemaDir = "schemas"
+
+""" Holds the paths of the schema files in the plugin directory. Gets set during runtime """
+schemaPaths = {} # during runtime this will be a map like __schemaUrls
+
+tmpFilePathsFileName = "{}tmp.txt".format(PREFIX)
+""" Holds the path to the file that contains just the path to the created
+temporary directory """
 
 
 class Verbosity(Enum):
@@ -84,13 +97,78 @@ __schemaUrls = {
             "",
             __schemaNames[Schema.VISINFO])}
 
-""" Specifies the name of the directory in which the schema files are stored """
-schemaDir = "schemas"
-""" Holds the paths of the schema files in the plugin directory. Gets set during runtime """
-schemaPaths = {} # during runtime this will be a map like __schemaUrls
 
-""" Working directory, here the extracted BCF file is stored """
-tempDir = None
+def getTmpFilePath(filename):
+
+    # get platform specific temporary directory
+    sysTmp = tempfile.gettempdir()
+    filepath = os.path.join(sysTmp, filename)
+
+    return filepath
+
+
+def appendLineBreak(line):
+
+    if line.endswith("\n"):
+        return line
+    else:
+        return line + "\n"
+
+
+def storeLine(file, text, lineno):
+
+    """ Replaces the line at `lineno` with the specified `text` in the
+    specified `file`.
+
+    `lineno` starts at 1!
+    If the file does not contain as many lines as the value of `lineno` blank
+    lines are inserted."""
+
+    if not os.path.exists(file): # create the file if does not exist yet
+        with open(file, "w") as f: pass
+
+    lines = None
+    with open(file, "r") as f:
+        lines = f.readlines()
+
+    # it seems like an off by one error, but the last line will be replaced by
+    # `text` in the code below
+    lineDiff = lineno - len(lines)
+    lines = lines + [""]*(lineDiff if lineDiff >= 0 else 0)
+    with open(file, "w") as f:
+        for line in lines:
+            if lines.index(line) == lineno - 1:
+                line = text
+            f.write(appendLineBreak(line))
+
+
+def storeTmpPath(tmpPath):
+
+    global tmpFilePathsFileName
+
+    # get platform specific temporary directory
+    fpath = getTmpFilePath(tmpFilePathsFileName)
+
+    storeLine(fpath, tmpPath, 1)
+
+
+def readLine(file, lineno):
+
+    """ Reads the line at `lineno` from `file`.
+
+    `lineno` starts at 1."""
+
+    line = ""
+    with open(file, "r") as f:
+        lines = [ line.rstrip() for line in f.readlines() ]
+        if len(lines) >= lineno:
+            line = lines[lineno - 1]
+        else:
+            line = None
+
+    return line
+
+
 def getSystemTmp(createNew: bool = False):
 
     """ Creates a temporary directory on first call or if `createNew` is set.
@@ -98,12 +176,61 @@ def getSystemTmp(createNew: bool = False):
     On subsequent calls the temp dir that was created latest is returned
     """
 
-    global tempDir
+    global tmpFilePathsFileName
+    global TMPDIR
+    global PREFIX
 
-    if createNew or tempDir is None:
-        tempDir = tempfile.TemporaryDirectory()
+    tmpDir = ""
+    fpath = getTmpFilePath(tmpFilePathsFileName)
+    if not os.path.exists(fpath):
+        tmpDir = tempfile.mkdtemp(prefix=PREFIX)
+        storeLine(fpath, tmpDir, 1)
 
-    return tempDir.name
+    else:
+        tmpDir = readLine(fpath, 1)
+
+    TMPDIR = tmpDir
+    return tmpDir
+
+
+def setBcfDir(dir):
+
+    global tmpFilePathsFileName
+
+    fpath = getTmpFilePath(tmpFilePathsFileName)
+    # fpath is assumed to already exist when this function is called the first
+    # time
+
+    storeLine(fpath, dir, 2)
+
+
+def getBcfDir():
+
+    global tmpFilePathsFileName
+
+    fpath = getTmpFilePath(tmpFilePathsFileName)
+    bcfDir = readLine(fpath, 2)
+
+    return bcfDir
+
+
+def deleteTmp():
+
+    """ Delete the temporary directory with all its contents """
+
+    global PREFIX
+
+    sysTmp = tempfile.gettempdir()
+    for fname in os.listdir(sysTmp):
+        if fname.startswith(PREFIX):
+            fpath = os.path.join(sysTmp, fname)
+            if os.path.isdir(fpath):
+                shutil.rmtree(fpath)
+            elif os.path.isfile(fpath):
+                os.remove(fpath)
+            else:
+                # special file, like socket
+                pass
 
 
 def printErr(msg, toFile=False):
@@ -147,6 +274,15 @@ def printErrorList(errors, toFile=False):
         printErr(error, toFile)
 
 
+def printWarning(warning):
+
+    if FREECAD:
+        import FreeCAD
+        FreeCAD.Console.PrintWarning("{}\n".format(warning))
+    else:
+        print("[WARNING] {}".format(warning))
+
+
 def showError(msg):
 
     msgBox = QMessageBox()
@@ -165,8 +301,7 @@ def debug(msg):
     """
 
     allowedModules = [ "project.py", "programmaticInterface.py",
-            "plugin_view.py", "plugin_model.py", "plugin_delegate.py",
-            "interface_tests.py", "modification.py" ]
+            "plugin_view.py", "plugin_model.py", "plugin_delegate.py"]
 
     if not (verbosity == Verbosity.EVERYTHING or
             verbosity == Verbosity.INFODEBUG):
@@ -187,6 +322,10 @@ def debug(msg):
         print(debugmsg)
 
 
+def printMembers(element):
+    for property, value in vars(element).items():
+        debug("{}.{}={}".format(element.__class__.__name__, property, value))
+
 
 def getCurrentQScreen():
 
@@ -195,17 +334,21 @@ def getCurrentQScreen():
 
     global qApp
 
-    if qApp == None:
-        qApp = QApplication.instance()
+    if GUI and False:
+        import FreeCADGui
+        return FreeCADGui.getMainWindow()
 
-    # check if the application is running alongside a Qt Gui at all
-    if qApp == None:
+    # if running entirely outside of FreeCAD use QApplication to get the screen
+    elif not FREECAD or GUI:
+        from PySide2.QtWidgets import QMessageBox, QApplication
+
+        desktop = QApplication.desktop()
+        screenNumber = desktop.screenNumber()
+
+        return QApplication.screens()[screenNumber]
+
+    else:
         return None
-
-    desktop = qApp.desktop()
-    screenNumber = desktop.screenNumber()
-
-    return qApp.screens()[screenNumber]
 
 
 def isAuthorSet():
@@ -403,6 +546,53 @@ def doesFileExistInProject(file: str):
 
     fileAbsPath = os.path.join(tempdir, file)
     return os.path.exists(fileAbsPath)
+
+
+def setDirty(bit: bool):
+
+    global DIRTY_FILE
+
+    filepath = getTmpFilePath(DIRTY_FILE)
+
+    with open(filepath, "w") as f:
+        if bit:
+            f.write("True")
+        else:
+            f.write("False")
+
+
+def getDirtyBit():
+
+    global DIRTY_FILE
+
+    filepath = getTmpFilePath(DIRTY_FILE)
+    if not os.path.exists(filepath):
+        return False
+
+    bit = False
+    with open(filepath, "r") as f:
+        content = f.read()
+        if content == "True":
+            bit = True
+        else:
+            bit = False
+    return bit
+
+
+def loggingReady():
+
+    return logInitialized
+
+
+def initializeErrorLog():
+
+    global logInitialized
+
+    if not logInitialized:
+        errFilePath = getTmpFilePath(errorFile)
+        logging.basicConfig(filename=errFilePath,
+                level=logging.ERROR)
+        logInitialized = True
 
 
 class cd:

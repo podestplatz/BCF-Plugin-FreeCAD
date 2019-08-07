@@ -162,6 +162,7 @@ class AddElementTests(unittest.TestCase):
         prototypeComment = copy.deepcopy(markup.comments[0])
         prototypeComment.comment = "hello this is me mario!"
         prototypeComment.state = s.State.States.ADDED
+        prototypeComment.containingObject = markup
         markup.comments.append(prototypeComment)
 
         writer.addElement(prototypeComment)
@@ -227,6 +228,7 @@ class AddElementTests(unittest.TestCase):
         prototypeViewpointRef.xmlId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
         prototypeViewpointRef.viewpoint = None
         prototypeViewpointRef.state = s.State.States.ADDED
+        prototypeViewpointRef.containingObject = markup
         markup.viewpoints.append(prototypeViewpointRef)
         writer.addElement(prototypeViewpointRef)
 
@@ -261,6 +263,7 @@ class AddElementTests(unittest.TestCase):
         prototypeViewpointRef.file = "viewpoint2.bcfv"
         prototypeViewpointRef.state = s.State.States.ADDED
         prototypeViewpointRef.viewpoint.state = s.State.States.ADDED
+        prototypeViewpointRef.containingObject = markup
         markup.viewpoints.append(prototypeViewpointRef)
         writer.addElement(prototypeViewpointRef)
 
@@ -974,7 +977,7 @@ class ProjectTests(unittest.TestCase):
         testFile = setupBCFFile(srcFilePath, self.testFileDir, self.testTopicDir, self.testBCFName)
         p = reader.readBcfFile(testFile)
 
-        projectPath = os.path.join(reader.bcfDir, writer.projectFileName)
+        projectPath = os.path.join(util.getBcfDir(), writer.projectFileName)
         os.remove(projectPath)
         writer.addElement(p)
 

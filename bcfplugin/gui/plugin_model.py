@@ -12,6 +12,7 @@ import bcfplugin.util as util
 from uuid import uuid4
 from bcfplugin.rdwr.topic import Topic
 from bcfplugin.rdwr.markup import Comment
+from bcfplugin.frontend.viewController import CamType
 
 
 def openProjectBtnHandler(file):
@@ -45,21 +46,6 @@ class TopicCBModel(QAbstractListModel):
         self.items = []
 
 
-    def updateTopics(self):
-
-        self.beginResetModel()
-
-        if not pI.isProjectOpen():
-            self.endResetModel()
-            return
-
-        topics = pI.getTopics()
-        if topics != pI.OperationResults.FAILURE:
-            self.items = [ topic[1] for topic in topics ]
-
-        self.endResetModel()
-
-
     def rowCount(self, parent = QModelIndex()):
         return len(self.items) + 1 # plus the dummy element
 
@@ -83,6 +69,22 @@ class TopicCBModel(QAbstractListModel):
         return flaggs
 
 
+    @Slot()
+    def updateTopics(self):
+
+        self.beginResetModel()
+
+        if not pI.isProjectOpen():
+            self.endResetModel()
+            return
+
+        topics = pI.getTopics()
+        if topics != pI.OperationResults.FAILURE:
+            self.items = [ topic[1] for topic in topics ]
+
+        self.endResetModel()
+
+
     @Slot(int)
     def newSelection(self, index):
 
@@ -102,43 +104,6 @@ class CommentModel(QAbstractListModel):
         QAbstractListModel.__init__(self, parent)
         self.items = []
         self.currentTopic = None
-
-
-    @Slot(Topic)
-    def resetItems(self, topic = None):
-
-        """ Load comments from `topic`.
-
-        If topic is set to `None` then all elements will be deleted from the
-        model."""
-
-        self.beginResetModel()
-
-        if topic is None:
-            del self.items
-            self.items = list()
-            self.endResetModel()
-            return
-
-        if not pI.isProjectOpen():
-            util.showError("First you have to open a project.")
-            util.printError("First you have to open a project.")
-            self.endResetModel()
-            return
-
-        comments = pI.getComments(topic)
-        if comments == pI.OperationResults.FAILURE:
-            util.showError("Could not get any comments for topic" \
-                    " {}".format(str(topic)))
-            util.printError("Could not get any comments for topic" \
-                    " {}".format(str(topic)))
-            self.endResetModel()
-            return
-
-        self.items = [ comment[1] for comment in comments ]
-        self.currentTopic = topic
-
-        self.endResetModel()
 
 
     def removeRow(self, index):
@@ -180,13 +145,17 @@ class CommentModel(QAbstractListModel):
         commentText = ""
         commentAuthor = ""
         commentDate = ""
-        dateFormat = "%Y-%m-%d %X"
 
         commentText = item.comment.strip()
         if role == Qt.DisplayRole:
-            commentAuthor = item.author if item.modAuthor == "" else item.modAuthor
-            commentDate = (item.date if item.modDate == item._modDate.defaultValue else item.modDate)
-            commentDate = commentDate.strftime(dateFormat)
+            # if modDate is set take the modDate and modAuthor, regardless of
+            # the date and author values.
+            if item.modDate != item._modDate.defaultValue:
+                commentAuthor = item.modAuthor
+                commentDate = str(item._modDate)
+            else:
+                commentAuthor = item.author
+                commentDate = str(item._date)
             comment = (commentText, commentAuthor, commentDate)
 
         elif role == Qt.EditRole: # date is automatically set when editing
@@ -212,15 +181,6 @@ class CommentModel(QAbstractListModel):
         return fl
 
 
-    def checkValue(self, text):
-
-        splitText = [ textItem.strip() for textItem in text.split("--") ]
-        if len(splitText) != 2:
-            return None
-
-        return splitText
-
-
     def setData(self, index, value, role=Qt.EditRole):
         # https://doc.qt.io/qtforpython/PySide2/QtCore/QAbstractItemModel.html#PySide2.QtCore.PySide2.QtCore.QAbstractItemModel.roleNames
 
@@ -242,6 +202,52 @@ class CommentModel(QAbstractListModel):
         self.resetItems(topic)
 
         return True
+
+
+    @Slot(Topic)
+    def resetItems(self, topic = None):
+
+        """ Load comments from `topic`.
+
+        If topic is set to `None` then all elements will be deleted from the
+        model."""
+
+        self.beginResetModel()
+
+        if topic is None:
+            del self.items
+            self.items = list()
+            self.endResetModel()
+            return
+
+        if not pI.isProjectOpen():
+            util.showError("First you have to open a project.")
+            util.printErr("First you have to open a project.")
+            self.endResetModel()
+            return
+
+        comments = pI.getComments(topic)
+        if comments == pI.OperationResults.FAILURE:
+            util.showError("Could not get any comments for topic" \
+                    " {}".format(str(topic)))
+            util.printErr("Could not get any comments for topic" \
+                    " {}".format(str(topic)))
+            self.endResetModel()
+            return
+
+        self.items = [ comment[1] for comment in comments ]
+        self.currentTopic = topic
+
+        self.endResetModel()
+
+
+    def checkValue(self, text):
+
+        splitText = [ textItem.strip() for textItem in text.split("--") ]
+        if len(splitText) != 2:
+            return None
+
+        return splitText
 
 
     def addComment(self, value):
@@ -275,6 +281,21 @@ class CommentModel(QAbstractListModel):
             return None
 
         return self.items[index.row()].viewpoint
+
+
+    def getAuthor(self):
+
+        util.debug("This is the current temp directory:"\
+                " {}".format(util.getSystemTmp()))
+
+        modAuthor = None
+        if util.isAuthorSet():
+            modAuthor = util.getAuthor()
+        else:
+            openAuthorsDialog(None)
+            modAuthor = util.getAuthor()
+
+        return modAuthor
 
 
 class SnapshotModel(QAbstractListModel):
@@ -320,6 +341,41 @@ class SnapshotModel(QAbstractListModel):
 
         # only show the first three snapshots.
         return len(self.snapshotList) if len(self.snapshotList) < 3 else 3
+
+
+    def setSize(self, newSize: QSize):
+
+        """ Sets the size in which the Pixmaps are returned """
+
+        self.size = newSize
+
+
+    @Slot()
+    def resetItems(self, topic = None):
+
+        """ Reset the internal state of the model.
+
+        If `topic` != None then the snapshots associated with the new topic are
+        loaded, else the list of snapshots is cleared.
+        """
+
+        self.beginResetModel()
+
+        if topic is None:
+            self.snapshotList = []
+            self.endResetModel()
+            return
+
+        self.currentTopic = topic
+        snapshots = pI.getSnapshots(self.currentTopic)
+        if snapshots == pI.OperationResults.FAILURE:
+            self.snapshotList = []
+            return
+
+        self.snapshotList = snapshots
+        # clear the image buffer
+        self.snapshotImgs = [None]*len(snapshots)
+        self.endResetModel()
 
 
     def imgFromFilename(self, filename):
@@ -383,36 +439,6 @@ class SnapshotModel(QAbstractListModel):
         return QPixmap.fromImage(img)
 
 
-    def setSize(self, newSize: QSize):
-
-        """ Sets the size in which the Pixmaps are returned """
-
-        self.size = newSize
-
-
-    @Slot()
-    def resetItems(self, topic = None):
-
-        """ Reset the internal state of the model.
-
-        If `topic` != None then the snapshots associated with the new topic are
-        loaded, else the list of snapshots is cleared.
-        """
-
-        self.beginResetModel()
-
-        self.currentTopic = topic
-        snapshots = pI.getSnapshots(self.currentTopic)
-        if snapshots == pI.OperationResults.FAILURE:
-            self.snapshotList = []
-            return
-
-        self.snapshotList = snapshots
-        # clear the image buffer
-        self.snapshotImgs = [None]*len(snapshots)
-        self.endResetModel()
-
-
 class ViewpointsListModel(QAbstractListModel):
 
     """
@@ -441,37 +467,6 @@ class ViewpointsListModel(QAbstractListModel):
         self.calcSizes()
 
 
-    @Slot()
-    def calcSizes(self):
-
-        """ Convert the millimeter sizes/offsets into pixels depending on the
-        current screen. """
-
-        screen = util.getCurrentQScreen()
-        # pixels per millimeter (not parts per million)
-        ppm = screen.logicalDotsPerInch() / util.MMPI
-
-        width = self._iconSize.width() * ppm
-        height = self._iconSize.height() * ppm
-        self._iconQSize = QSize(width, height)
-
-
-    @Slot()
-    def resetItems(self, topic = None):
-
-        """ If `topic != None` load viewpoints associated with `topic`, else
-        delete the internal state of the model """
-
-        self.beginResetModel()
-
-        if topic is None:
-            self.viewpoints = []
-        else:
-            self.viewpoints = [ vp[1] for vp in pI.getViewpoints(topic, False) ]
-
-        self.endResetModel()
-
-
     def data(self, index, role = Qt.DisplayRole):
 
         if not index.isValid():
@@ -498,6 +493,65 @@ class ViewpointsListModel(QAbstractListModel):
         return len(self.viewpoints)
 
 
+    @Slot()
+    def resetItems(self, topic = None):
+
+        """ If `topic != None` load viewpoints associated with `topic`, else
+        delete the internal state of the model """
+
+        self.beginResetModel()
+
+        if topic is None:
+            self.viewpoints = []
+        else:
+            self.viewpoints = [ vp[1] for vp in pI.getViewpoints(topic, False) ]
+
+        self.endResetModel()
+
+
+    @Slot()
+    def resetView(self):
+
+        """ Reset the view of FreeCAD to the state before the first viewpoint
+        was applied """
+
+        pI.resetView()
+
+
+    @Slot()
+    def calcSizes(self):
+
+        """ Convert the millimeter sizes/offsets into pixels depending on the
+        current screen. """
+
+        screen = util.getCurrentQScreen()
+        # pixels per millimeter (not parts per million)
+        ppm = screen.logicalDotsPerInch() / util.MMPI
+
+        width = self._iconSize.width() * ppm
+        height = self._iconSize.height() * ppm
+        self._iconQSize = QSize(width, height)
+
+
+    @Slot(QModelIndex)
+    def activateViewpoint(self, index):
+
+        if not index.isValid() or index.row() >= len(self.viewpoints):
+            return False
+
+        vpRef = self.viewpoints[index.row()]
+        camType = None
+        if vpRef.viewpoint.oCamera is not None:
+            camType = CamType.ORTHOGONAL
+        elif vpRef.viewpoint.pCamera is not None:
+            camType = CamType.PERSPECTIVE
+
+        result = pI.activateViewpoint(vpRef.viewpoint, camType)
+        if result == pI.OperationResults.FAILURE:
+            return False
+        return True
+
+
     def setIconSize(self, size: QSize):
 
         """ Size is expected to be given in millimeters. """
@@ -518,24 +572,6 @@ class TopicMetricsModel(QAbstractTableModel):
         self.disabledIndices = [ 1, 2, 7, 8 ]
         self.topic = None
         self.members = []
-
-
-    def createMembersList(self, topic):
-
-        """ Create and return an ordered list of members, in the order they
-        shall be shown.
-
-        An object inside this list will be the underlying object representing
-        the value. This is done to be able to access the xmlName which is used
-        as the name of the value.
-        """
-
-        members = [topic._title, topic._date, topic._author, topic._type,
-                topic._status, topic._priority, topic._index, topic._modDate,
-                topic._modAuthor, topic._dueDate, topic._assignee,
-                topic._description ]
-
-        return members
 
 
     def data(self, index, role = Qt.DisplayRole):
@@ -564,7 +600,7 @@ class TopicMetricsModel(QAbstractTableModel):
 
         if orientation == Qt.Horizontal:
             if section == 0:
-                header = "Key"
+                header = "Property"
             elif section == 1:
                 header = "Value"
 
@@ -645,6 +681,23 @@ class TopicMetricsModel(QAbstractTableModel):
         self.endResetModel()
 
 
+    def createMembersList(self, topic):
+
+        """ Create and return an ordered list of members, in the order they
+        shall be shown.
+
+        An object inside this list will be the underlying object representing
+        the value. This is done to be able to access the xmlName which is used
+        as the name of the value.
+        """
+
+        members = [topic._title, topic._date, topic._author, topic._type,
+                topic._status, topic._priority, topic._index, topic._modDate,
+                topic._modAuthor, topic._dueDate, topic._assignee,
+                topic._description ]
+
+        return members
+
 
 class AdditionalDocumentsModel(QAbstractTableModel):
 
@@ -656,9 +709,54 @@ class AdditionalDocumentsModel(QAbstractTableModel):
         self.documents = []
 
 
-    def createDocumentsList(self, topic):
+    def rowCount(self, parent = QModelIndex()):
 
-        self.documents = topic.docRefs
+        return len(self.documents)
+
+
+    def columnCount(self, parent = QModelIndex()):
+
+        return 2 # external, description, reference
+
+
+    def data(self, index, role = Qt.DisplayRole):
+
+        if not index.isValid():
+            return None
+
+        ret_val = None
+        if role == Qt.DisplayRole:
+            if index.column() == 0:
+                ret_val = self.documents[index.row()].description
+            elif index.column() == 1:
+                ret_val = str(self.documents[index.row()].reference)
+
+        path = self.getFilePath(index)
+        isPath = os.path.exists(path)
+        if role == Qt.ForegroundRole:
+            brush = QBrush(QColor("black"))
+            if index.column() == 0:
+                if isPath:
+                    brush = QBrush(QColor("blue"))
+
+            ret_val = brush
+
+        return ret_val
+
+
+    def headerData(self, section, orientation, role = Qt.DisplayRole):
+
+        if role != Qt.DisplayRole:
+            return None
+
+        header = None
+        if orientation == Qt.Horizontal:
+            if section == 0:
+                header = "Description"
+            elif section == 1:
+                header = "Path"
+
+        return header
 
 
     @Slot()
@@ -677,16 +775,59 @@ class AdditionalDocumentsModel(QAbstractTableModel):
         self.endResetModel()
 
 
+    def createDocumentsList(self, topic):
+
+        self.documents = topic.docRefs
+
+
+    def getFilePath(self, index):
+
+        global bcfDir
+
+        if not index.isValid():
+            return None
+
+        if index.row() >= len(self.documents):
+            return None
+
+        doc = self.documents[index.row()]
+        path = str(doc.reference)
+        if not doc.external:
+            sysTmp = util.getBcfDir()
+            path = os.path.join(sysTmp, path)
+
+        return path
+
+
+class RelatedTopicsModel(QAbstractListModel):
+
+
+    def __init__(self, parent = None):
+
+        QAbstractListModel.__init__(self, parent)
+        # holds a list of all topic objects referenced by the "relatedTopics"
+        # list inside the current topic object `topic`
+        self.relTopics = list()
+        self.topic = None
+
+
+    def flags(self, index):
+
+        """ The resulting list shall only be read only.
+
+        In the future however it is possible to also let the user add related
+        topics.
+        """
+
+        flgs = Qt.ItemIsEnabled
+        flgs |= Qt.ItemIsSelectable
+
+        return flgs
+
+
     def rowCount(self, parent = QModelIndex()):
 
-        util.debug("called")
-        return len(self.documents)
-
-
-    def columnCount(self, parent = QModelIndex()):
-
-        util.debug("called")
-        return 3 # external, description, reference
+        return len(self.relTopics)
 
 
     def data(self, index, role = Qt.DisplayRole):
@@ -694,31 +835,50 @@ class AdditionalDocumentsModel(QAbstractTableModel):
         if not index.isValid():
             return None
 
-        ret_val = None
-        if role == Qt.DisplayRole:
-            if index.column() == 0:
-                ret_val = self.documents[index.row()].description
-            elif index.column() == 1:
-                ret_val = self.documents[index.row()].external
-            elif index.column() == 2:
-                ret_val = str(self.documents[index.row()].reference)
-
-        return ret_val
-
-
-    def headerData(self, section, orientation, role = Qt.DisplayRole):
+        if index.row() >= len(self.relTopics):
+            util.printInfo("A too large index was passed! Please report the"\
+                    " steps you did as issue on the plugin's github page.")
+            return None
 
         if role != Qt.DisplayRole:
             return None
 
-        header = None
-        if orientation == Qt.Horizontal:
-            if section == 0:
-                header = "Description"
-            elif section == 1:
-                header = "is external?"
-            elif section == 2:
-                header = "Uri"
+        idx = index.row()
+        topicTitle = self.relTopics[idx].title
 
-        return header
+        return topicTitle
+
+
+    @Slot()
+    def resetItems(self, topic = None):
+
+        self.beginResetModel()
+
+        if topic is None:
+            self.relTopics = list()
+            self.topic = None
+
+        else:
+            self.createRelatedTopicsList(topic)
+            self.topic = topic
+
+        self.endResetModel()
+
+
+    def createRelatedTopicsList(self, topic):
+
+        if topic is None:
+            return False
+
+        relatedTopics = topic.relatedTopics
+        for t in relatedTopics:
+            # in this list only the uid of a topic is stored
+            tUId = t.value
+            util.debug("Getting topic to: {}:{}".format(tUId, tUId.__class__))
+            match = pI.getTopicFromUUID(tUId)
+            if match != pI.OperationResults.FAILURE:
+                self.relTopics.append(match)
+                util.debug("Got a match {}".format(match.title))
+            else:
+                util.debug("Got nothing back")
 

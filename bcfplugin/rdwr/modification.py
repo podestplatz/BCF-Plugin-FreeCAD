@@ -1,10 +1,11 @@
+from copy import deepcopy
 from enum import Enum
 from datetime import datetime
-from rdwr.interfaces.hierarchy import Hierarchy
-from rdwr.interfaces.state import State
-from rdwr.interfaces.identifiable import Identifiable
+from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
+from bcfplugin.rdwr.interfaces.state import State
+from bcfplugin.rdwr.interfaces.identifiable import Identifiable
 
-import rdwr.project as p
+import bcfplugin.rdwr.project as p
 
 
 class ModificationType(Enum):
@@ -32,6 +33,18 @@ class ModificationAuthor(p.SimpleElement):
         if modType == ModificationType.MODIFICATION:
             name = "ModifiedAuthor"
         p.SimpleElement.__init__(self, author, name, "", containingElement, state)
+
+
+    def __deepcopy__(self, memo):
+
+        cpysuper = p.SimpleElement.__deepcopy__(self, memo)
+        cpy = ModificationAuthor(deepcopy(self.author))
+        cpy.id = cpysuper.id
+        cpy.state = cpysuper.state
+        cpy.xmlName = cpysuper.xmlName
+        cpy.defaultValue = cpysuper.defaultValue
+
+        return cpy
 
 
     @property
@@ -88,8 +101,25 @@ class ModificationDate(p.SimpleElement):
 
     def __str__(self):
 
-        ret_str = self.value.strftime(self.dateFormat)
+        ret_str = ""
+        if self.value is not None:
+            ret_str = self.value.strftime(self.dateFormat)
+        else:
+            ret_str = "Not set"
+
         return ret_str
+
+
+    def __deepcopy__(self, memo):
+
+        cpysuper = p.SimpleElement.__deepcopy__(self, memo)
+        cpy = ModificationDate(deepcopy(self.date))
+        cpy.id = cpysuper.id
+        cpy.state = cpysuper.state
+        cpy.xmlName = cpysuper.xmlName
+        cpy.defaultValue = cpysuper.defaultValue
+
+        return cpy
 
 
     @property

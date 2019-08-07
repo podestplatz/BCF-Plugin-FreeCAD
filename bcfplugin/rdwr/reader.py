@@ -1,6 +1,7 @@
 import sys
 import os
 import dateutil.parser
+import logging
 from zipfile import ZipFile
 from xmlschema import XMLSchema
 from uuid import UUID
@@ -9,23 +10,19 @@ from typing import List, Dict
 if __name__ == "__main__":
     sys.path.insert(0, "../")
     print(sys.path)
-import util as util
-from util import debug, DEBUG
-from rdwr.project import Project
-from rdwr.uri import Uri as Uri
-from rdwr.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
-from rdwr.topic import (Topic, BimSnippet, DocumentReference)
-from rdwr.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
+import bcfplugin.util as util
+from bcfplugin.util import debug, DEBUG
+from bcfplugin.rdwr.project import Project
+from bcfplugin.rdwr.uri import Uri as Uri
+from bcfplugin.rdwr.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
+from bcfplugin.rdwr.topic import (Topic, BimSnippet, DocumentReference)
+from bcfplugin.rdwr.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         ComponentColour, PerspectiveCamera, OrthogonalCamera, BitmapFormat,
         Bitmap)
-from rdwr.threedvector import (Point, Line, Direction, ClippingPlane)
+from bcfplugin.rdwr.threedvector import (Point, Line, Direction, ClippingPlane)
 
 # BCF standard versions that can be read in
 SUPPORTED_VERSIONS = ["2.1"]
-
-# path to the extracted BCF file
-# gets set by readBcfFile()
-bcfDir = ""
 
 if DEBUG:
     import pprint
@@ -50,6 +47,23 @@ def readFile(path: str):
         return None
 
     return file
+
+
+def writeValidationError(error):
+
+    if not util.loggingReady():
+        util.initializeErrorLog()
+        errorFilePath = util.getTmpFilePath(util.errorFile)
+        util.printWarning("Writing validation errors to"\
+                " {}".format(errorFilePath))
+
+    logging.error(error)
+
+
+def writeValidationErrorList(errorList):
+
+    for error in errorList:
+        writeValidationError(error)
 
 
 def extractFileToTmp(zipFilePath: str):
@@ -178,7 +192,7 @@ def buildProject(projectFilePath: str, projectSchema: str):
 
     schema = XMLSchema(projectSchema)
     (projectDict, errors) = schema.to_dict(projectFilePath, validation="lax")
-    util.printErrorList([ err.message for err in errors ])
+    writeValidationErrorList([ str(err) for err in errors ])
 
     # can do that because the project file is valid and ProjectId is required
     # by the schema
@@ -205,7 +219,7 @@ def buildComment(commentDict: Dict):
     if modifiedDate is not None:
         modifiedDate = dateutil.parser.parse(modifiedDate)
 
-    commentString = commentDict["Comment"]
+    commentString = commentDict["Comment"] if commentDict["Comment"] else ""
 
     viewpointRef = getOptionalFromDict(commentDict, "Viewpoint", None)
     if viewpointRef:
@@ -360,7 +374,7 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
 
     markupSchema = XMLSchema(markupSchemaPath)
     (markupDict, errors) = markupSchema.to_dict(markupFilePath, validation="lax")
-    util.printErrorList([ err.message for err in errors ])
+    writeValidationErrorList([ str(err) for err in errors ])
 
     commentList = getOptionalFromDict(markupDict, "Comment", list())
     comments = [ buildComment(comment) for comment in commentList ]
@@ -544,7 +558,7 @@ def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
 
     vpSchema = XMLSchema(viewpointSchemaPath)
     (vpDict, errors) = vpSchema.to_dict(viewpointFilePath, validation="lax")
-    util.printErrorList([ str(err) for err in errors ])
+    writeValidationErrorList([ str(err) for err in errors ])
 
     id = UUID(vpDict["@Guid"])
 
@@ -619,8 +633,6 @@ def readBcfFile(bcfFile: str):
     is returned.
     """
 
-    global bcfDir
-
     tmpDir = util.getSystemTmp()
     (projectSchemaPath, extensionsSchemaPath,\
         markupSchemaPath, versionSchemaPath,\
@@ -643,12 +655,11 @@ def readBcfFile(bcfFile: str):
     ### Check version ###
     versionFilePath = os.path.join(bcfExtractedPath, "bcf.version")
     if not os.path.exists(versionFilePath):
-        util.printErr("No bcf.version file found in {}. This file is not optional.",
-                file=sys.stderr)
+        util.printErr("No bcf.version file found in {}. This file is not optional.")
         return None
     error = validateFile(versionFilePath, versionSchemaPath, bcfFile)
     if error != "":
-        pprint.pprint(error, file=sys.stderr)
+        writeValidationError(error)
         return None
     version = getVersion(bcfExtractedPath, versionSchemaPath)
     if version not in SUPPORTED_VERSIONS:
@@ -664,9 +675,11 @@ def readBcfFile(bcfFile: str):
     if os.path.exists(projectFilePath):
         error = validateFile(projectFilePath, projectSchemaPath, bcfFile)
         if error != "":
-            debug("{} is not completely valid. Some parts won't be available."\
-                    " Following the error message:\n{}".format(projectFilePath,
-                        error))
+            msg = ("{} is not completely valid. Some parts won't be"\
+                    " available.".format(projectFilePath))
+            debug(msg)
+            writeValidationError("{}.\n Following the error"\
+                    " message:\n{}".format(msg, error))
         proj = buildProject(projectFilePath, projectSchemaPath)
 
     ### Iterate over the topic directories ###
@@ -680,10 +693,12 @@ def readBcfFile(bcfFile: str):
         debug("reader.readBcfFile(): looking into topic {}".format(topicDir))
         error = validateFile(markupFilePath, markupSchemaPath, bcfFile)
         if error != "":
-            util.printErr("{} does not comply with the standard of versions {}."\
-                   " Some parts won't be available."\
-                   " Error:\n{}".format(markupFilePath, SUPPORTED_VERSIONS,
-                        error))
+            msg = ("markup.bcf of topic {} does not comply with the standard"
+                    " of versions {}."\
+                    " Some parts won't be available.".format(topic,
+                        SUPPORTED_VERSIONS))
+            util.printErr(msg)
+            writeValidationError("{}\nError:\n{}".format(msg, error))
         markup = buildMarkup(markupFilePath, markupSchemaPath)
 
         # generate a viewpoint object for all viewpoints listed in the markup
@@ -707,8 +722,9 @@ def readBcfFile(bcfFile: str):
         # add the finished markup object to the project
         proj.topicList.append(markup)
 
-    bcfDir = bcfExtractedPath
-    debug("reader.readBcfFile(): BCF file is open at {}".format(bcfDir))
+    util.setBcfDir(bcfExtractedPath)
+    debug("reader.readBcfFile(): BCF file is open at"\
+            " {}".format(bcfExtractedPath))
     return proj
 
 

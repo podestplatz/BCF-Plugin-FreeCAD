@@ -11,15 +11,15 @@ if __name__ == "__main__":
 import copy as c
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as MD
-import util as util
-from util import DEBUG, debug
-import rdwr.reader as reader
-import rdwr.interfaces.hierarchy as iH
-import rdwr.interfaces.state as iS
-import rdwr.interfaces.identifiable as iI
-import rdwr.markup as m
-import rdwr.project as p
-import rdwr.uri as u
+from bcfplugin.util import DEBUG, debug
+import bcfplugin.util as util
+import bcfplugin.rdwr.reader as reader
+import bcfplugin.rdwr.interfaces.hierarchy as iH
+import bcfplugin.rdwr.interfaces.state as iS
+import bcfplugin.rdwr.interfaces.identifiable as iI
+import bcfplugin.rdwr.markup as m
+import bcfplugin.rdwr.project as p
+import bcfplugin.rdwr.uri as u
 
 
 projectFileName = "project.bcfp"
@@ -148,8 +148,11 @@ def getFileOfElement(element):
 
     debug("retrieving hierarchy of {}".format(element))
     elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
-    if not elementHierarchy: # element is not addable
+    if not elementHierarchy: # element cannot be modified
+        debug("Could not find a hierarchy {}")
         return None
+
+    debug("Hierarchy is {}".format(elementHierarchy))
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
     if "Viewpoint" in strHierarchy:
@@ -362,7 +365,13 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
 
     xmlPathExpression = "./"
     for element in elementHierarchy:
-        xmlPathExpression += "/" + element.xmlName
+        debug("element is of type: {}".format(type(element)))
+        if issubclass(type(element), p.Attribute):
+            xmlPathExpression += "[@{}='{}']".format(element.xmlName,
+                    element.value)
+        else:
+            xmlPathExpression += "/" + element.xmlName
+
         if issubclass(type(element), iI.XMLIdentifiable):
             # add guid for deterministicness
             xmlPathExpression += "[@Guid='{}']".format(element.xmlId)
@@ -674,7 +683,7 @@ def addElement(element):
         raise NotImplementedError("Writing of bcf.version"\
                 " is not supported")
 
-    bcfPath = reader.bcfDir
+    bcfPath = util.getBcfDir()
     topicPath = ""
     if not addToProject:
         topicDir = getTopicDir(element)
@@ -747,6 +756,9 @@ def deleteElement(element):
     and their accompanying viewpoint references are also deleted.
     """
 
+    elementHierarchy = element.getHierarchyList()
+    debug("Hierarchy of element {}".format(elementHierarchy))
+
     debug("Deleting element {}".format(element))
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
@@ -754,7 +766,7 @@ def deleteElement(element):
         raise ValueError("For {} no file can be found to delete from"\
             "".format(element.__class__.__name__))
 
-    bcfPath = reader.bcfDir
+    bcfPath = util.getBcfDir()
     # path of the topic `element` is contained in
     topicPath = os.path.join(bcfPath, getTopicDir(element))
     # filepath of the file `element` is contained in
@@ -833,7 +845,7 @@ def modifyElement(element, previousValue):
         raise ValueError("For {} no file can be found that contains it."\
             "file".format(element))
 
-    bcfPath = reader.bcfDir
+    bcfPath = util.getBcfDir()
     # path of the topic `element` is contained in
     topicPath = os.path.join(bcfPath, getTopicDir(element))
     # filepath of the file `element` is contained in
@@ -866,14 +878,23 @@ def addProjectUpdate(project: p.Project, element, prevVal):
     """
 
     global projectUpdates
+
     projectCpy = c.deepcopy(project)
+    # copy element and morph it into the hierarchy of the copied project
     elementCpy = c.deepcopy(element)
+    oldElement = projectCpy.searchObject(element)
+    elementCpy.containingObject = oldElement.containingObject
+
+    if elementCpy is None:
+        raise RuntimeError("Could not find element id {} in project"\
+                " {}".format(element.id, projectCpy))
     prevValCpy = None
     if prevVal is not None:
         prevValCpy = copy.deepcopy(prevVal)
 
     if element.state != iS.State.States.ORIGINAL:
         projectUpdates.append((projectCpy, elementCpy, prevValCpy))
+        util.setDirty(True)
     else:
         raise ValueError("Element is in its original state. Cannot be added as"\
                 " update")
@@ -929,6 +950,9 @@ def handleDeleteElement(element, oldVal):
     """
 
     try:
+        elementHierarchy = element.getHierarchyList()
+        debug("Hierarchy of element {}".format(elementHierarchy))
+
         deleteElement(element)
     except ValueError as err:
         msg = ("Element {} could not be deleted. Reverting to previous "\
@@ -1011,6 +1035,7 @@ def processProjectUpdates():
 
     global projectUpdates
 
+    debug("length of project updates: {}".format(len(projectUpdates)))
     # list of all updates that were successfully processed
     processedUpdates = list()
     # holds the update that failed to be able to revert back
@@ -1019,19 +1044,31 @@ def processProjectUpdates():
         element = update[1]
         oldVal = update[2]
         updateType = element.state
+
+        debug("State of element: {}".format(updateType))
+        debug("type(updateType) = {}".format(type(updateType)))
+        debug("type(ADDED) = {}".format(type(iS.State.States.ADDED)))
+        debug("State == ADDED: {}".format(updateType is iS.State.States.ADDED))
         if  updateType == iS.State.States.ADDED:
+            debug("Adding an element")
             if handleAddElement(element, oldVal):
                 processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
+
+        debug("State == DELETED: {}".format(updateType is iS.State.States.DELETED))
         if updateType == iS.State.States.DELETED:
+            debug("Deleting an element")
             if handleDeleteElement(element, oldVal):
                 processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
+
+        debug("State == MODIFIED: {}".format(updateType is iS.State.States.MODIFIED))
         if updateType == iS.State.States.MODIFIED:
+            debug("Modifying an element")
             if handleModifyElement(element, oldVal):
                 processedUpdates.append(update)
             else:
@@ -1088,6 +1125,7 @@ def zipToBcfFile(bcfRootPath, dstFile):
         with zipfile.ZipFile(dstFile, "w") as zipFile:
             recursiveZipping("./", zipFile)
 
+    util.setDirty(False)
     return dstFile
 
 
@@ -1103,36 +1141,9 @@ def createNewBcfFile(name):
     newTmpDir = util.getSystemTmp(createNew = True)
 
     newBcfDir = os.path.join(newTmpDir, name)
-    reader.bcfDir = newBcfDir
+    util.setBcfDir(newBcfDir)
     os.mkdir(newBcfDir)
     addElement(project)
 
     return project
 
-
-################## UNUSED ##################
-def compileChanges(project: p.Project):
-
-    """
-    This function crawls through the complete object structure below project and
-    looks for objects whose state is different from `iS.State.States.ORIGINAL`.
-    Elements that are flagged with `iS.State.States.ADDED` are put into the list
-    `addedObjects`.
-    Elements that are flagged with `iS.State.States.DELETED` are put into the
-    list `deletedObjects`.
-    Elements that are flagges with `iS.State.States.MODIFIED` are put into the
-    list `modifiedObjects`.
-    These lists are then, in a subsequent step, processed and written to file.
-    """
-
-    stateList = project.getStateList()
-    for item in stateList:
-        if item[0] == iS.State.States.ADDED:
-            addedObjects.append(item[1])
-        elif item[0] == iS.State.States.MODIFIED:
-            modifiedObjects.append(item[1])
-        elif item[0] == iS.State.States.DELETED:
-            deletedObjects.append(item[1])
-        else: # Last option would be original state, which should not be contained in the list anyways
-            pass
-###############################################

@@ -1,41 +1,68 @@
 import os
 import sys
+import importlib
 excPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, excPath)
 
-import util
-
 __all__ = ["programmaticInterface.py", "ui"]
+
+FREECAD = False
+""" Set by BCFPlugin.py when running inside FreeCAD """
+
+GUI = False
+""" Set by BCFPlugin.py when running in Gui mode """
+
+TMPDIR = None
+""" Temp directory used by the plugin as working directory """
+
+DIRTY = False
+""" Denotes whether there are unwritten changes in the data model """
+
+PROJDIR = None
+""" The directory into which the bcf file is extracted to """
+
+dependencies = ["dateutil", "pytz", "pyperclip", "xmlschema"]
+""" Packages this plugin depends on. """
+
+
+def printErr(msg):
+
+    global FREECAD
+
+    if FREECAD:
+        FreeCAD.Console.PrintError(msg)
+    else:
+        print(msg, file=sys.stderr)
+
+
+def printInfo(msg):
+
+    global FREECAD
+
+    if FREECAD:
+        FreeCAD.Console.PrintMessage(msg)
+    else:
+        print(msg)
+
 
 def check_dependencies():
     available = True
-    try:
-        import dateutil
-    except:
-        pkg = "dateutil"
-        available = False
 
-    if available:
+    for dependency in dependencies:
         try:
-            import xmlschema
-        except:
-            pkg = "xmlschema"
+            importlib.import_module(dependency)
+        except Exception as e:
+            pkg = dependency
             available = False
-
-    if available:
-        try:
-            import pytz
-        except:
-            pkg = "pytz"
-            available = False
+            break
 
     if not available:
-        util.printErr("Could not find the module `xmlschema`. Install it through"\
+        printErr("Could not find the module `{}`. Install it through"\
                 " pip\n\tpip install {}\nYou also might want to"\
                 " install it in a virtual environment. To create and initialise"\
                 " said env execute\n\tpython -m venv <NAME>\n\tsource"\
-                " ./<NAME>/bin/activate".format(pkg))
-        util.printInfo("If you already have it installed inside a virtual environment" \
+                " ./<NAME>/bin/activate".format(pkg, pkg))
+        printInfo("If you already have it installed inside a virtual environment" \
                 ", no problem we just need to modify the `sys.path` variable a"\
                 " bit. python inside FreeCAD, unfortunately, is not aware by" \
                 " default, of a virtual environment. To do that you have to " \
@@ -55,15 +82,17 @@ try:
 except:
     pass
 else:
-    util.FREECAD = True
+    FREECAD = True
     if FreeCAD.GuiUp:
+        FreeCAD.Console.PrintMessage("set util.GUI\n")
         import FreeCADGui as FGui
-        from PySide import QtCore, QtGui
-        util.GUI = True
+        GUI = True
 
 
 frontend = None
 if not check_dependencies():
     raise ImportError
 
+import util
+util.deleteTmp()
 from programmaticInterface import *

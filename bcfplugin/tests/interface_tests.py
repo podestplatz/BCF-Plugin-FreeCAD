@@ -53,13 +53,11 @@ class DeleteObjectTest(unittest.TestCase):
 
     def tearDown(self):
         dirPath = os.path.join(util.getSystemTmp(), self.testBCFName)
-        project.debug("Deleted tree {}".format(dirPath))
         rmtree(dirPath)
 
 
     def test_deleteComment(self):
 
-        project.debug("+++++++++++++++++++")
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
         testFile = setupBCFFile(srcFilePath,
                 self.testFileDir,
@@ -77,7 +75,6 @@ class DeleteObjectTest(unittest.TestCase):
 
     def test_deleteCopiedComment(self):
 
-        project.debug("+++++++++++++++++++")
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
         testFile = setupBCFFile(srcFilePath,
                 self.testFileDir,
@@ -105,7 +102,6 @@ class DeleteObjectTest(unittest.TestCase):
         attribute holds the default value or not.
         """
 
-        project.debug("+++++++++++++++++++")
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
         testFile = setupBCFFile(srcFilePath,
                 self.testFileDir,
@@ -118,6 +114,8 @@ class DeleteObjectTest(unittest.TestCase):
         objectToDelete = pI.curProject.topicList[0].header.files[1]._ifcProjectId
         objectToDelete.state = s.State.States.DELETED
         pI.deleteObject(objectToDelete)
+        elementHierarchy = hierarchy.Hierarchy.checkAndGetHierarchy(objectToDelete)
+        util.debug("Hierarchy of element {}".format(elementHierarchy))
 
         newObject = pI.curProject.topicList[0].header.files[1]._ifcProjectId
         newObjectValue = newObject.value
@@ -131,7 +129,6 @@ class DeleteObjectTest(unittest.TestCase):
         Tests the deletion of a file node.
         """
 
-        project.debug("+++++++++++++++++++")
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
         testFile = setupBCFFile(srcFilePath,
                 self.testFileDir,
@@ -157,7 +154,6 @@ class DeleteObjectTest(unittest.TestCase):
         Tests the deletion of the complete Header element
         """
 
-        project.debug("+++++++++++++++++++")
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
         testFile = setupBCFFile(srcFilePath,
                 self.testFileDir,
@@ -183,7 +179,6 @@ class DeleteObjectTest(unittest.TestCase):
         Tests the deletion of a Label
         """
 
-        project.debug("+++++++++++++++++++")
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
         testFile = setupBCFFile(srcFilePath,
                 self.testFileDir,
@@ -205,7 +200,6 @@ class DeleteObjectTest(unittest.TestCase):
 
     def test_deleteViewpoint(self):
 
-        project.debug("+++++++++++++++++++")
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
         testFile = setupBCFFile(srcFilePath,
                 self.testFileDir,
@@ -227,9 +221,6 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testTopicDir, "viewpoint.bcfv")
         vpFileExists = os.path.exists(vpFilePath)
 
-        project.debug("\n\tlen(vpList)={}\n\tsearchResult={}\n\t"\
-                "vpFileExists={}".format(len(vpList), searchResult,
-                    vpFileExists))
         self.assertTrue(len(vpList) == 0 and searchResult == None and
                 not vpFileExists)
 
@@ -241,7 +232,6 @@ class DeleteObjectTest(unittest.TestCase):
         underlying viewpoint object
         """
 
-        project.debug("+++++++++++++++++++")
         srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
         testFile = setupBCFFile(srcFilePath,
                 self.testFileDir,
@@ -262,9 +252,6 @@ class DeleteObjectTest(unittest.TestCase):
                 self.testTopicDir, "viewpoint.bcfv")
         vpFileExists = os.path.exists(vpFilePath)
 
-        project.debug("\n\tlen(vpList)={}\n\tsearchResult={}\n\t"\
-                "vpFileExists={}".format(len(vpList), searchResult,
-                    vpFileExists))
         self.assertTrue(len(vpList) == 0 and searchResult == None and
                 vpFileExists)
 
@@ -278,8 +265,10 @@ class GetTopicsTest(unittest.TestCase):
 
     def tearDown(self):
         dirPath = os.path.join(util.getSystemTmp(), self.testBCFName)
-        project.debug("Deleted tree {}".format(dirPath))
-        rmtree(dirPath)
+        try:
+            rmtree(dirPath)
+        except:
+            pass
 
 
     def test_indexOrdering(self):
@@ -329,6 +318,7 @@ class ModifyElementTests(unittest.TestCase):
         newComments = self.retrieveComments(newTopics[0])
         updatedComment = newComments[0]
 
+        util.debug(updatedComment.state)
         self.assertTrue(updatedComment.state == s.State.States.ORIGINAL)
 
 
@@ -340,14 +330,16 @@ class ModifyElementTests(unittest.TestCase):
         commentToModify = comments[0]
 
         newText = "Hello my name is... Slim Shaaaaadyyyy"
+        newAuthor = "a@b.c"
         commentToModify.comment = newText
-        self.plugin.modifyElement(commentToModify, author="a@b.c")
+        self.plugin.modifyElement(commentToModify, author=newAuthor)
 
         newTopics = self.retrieveTopics()
         newComments = self.retrieveComments(newTopics[0])
         updatedComment = newComments[0]
 
-        self.assertTrue(updatedComment.comment == newText)
+        self.assertTrue(updatedComment.comment == newText and
+                updatedComment.modAuthor == newAuthor)
 
 
     def test_modifyCommentWithoutAuthor(self):

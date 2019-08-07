@@ -25,6 +25,7 @@ class BCFPluginPanel:
 
         self.running = True
         self.form = view.MyMainWindow()
+        self.form.resize(self.form.geometry().width(), self.form.geometry().height())
         self.form.setObjectName("BCFPlugin")
 
 
@@ -66,6 +67,11 @@ class BCFPluginPanel:
         """ Show the close and a open button be visible in the row above the panel """
 
         return int(QDialogButtonBox.Close)
+
+
+    def close(self):
+
+        self.form.closeEvent(None)
 
 
     def reject(self):
