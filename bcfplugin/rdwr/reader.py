@@ -10,6 +10,7 @@ from typing import List, Dict
 if __name__ == "__main__":
     sys.path.insert(0, "../")
     print(sys.path)
+import bcfplugin
 import bcfplugin.util as util
 from bcfplugin.util import debug, DEBUG
 from bcfplugin.rdwr.project import Project
@@ -26,6 +27,9 @@ SUPPORTED_VERSIONS = ["2.1"]
 
 if DEBUG:
     import pprint
+
+logger = logging.getLogger(__name__)
+logger.addHandler(bcfplugin.getStdoutHandler())
 
 
 def modifyVisinfoSchema(schema):
@@ -58,7 +62,7 @@ def readFile(path: str):
     try:
         file = ZipFile(path)
     except Exception as e:
-        util.printErr("The supplied BCF file ({}) could not be opened.\nError:\
+        logger.error("The supplied BCF file ({}) could not be opened.\nError:\
                 {}".format(path, str(e)))
         return None
 
@@ -70,7 +74,7 @@ def writeValidationError(error):
     if not util.loggingReady():
         util.initializeErrorLog()
         errorFilePath = util.getTmpFilePath(util.errorFile)
-        util.printWarning("Writing validation errors to"\
+        logger.warning("Writing validation errors to"\
                 " {}".format(errorFilePath))
 
     logging.error(error)
@@ -93,7 +97,7 @@ def extractFileToTmp(zipFilePath: str):
     tmpDir = util.getSystemTmp()
     extractionPath = os.path.join(tmpDir, os.path.basename(zipFilePath))
 
-    debug("reader.extractFileToTmp(): Extracting {} to {}".format(zipFile.filename, extractionPath))
+    logger.debug("reader.extractFileToTmp(): Extracting {} to {}".format(zipFile.filename, extractionPath))
     zipFile.extractall(extractionPath)
     return extractionPath
 
@@ -660,7 +664,7 @@ def readBcfFile(bcfFile: str):
             markupSchemaPath is None or
             versionSchemaPath is None or
             visinfoSchemaPath is None):
-        util.printErr("One or more schema files could not be downloaded!"\
+        logger.error("One or more schema files could not be downloaded!"\
                 "Please try again in a few moments")
         return None
 
@@ -672,7 +676,7 @@ def readBcfFile(bcfFile: str):
     ### Check version ###
     versionFilePath = os.path.join(bcfExtractedPath, "bcf.version")
     if not os.path.exists(versionFilePath):
-        util.printErr("No bcf.version file found in {}. This file is not optional.")
+        logger.error("No bcf.version file found in {}. This file is not optional.")
         return None
     error = validateFile(versionFilePath, versionSchemaPath, bcfFile)
     if error != "":
@@ -694,27 +698,27 @@ def readBcfFile(bcfFile: str):
         if error != "":
             msg = ("{} is not completely valid. Some parts won't be"\
                     " available.".format(projectFilePath))
-            debug(msg)
+            logger.debug(msg)
             writeValidationError("{}.\n Following the error"\
                     " message:\n{}".format(msg, error))
         proj = buildProject(projectFilePath, projectSchemaPath)
 
     ### Iterate over the topic directories ###
     topicDirectories = util.getDirectories(bcfExtractedPath)
-    debug(topicDirectories)
+    logger.debug(topicDirectories)
     for topic in topicDirectories:
         ### Validate all viewpoint files in the directory, and build them ###
         topicDir = os.path.join(bcfExtractedPath, topic)
 
         markupFilePath = os.path.join(topicDir, "markup.bcf")
-        debug("reader.readBcfFile(): looking into topic {}".format(topicDir))
+        logger.debug("reader.readBcfFile(): looking into topic {}".format(topicDir))
         error = validateFile(markupFilePath, markupSchemaPath, bcfFile)
         if error != "":
             msg = ("markup.bcf of topic {} does not comply with the standard"
                     " of versions {}."\
                     " Some parts won't be available.".format(topic,
                         SUPPORTED_VERSIONS))
-            util.printErr(msg)
+            logger.error(msg)
             writeValidationError("{}\nError:\n{}".format(msg, error))
         markup = buildMarkup(markupFilePath, markupSchemaPath)
 
@@ -728,7 +732,7 @@ def readBcfFile(bcfFile: str):
                 # error then skip the viewpoint
                 vp = buildViewpoint(vpPath, visinfoSchemaPath)
             except KeyError as err:
-                util.printErr("{} is required in a viewpoint file."
+                logger.error("{} is required in a viewpoint file."
                     " Viewpoint {}/{} is skipped"\
                         "".format(str(err), topic, vpRef.file))
                 continue
@@ -740,7 +744,7 @@ def readBcfFile(bcfFile: str):
         proj.topicList.append(markup)
 
     util.setBcfDir(bcfExtractedPath)
-    debug("reader.readBcfFile(): BCF file is open at"\
+    logger.debug("reader.readBcfFile(): BCF file is open at"\
             " {}".format(bcfExtractedPath))
     return proj
 

@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 import importlib
 excPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, excPath)
@@ -24,6 +25,9 @@ PROJDIR = None
 dependencies = ["dateutil", "pytz", "pyperclip", "xmlschema"]
 """ Packages this plugin depends on. """
 
+LOGFORMAT = "%(levelname)s:%(module)s.%(funcName)s() - %(message)s"
+""" Format of all logged messages """
+
 
 def printErr(msg):
 
@@ -43,6 +47,34 @@ def printInfo(msg):
         FreeCAD.Console.PrintMessage(msg)
     else:
         print(msg)
+
+
+def getStdoutHandler():
+
+    """ Returns a handler for the logging facility of python, writing the
+    messages to stdout """
+
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.WARNING)
+
+    format = logging.Formatter(LOGFORMAT)
+    handler.setFormatter(format)
+
+    return handler
+
+
+def getFileHandler(fpath):
+
+    """ Returns a handler for the logging facility of python, writing the
+    messages to file `fpath` """
+
+    handler = logging.FileHandler(fpath)
+    handler.setLevel(logging.DEBUG)
+
+    format = logging.Formatter(LOGFORMAT)
+    handler.setFormatter(format)
+
+    return handler
 
 
 def check_dependencies():

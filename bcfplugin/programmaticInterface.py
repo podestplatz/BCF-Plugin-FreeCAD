@@ -5,12 +5,14 @@ import copy
 import pytz
 import shutil
 import inspect
+import logging
 import datetime
 from enum import Enum
 from typing import List, Tuple
 from uuid import uuid4, UUID
 
-import util
+import bcfplugin
+import bcfplugin.util as util
 import bcfplugin.rdwr.reader as reader
 import bcfplugin.rdwr.writer as writer
 import bcfplugin.rdwr.project as p
@@ -48,6 +50,9 @@ App = None
 Gui = None
 """ Alias for the FreeCADGui module """
 
+logger = logging.getLogger(__name__)
+logger.addHandler(bcfplugin.getStdoutHandler())
+
 if GUI:
     import frontend.viewController as vCtrl
     import FreeCADGui as Gui
@@ -73,8 +78,8 @@ def _handleProjectUpdate(errMsg, backup):
 
     errorenousUpdate = writer.processProjectUpdates()
     if errorenousUpdate is not None:
-        util.printErr(errMsg)
-        util.printInfo("Project state is reset to before the update.")
+        logger.error(errMsg)
+        logger.info("Project state is reset to before the update.")
         oldProject = curProject
         curProject = backup
         del oldProject
@@ -137,13 +142,13 @@ def openProject(bcfFile):
     global curProject
 
     if not os.path.exists(bcfFile):
-        util.printErr("File {} does not exist. Please choose a valid"\
+        logger.error("File {} does not exist. Please choose a valid"\
             " file!".format(bcfFile))
         return OperationResults.FAILURE
 
     project = reader.readBcfFile(bcfFile)
     if project is None:
-        util.printErr("{} could not be read.".format(bcfFile))
+        logger.error("{} could not be read.".format(bcfFile))
         return OperationResults.FAILURE
 
     curProject = project
@@ -185,7 +190,7 @@ def _searchRealTopic(topic: Topic):
 
     realTopic = curProject.searchObject(topic)
     if realTopic is None:
-        util.printErr("Topic {} could not be found in the open project."\
+        logger.error("Topic {} could not be found in the open project."\
                 "Cannot retrieve any comments for it then".format(topic))
     return realTopic
 
@@ -211,12 +216,12 @@ def openIfcFile(path: str):
     """ Opens an IfcFile behind path. IfcOpenShell is required! """
 
     if not os.path.exists(path):
-        util.printErr("File {} could not be found. Please supply a path that"\
+        logger.error("File {} could not be found. Please supply a path that"\
                 "exists")
         return OperationResults.FAILURE
 
     if not FREECAD:
-        util.printErr("I am not running inside FreeCAD. {} can only be opened"\
+        logger.error("I am not running inside FreeCAD. {} can only be opened"\
                 "inside FreeCAD")
         return OperationResults.FAILURE
 
@@ -237,13 +242,13 @@ def activateViewpoint(viewpoint: Viewpoint,
     """ Sets the camera view the model from the specified viewpoint."""
 
     if not (GUI and FREECAD):
-        util.printErr("Application is running either not inside FreeCAD or without"\
+        logger.error("Application is running either not inside FreeCAD or without"\
                 " Gui. Thus cannot set camera position")
         return OperationResults.FAILURE
 
     if (Gui.ActiveDocument is None or
             Gui.ActiveDocument.ActiveView is None):
-        util.printErr("There is no document or view active. Thus cannot apply"\
+        logger.error("There is no document or view active. Thus cannot apply"\
                 " any viewpoint settings.")
         return OperationResults.FAILURE
 
@@ -254,11 +259,11 @@ def activateViewpoint(viewpoint: Viewpoint,
     elif camType == CamType.PERSPECTIVE:
         camSettings = viewpoint.pCamera
     else:
-        util.printErr("Camera type {} does not exist.".format(camType))
+        logger.error("Camera type {} does not exist.".format(camType))
         return OperationResults.FAILURE
 
     if camSettings is None:
-        util.printErr("No camera settings found in viewpoint"\
+        logger.error("No camera settings found in viewpoint"\
                 " {}".format(viewpoint))
         return OperationResults.FAILURE
 
@@ -272,7 +277,7 @@ def activateViewpoint(viewpoint: Viewpoint,
     # selection is set.
     # NOTE: ViewSetupHints are not applied atm
     if viewpoint.components is not None:
-        util.debug("applying components settings")
+        logger.debug("applying components settings")
         components = viewpoint.components
         vCtrl.applyVisibilitySettings(components.visibilityDefault,
                 components.visibilityExceptions)
@@ -292,7 +297,7 @@ def resetView():
     first viewpoint """
 
     if not (GUI and FREECAD):
-        util.printErr("Application is running either not inside FreeCAD or without"\
+        logger.error("Application is running either not inside FreeCAD or without"\
                 " GUI. Thus cannot set camera position")
         return OperationResults.FAILURE
 
@@ -311,7 +316,7 @@ def _isIfcGuid(guid: str):
     if len(guid) != 22:
         return False
 
-    util.debug("checking {} of type {}".format(guid, type(guid)))
+    logger.debug("checking {} of type {}".format(guid, type(guid)))
 
     pattern = re.compile("[0-9,A-Z,a-z,_$]*")
     if pattern.fullmatch(guid) is None:
@@ -335,7 +340,7 @@ def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
     global curProject
 
     if not os.path.exists(path):
-        util.printErr("File `{}` does not exist. Nothing is beeing copied.")
+        logger.error("File `{}` does not exist. Nothing is beeing copied.")
         return OperationResults.FAILURE
 
     if not isProjectOpen():
@@ -355,7 +360,7 @@ def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
     i = 1
     while os.path.exists(destPath):
         if i == 1:
-            util.printInfo("{} already exists.".format(destPath))
+            logger.info("{} already exists.".format(destPath))
 
         dir, file = os.path.split(destPath)
         splitFN = dstFileName.split(".")
@@ -365,7 +370,7 @@ def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
         i += 1
 
     if i != 1:
-        util.printInfo("Changed filename to {}.".format(destPath))
+        logger.info("Changed filename to {}.".format(destPath))
 
     shutil.copyfile(path, destPath)
 
@@ -388,7 +393,7 @@ def setModDateAuthor(element, author="", addUpdate=True):
     # overwritten
     elif author == "" or author is None:
         # print info if the author is not set
-        util.printInfo("Author is not set.")
+        logger.info("Author is not set.")
         element.modAuthor = element._modAuthor.defaultValue
 
     # add the author/date modification as update to the writers module
@@ -561,13 +566,13 @@ def getRelevantIfcFiles(topic: Topic):
         return []
 
     files = copy.deepcopy(markup.header.files)
-    util.debug("files are {}".format(files))
+    logger.debug("files are {}".format(files))
 
     hasIfcProjectId = lambda file: file.ifcProjectId != file._ifcProjectId.defaultValue
     hasReference = lambda file: file.reference != file._reference.defaultValue
     files = filter(lambda f: hasIfcProjectId(f) and hasReference(f), files)
 
-    util.printInfo("If you want to open one of the files in FreeCAD run:\n"\
+    logger.info("If you want to open one of the files in FreeCAD run:\n"\
             "\t plugin.openIfcProject(file)")
 
     return list(files)
@@ -604,7 +609,7 @@ def getTopic(element):
 
     realElement = curProject.searchObject(element)
     if realElement is None:
-        util.printError("Element {} could not be found in the current project.")
+        logger.erroror("Element {} could not be found in the current project.")
         return None
 
     elemHierarchy = realElement.getHierarchyList()
@@ -634,12 +639,12 @@ def getTopicFromUUID(uid: UUID):
     global curProject
 
     if not isProjectOpen():
-        util.printErr("The project is not open. Open a project before"\
+        logger.error("The project is not open. Open a project before"\
                 " trying to retrieve a topic by UUID.")
         return OperationResults.FAILURE
 
     if not isinstance(uid, UUID):
-        util.printErr("uid is not of type UUID. Can only get topic by UUID.")
+        logger.error("uid is not of type UUID. Can only get topic by UUID.")
         return OperationResults.FAILURE
 
     match = None
@@ -650,7 +655,7 @@ def getTopicFromUUID(uid: UUID):
             break
 
     if match is None:
-        util.printErr("Could not find a topic to that uid: {}".format(str(uid)))
+        logger.error("Could not find a topic to that uid: {}".format(str(uid)))
         return OperationResults.FAILURE
 
     return match
@@ -672,7 +677,7 @@ def addViewpointToComment(comment: Comment, viewpoint: ViewpointReference, autho
     projectBackup = copy.deepcopy(curProject)
 
     if author == "":
-        util.printInfo("`author` is empty. Cannot update without an author.")
+        logger.info("`author` is empty. Cannot update without an author.")
         return OperationResults.FAILURE
 
     if not isProjectOpen():
@@ -681,11 +686,11 @@ def addViewpointToComment(comment: Comment, viewpoint: ViewpointReference, autho
     realComment = curProject.searchObject(comment)
     realViewpoint = curProject.searchObject(viewpoint)
     if realComment == None:
-        util.printErr("No matching comment was found in the current project.")
+        logger.error("No matching comment was found in the current project.")
         return OperationResults.FAILURE
 
     if realViewpoint == None:
-        util.printErr("No matching viewpoint was found in the current project.")
+        logger.error("No matching viewpoint was found in the current project.")
         return OperationResults.FAILURE
 
     modDate = utc.localize(datetime.datetime.now())
@@ -724,28 +729,28 @@ def addCurrentViewpoint(topic: Topic):
     projectBackup = copy.deepcopy(curProject)
 
     if not (GUI and FREECAD):
-        util.printErr("Application is running either not inside FreeCAD or without"\
+        logger.error("Application is running either not inside FreeCAD or without"\
                 " GUI. Thus cannot set camera position")
         return OperationResults.FAILURE
 
     doNotAdd = False
     if not isProjectOpen():
-        util.printInfo("Project is not open. Viewpoint cannot be added to any"\
+        logger.info("Project is not open. Viewpoint cannot be added to any"\
                 " topic")
         doNotAdd = True
 
     realTopic = _searchRealTopic(topic)
     if realTopic is None:
-        util.printInfo("Viewpoint will not be added.")
+        logger.info("Viewpoint will not be added.")
         doNotAdd = True
 
     camSettings = None
     try:
         camSettings = vCtrl.readCamera()
     except AttributeError as err:
-        util.printErr("Camera settings could not be read. Make sure the 3D"\
+        logger.error("Camera settings could not be read. Make sure the 3D"\
                 " view is active.")
-        util.printErr(str(err))
+        logger.error(str(err))
         return OperationResults.FAILURE
     else:
         if camSettings is None:
@@ -761,7 +766,7 @@ def addCurrentViewpoint(topic: Topic):
         elif isinstance(camSettings, PerspectiveCamera):
             pCamera = camSettings
 
-        util.printInfo(str(camSettings))
+        logger.info(str(camSettings))
         vp = Viewpoint(vpGuid, None, oCamera, pCamera)
         vp.state = State.States.ADDED
         vpFileName = writer.generateViewpointFileName(realMarkup)
@@ -853,9 +858,9 @@ def addComment(topic: Topic, text: str, author: str,
     writer.addProjectUpdate(curProject, comment, None)
     errorenousUpdate = writer.processProjectUpdates()
     if errorenousUpdate is not None:
-        util.printErr("Error while adding {}".format(errorenousUpdate[1]))
-        util.printErr("Project is reset to before the addition.")
-        util.printInfo("Please fix comment {}".format(comment))
+        logger.error("Error while adding {}".format(errorenousUpdate[1]))
+        logger.error("Project is reset to before the addition.")
+        logger.info("Please fix comment {}".format(comment))
         curProject = projectBackup
 
         return OperationResults.FAILURE
@@ -883,23 +888,23 @@ def addFile(topic: Topic, ifcProject: str = "",
 
     if not isExternal:
         if not util.doesFileExistInProject(reference):
-            util.printErr("{} does not exist inside the project. Please check"\
+            logger.error("{} does not exist inside the project. Please check"\
                     " the path. Or for copiing a new file to the project use: "\
                     " plugin.copyFile(topic, fileAbsPath)".format(reference))
             return OperationResults.FAILURE
     elif not os.path.exists(reference):
-        util.printErr("{} could not be found. Please check the path for"\
+        logger.error("{} could not be found. Please check the path for"\
                 " typos".format(reference))
         return OperationResults.FAILURE
 
     if not _isIfcGuid(ifcProject) or ifcProject == "":
-        util.printErr("{} is not a valid IfcGuid. An Ifc guid has to be of"\
+        logger.error("{} is not a valid IfcGuid. An Ifc guid has to be of"\
                 " length 22 and contain alphanumeric characters including '_'"\
                 " and '$'".format(ifcProject))
 
     if (not _isIfcGuid(ifcSpatialStructureElement) or
             ifcSpatialStructureElement == ""):
-        util.printErr("{} is not a valid IfcGuid. An Ifc guid has to be of"\
+        logger.error("{} is not a valid IfcGuid. An Ifc guid has to be of"\
                 " length 22 and contain alphanumeric characters including '_'"\
                 " and '$'".format(ifcProject))
 
@@ -955,17 +960,17 @@ def addDocumentReference(topic: Topic,
     projectBackup = copy.deepcopy(curProject)
 
     if (path == "" and description == ""):
-        util.printInfo("Not adding an empty document reference")
+        logger.info("Not adding an empty document reference")
         return OperationResults.FAILURE
 
     if not isExternal:
         if not util.doesFileExistInProject(topic, path):
-            util.printErr("{} does not exist inside the project. Please check"\
+            logger.error("{} does not exist inside the project. Please check"\
                     " the path. Or for copiing a new file to the project use: "\
                     " plugin.copyFile(topic, fileAbsPath)".format(path))
             return OperationResults.FAILURE
     elif not os.path.exists(path):
-        util.printInfo("{} could not be found on the file system. Assuming"\
+        logger.info("{} could not be found on the file system. Assuming"\
                 " that it resides somewhere on a network.".format(path))
 
     # check if `guid` is a valid UUID and create a UUID object
@@ -979,7 +984,7 @@ def addDocumentReference(topic: Topic,
         try:
             guidU = UUID(guid)
         except ValueError as err:
-            util.printErr("The supplied guid is malformed ({}).".format(guid))
+            logger.error("The supplied guid is malformed ({}).".format(guid))
             return OperationResults.FAILURE
 
     if not isProjectOpen():
@@ -1014,7 +1019,7 @@ def addLabel(topic: Topic, label: str):
     projectBackup = copy.deepcopy(curProject)
 
     if label == "":
-        util.printInfo("Not adding an empty label.")
+        logger.info("Not adding an empty label.")
         return OperationResults.FAILURE
 
     if not isProjectOpen():
@@ -1048,12 +1053,12 @@ def deleteObject(object):
     projectBackup = copy.deepcopy(curProject)
 
     if not issubclass(type(object), Identifiable):
-        util.printErr("Cannot delete {} since it doesn't inherit from"\
+        logger.error("Cannot delete {} since it doesn't inherit from"\
             " interfaces.Identifiable".format(object))
         return OperationResults.FAILURE
 
     if not issubclass(type(object), Hierarchy):
-        util.printErr("Cannot delete {} since it seems to be not part of" \
+        logger.error("Cannot delete {} since it seems to be not part of" \
             " the data model. It has to inherit from"\
             " hierarchy.Hierarchy".format(object))
         return OperationResults.FAILURE
@@ -1065,11 +1070,11 @@ def deleteObject(object):
     if realObject is None:
         # No rollback has to be done here, since the state of the project is not
         # changed anyways.
-        util.printErr("Object {} could not be found in project {}".format(
+        logger.error("Object {} could not be found in project {}".format(
             object.__class__, curProject.__class__))
         return OperationResults.FAILURE
 
-    util.debug("Deleting element {} from {}".format(realObject.__class__,
+    logger.debug("Deleting element {} from {}".format(realObject.__class__,
         curProject.__class__))
     realObject.state = State.States.DELETED
     writer.addProjectUpdate(curProject, realObject, None)
@@ -1080,12 +1085,12 @@ def deleteObject(object):
     if result ==  OperationResults.FAILURE:
         curProject = projectBackup
         errMsg = "Couldn't delete {} from the file.".format(object)
-        util.printErr(errMsg)
+        logger.error(errMsg)
         return OperationResults.FAILURE
 
     # otherwise the updated project is returned
     else:
-        util.debug("Deleting from project with id {}".format(id(curProject)))
+        logger.debug("Deleting from project with id {}".format(id(curProject)))
         curProject = curProject.deleteObject(realObject)
         return OperationResults.SUCCESS
 
@@ -1105,7 +1110,7 @@ def modifyComment(comment: Comment, newText: str, author: str):
     projectBackup = copy.deepcopy(curProject)
 
     if newText == "":
-        util.printInfo("newText is empty. Deleting comment now.")
+        logger.info("newText is empty. Deleting comment now.")
         deleteObject(comment)
         return OperationResults.SUCCESS
 
@@ -1114,7 +1119,7 @@ def modifyComment(comment: Comment, newText: str, author: str):
 
     realComment = curProject.searchObject(comment)
     if realComment is None:
-        util.printErr("Comment {} could not be found in the data model. Not"\
+        logger.error("Comment {} could not be found in the data model. Not"\
                 "modifying anything".format(comment))
         return OperationResulsts.FAILURE
 
@@ -1153,7 +1158,7 @@ def modifyElement(element, author=""):
     if not (issubclass(type(element), Identifiable) and
             issubclass(type(element), State) and
             issubclass(type(element), XMLName)):
-        util.printErr("Element is not an object from the data model. Cannot"\
+        logger.error("Element is not an object from the data model. Cannot"\
                 " update it")
         return OperationResults.FAILURE
 
@@ -1161,37 +1166,37 @@ def modifyElement(element, author=""):
     # get a reference to the real element in the data model
     realElement = curProject.searchObject(element)
     if realElement is None:
-        util.printErr("{} object, that shall be changed, could not be"\
+        logger.error("{} object, that shall be changed, could not be"\
                 " found in the current project.".format(element.xmlName))
         return OperationResults.FAILURE
 
     # get the associated topic
     realTopic = getTopic(realElement)
     if realTopic is None:
-        util.printErr("{} currently it is only possible to modify values of"\
+        logger.error("{} currently it is only possible to modify values of"\
                 " markup.bcf.")
         return OperationResults.FAILURE
 
     realElement.state = State.States.DELETED
     writer.addProjectUpdate(curProject, realElement, None)
 
-    util.debug("Setting state of {} to equal {}".format(realElement, element))
+    logger.debug("Setting state of {} to equal {}".format(realElement, element))
     # copy the state of the given element to the real element
     for property, value in vars(element).items():
         if property == "containingObject":
-            util.debug("Set comment.{}={}".format(property,
+            logger.debug("Set comment.{}={}".format(property,
                 realElement.containingObject.__class__))
             continue
         setattr(realElement, property, copy.deepcopy(value))
-        util.debug("Set comment.{}={}".format(property, value))
+        logger.debug("Set comment.{}={}".format(property, value))
 
     # if topic/comment was modified update `modDate` and `modAuthor`
     if isinstance(realElement, Topic) or isinstance(realElement, Comment):
         setModDateAuthor(realElement, author, False)
-        util.debug("ModAuthor: {}; ModDate: {}".format(realElement.modAuthor,
+        logger.debug("ModAuthor: {}; ModDate: {}".format(realElement.modAuthor,
             realElement.modDate))
 
-    util.debug("Add {} as new project update".format(realElement))
+    logger.debug("Add {} as new project update".format(realElement))
     realElement.state = State.States.ADDED
     writer.addProjectUpdate(curProject, realElement, None)
     realElement.state = State.States.ORIGINAL

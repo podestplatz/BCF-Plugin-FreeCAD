@@ -1,18 +1,22 @@
 import os
 import copy
+import logging
+from uuid import uuid4
 
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import (QAbstractListModel, QAbstractTableModel,
         QModelIndex, Slot, Signal, Qt, QSize)
 
+import bcfplugin
 import bcfplugin.programmaticInterface as pI
 import bcfplugin.util as util
-
-from uuid import uuid4
 from bcfplugin.rdwr.topic import Topic
 from bcfplugin.rdwr.markup import Comment
 from bcfplugin.frontend.viewController import CamType
+
+logger = logging.getLogger(__name__)
+logger.addHandler(bcfplugin.getStdoutHandler)
 
 
 def openProjectBtnHandler(file):
@@ -222,7 +226,7 @@ class CommentModel(QAbstractListModel):
 
         if not pI.isProjectOpen():
             util.showError("First you have to open a project.")
-            util.printErr("First you have to open a project.")
+            logger.error("First you have to open a project.")
             self.endResetModel()
             return
 
@@ -230,7 +234,7 @@ class CommentModel(QAbstractListModel):
         if comments == pI.OperationResults.FAILURE:
             util.showError("Could not get any comments for topic" \
                     " {}".format(str(topic)))
-            util.printErr("Could not get any comments for topic" \
+            logger.error("Could not get any comments for topic" \
                     " {}".format(str(topic)))
             self.endResetModel()
             return
@@ -285,7 +289,7 @@ class CommentModel(QAbstractListModel):
 
     def getAuthor(self):
 
-        util.debug("This is the current temp directory:"\
+        logger.debug("This is the current temp directory:"\
                 " {}".format(util.getSystemTmp()))
 
         modAuthor = None
@@ -641,7 +645,7 @@ class TopicMetricsModel(QAbstractTableModel):
         try:
             self.members[index.row()].value = value[0]
         except Exception as err:
-            util.printErr(str(err))
+            logger.error(str(err))
             return False
 
         result = pI.modifyElement(self.topic, value[1])
@@ -836,7 +840,7 @@ class RelatedTopicsModel(QAbstractListModel):
             return None
 
         if index.row() >= len(self.relTopics):
-            util.printInfo("A too large index was passed! Please report the"\
+            logger.info("A too large index was passed! Please report the"\
                     " steps you did as issue on the plugin's github page.")
             return None
 
@@ -874,11 +878,11 @@ class RelatedTopicsModel(QAbstractListModel):
         for t in relatedTopics:
             # in this list only the uid of a topic is stored
             tUId = t.value
-            util.debug("Getting topic to: {}:{}".format(tUId, tUId.__class__))
+            logger.debug("Getting topic to: {}:{}".format(tUId, tUId.__class__))
             match = pI.getTopicFromUUID(tUId)
             if match != pI.OperationResults.FAILURE:
                 self.relTopics.append(match)
-                util.debug("Got a match {}".format(match.title))
+                logger.debug("Got a match {}".format(match.title))
             else:
-                util.debug("Got nothing back")
+                logger.debug("Got nothing back")
 
