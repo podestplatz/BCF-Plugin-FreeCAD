@@ -246,6 +246,7 @@ class TopicMetricsDialog(QDialog):
         self.addDocTable = QTableView()
         self.addDocTable.setModel(parent.addDocumentsModel)
         self.addDocTable.doubleClicked.connect(self.openDocRef)
+        self.addDocTable.clicked.connect(self.showDoubleClickHint)
         self.addDocGroupLayout.addWidget(self.addDocTable)
         if parent.addDocumentsModel.rowCount() == 0:
             self.addDocTable.hide()
@@ -283,6 +284,15 @@ class TopicMetricsDialog(QDialog):
         else: # copy path to clipboard and notify the user about it
             pyperclip.copy(index.model().data(index))
             showNotification(self, "Copied path to clipboard.")
+
+
+    @Slot(QModelIndex)
+    def showDoubleClickHint(self, index):
+
+        if index.column() == 0:
+            showNotification(self, "Double click to open document.")
+        elif index.column() == 1:
+            showNotification(self, "Double click to copy path.")
 
 
 class MyMainWindow(QWidget):
