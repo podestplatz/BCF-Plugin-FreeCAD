@@ -10,8 +10,7 @@ import bcfplugin.util as util
 from bcfplugin import TMPDIR
 
 
-logger = logging.getLogger()
-logger.addHandler(bcfplugin.getStdoutHandler())
+logger = bcfplugin.createLogger(__name__)
 
 dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
 emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"

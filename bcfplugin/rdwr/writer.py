@@ -12,7 +12,6 @@ if __name__ == "__main__":
 import copy as c
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as MD
-from bcfplugin.util import DEBUG, debug
 import bcfplugin
 import bcfplugin.util as util
 import bcfplugin.rdwr.reader as reader
@@ -23,8 +22,7 @@ import bcfplugin.rdwr.markup as m
 import bcfplugin.rdwr.project as p
 import bcfplugin.rdwr.uri as u
 
-logger = logging.getLogger(__name__)
-logger.addHandler(bcfplugin.getStdoutHandler())
+logger = bcfplugin.createLogger(__name__)
 
 projectFileName = "project.bcfp"
 markupFileName = "markup.bcf"

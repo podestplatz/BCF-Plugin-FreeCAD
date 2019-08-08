@@ -15,8 +15,7 @@ from bcfplugin.rdwr.topic import Topic
 from bcfplugin.rdwr.markup import Comment
 from bcfplugin.frontend.viewController import CamType
 
-logger = logging.getLogger(__name__)
-logger.addHandler(bcfplugin.getStdoutHandler)
+logger = bcfplugin.createLogger(__name__)
 
 
 def openProjectBtnHandler(file):

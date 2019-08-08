@@ -17,8 +17,7 @@ from bcfplugin import DIRTY
 from bcfplugin.rdwr.viewpoint import Viewpoint
 
 
-logger = logging.getLogger()
-logger.addHandler(bcfplugin.getStdoutHandler())
+logger = bcfplugin.createLogger(__name__)
 
 def tr(self, text):
 

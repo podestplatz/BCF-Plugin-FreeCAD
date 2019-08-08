@@ -50,8 +50,8 @@ App = None
 Gui = None
 """ Alias for the FreeCADGui module """
 
-logger = logging.getLogger(__name__)
-logger.addHandler(bcfplugin.getStdoutHandler())
+logger = bcfplugin.createLogger(__name__)
+
 
 if GUI:
     import frontend.viewController as vCtrl

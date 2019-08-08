@@ -30,8 +30,7 @@ import rdwr.modification as modification
 import programmaticInterface as pI
 import rdwr.interfaces.hierarchy as hierarchy
 
-logger = logging.getLogger(__name__)
-logger.addHandler(bcfplugin.getStdoutHandler())
+logger = bcfplugin.createLogger(__name__)
 
 
 def setupBCFFile(testFile, testFileDir, testTopicDir, testBCFName):

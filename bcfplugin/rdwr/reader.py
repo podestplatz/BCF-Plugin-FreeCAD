@@ -12,7 +12,6 @@ if __name__ == "__main__":
     print(sys.path)
 import bcfplugin
 import bcfplugin.util as util
-from bcfplugin.util import debug, DEBUG
 from bcfplugin.rdwr.project import Project
 from bcfplugin.rdwr.uri import Uri as Uri
 from bcfplugin.rdwr.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
@@ -25,11 +24,7 @@ from bcfplugin.rdwr.threedvector import (Point, Line, Direction, ClippingPlane)
 # BCF standard versions that can be read in
 SUPPORTED_VERSIONS = ["2.1"]
 
-if DEBUG:
-    import pprint
-
-logger = logging.getLogger(__name__)
-logger.addHandler(bcfplugin.getStdoutHandler())
+logger = bcfplugin.createLogger(__name__)
 
 
 def modifyVisinfoSchema(schema):
@@ -97,7 +92,7 @@ def extractFileToTmp(zipFilePath: str):
     tmpDir = util.getSystemTmp()
     extractionPath = os.path.join(tmpDir, os.path.basename(zipFilePath))
 
-    logger.debug("reader.extractFileToTmp(): Extracting {} to {}".format(zipFile.filename, extractionPath))
+    logger.debug("Extracting {} to {}".format(zipFile.filename, extractionPath))
     zipFile.extractall(extractionPath)
     return extractionPath
 
@@ -684,7 +679,7 @@ def readBcfFile(bcfFile: str):
         return None
     version = getVersion(bcfExtractedPath, versionSchemaPath)
     if version not in SUPPORTED_VERSIONS:
-        pprint.pprint("BCF version {} is not supported by this plugin. Supported"\
+        logger.error("BCF version {} is not supported by this plugin. Supported"\
                 "versions are: {}".format(version, SUPPORTED_VERSIONS),
                 file=sys.stderr)
         return None
@@ -711,7 +706,7 @@ def readBcfFile(bcfFile: str):
         topicDir = os.path.join(bcfExtractedPath, topic)
 
         markupFilePath = os.path.join(topicDir, "markup.bcf")
-        logger.debug("reader.readBcfFile(): looking into topic {}".format(topicDir))
+        logger.debug("looking into topic {}".format(topicDir))
         error = validateFile(markupFilePath, markupSchemaPath, bcfFile)
         if error != "":
             msg = ("markup.bcf of topic {} does not comply with the standard"
@@ -744,7 +739,7 @@ def readBcfFile(bcfFile: str):
         proj.topicList.append(markup)
 
     util.setBcfDir(bcfExtractedPath)
-    logger.debug("reader.readBcfFile(): BCF file is open at"\
+    logger.debug("BCF file is open at"\
             " {}".format(bcfExtractedPath))
     return proj
 
