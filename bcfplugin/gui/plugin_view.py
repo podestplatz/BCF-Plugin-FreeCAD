@@ -335,13 +335,9 @@ class MyMainWindow(QWidget):
         self.mainLayout.setObjectName("mainLayout")
         self.setWindowTitle("BCF-Plugin")
 
-        self.projectGroup = self.createProjectGroup()
+        self.projectGroup = self.createProjectTopicGroup()
         self.mainLayout.addWidget(self.projectGroup)
         self.mainLayout.addStretch()
-
-        self.topicGroup = self.createTopicGroup()
-        self.topicGroup.hide()
-        self.mainLayout.addWidget(self.topicGroup)
 
         self.commentGroup = self.createCommentGroup()
         self.commentGroup.hide()
@@ -374,22 +370,16 @@ class MyMainWindow(QWidget):
         self.projectOpened.connect(lambda: self.snStack.setCurrentIndex(0))
         self.projectOpened.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
         self.projectOpened.connect(self.hideCommentSnapshotGroup)
-        self.projectOpened.connect(self.replaceTopicNameLabel)
+        self.projectOpened.connect(self.topicNameLbl.hide)
 
         # create editor for a double left click on a comment
         self.commentList.doubleClicked.connect(
                 lambda idx: self.commentList.edit(idx))
 
-        self.topicNameLabel.clicked.connect(self.hideCommentSnapshotGroup)
-        self.topicNameLabel.clicked.connect(self.replaceTopicNameLabel)
-
         self.topicListModel.selectionChanged.connect(lambda x:
                 self.showCommentSnapshotGroup())
         self.topicListModel.selectionChanged.connect(lambda x:
                 self.newCommentEdit.setDisabled(False))
-        self.topicListModel.selectionChanged.connect(lambda x:
-                self.replaceTopicList())
-        self.topicListModel.selectionChanged.connect(self.setTopicName)
 
         # reset ui after a topic switch, to not display any artifacts from the
         # previous topic
@@ -401,6 +391,10 @@ class MyMainWindow(QWidget):
         self.topicListModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
         self.topicListModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
         self.topicListModel.selectionChanged.connect(self.relTopModel.resetItems)
+        self.topicListModel.selectionChanged.connect(lambda x:
+                self.topicNameLbl.show())
+        self.topicListModel.selectionChanged.connect(lambda topic:
+                self.topicNameLbl.setText(topic.title))
         # reset both the combobox and the stacked widget beneath to the first
         # index for a topic switch
         self.topicListModel.selectionChanged.connect(lambda: self.snStack.setCurrentIndex(0))
@@ -430,55 +424,50 @@ class MyMainWindow(QWidget):
         self.openFilePath = ""
 
 
-    def createProjectGroup(self):
+    def createProjectTopicGroup(self):
 
-        projectGroup = QGroupBox()
-        projectGroup.setObjectName("projectGroup")
+        topFrame = QFrame()
+        topLayout = QHBoxLayout(topFrame)
 
-        self.projectLayout = QHBoxLayout(projectGroup)
-        self.projectLayout.setObjectName("projectLayout")
+        projFrame = QFrame()
+        projLayout = QVBoxLayout(projFrame)
+        topLayout.addWidget(projFrame)
 
-        self.projectLabel = QLabel(self.tr("Open Project"))
-        self.projectLabel.setObjectName("projectLabel")
-        self.projectLayout.addWidget(self.projectLabel)
+        self.projSaveBtn = QPushButton("Save")
+        self.projSaveBtn.setObjectName("projSaveBtn")
+        self.projSaveBtn.hide()
 
-        self.projectSaveButton = QPushButton(self.tr("Save"))
-        self.projectSaveButton.setObjectName("projectSaveButton")
-        self.projectSaveButton.clicked.connect(self.saveProjectHandler)
-        self.projectSaveButton.hide()
+        self.projOpenBtn = QPushButton(self.tr("Open"))
+        self.projOpenBtn.setObjectName("projOpenBtn")
+        self.projOpenBtn.clicked.connect(self.openProjectBtnHandler)
+        self.projOpenBtn.clicked.connect(self.projSaveBtn.show)
 
-        self.projectButton = QPushButton(self.tr("Open"))
-        self.projectButton.setObjectName("projectButton")
-        self.projectButton.clicked.connect(self.openProjectBtnHandler)
-        self.projectButton.clicked.connect(self.projectSaveButton.show)
+        projSpacer = QSpacerItem(0, 0)
 
-        self.projectLayout.addWidget(self.projectButton)
-        self.projectLayout.addWidget(self.projectSaveButton)
+        projLayout.addWidget(self.projOpenBtn)
+        projLayout.addWidget(self.projSaveBtn)
+        projLayout.addStretch(20)
 
-        return projectGroup
+        topicFrame = QFrame()
+        topicLayout = QVBoxLayout(topicFrame)
+        topLayout.addWidget(topicFrame)
 
+        self.topicDetailsBtn = QPushButton(self.tr("Details"))
+        self.topicDetailsBtn.setObjectName("topicDetailsBtn")
+        self.topicDetailsBtn.hide()
 
-    def createTopicGroup(self):
-
-        topicGroup = QGroupBox()
-        topicGroup.setObjectName("topicGroup")
-        topicGroup.setTitle("Topic")
-
-        self.topicNameLabel = QPushButton()
-        self.topicNameLabel.hide()
-        colPal = self.topicNameLabel.palette()
-        colPal.setColor(QPalette.Button, QColor.fromRgb(0xFF, 0xFF, 0xFF))
-        self.topicNameLabel.setAutoFillBackground(True)
-        self.topicNameLabel.setPalette(colPal)
-        self.topicNameLabel.update()
+        self.topicNameLbl = QLabel()
 
         self.topicList = QListView()
         self.topicListModel = model.TopicCBModel()
         self.topicList.setModel(self.topicListModel)
+        self.topicList.setObjectName("topicList")
         self.topicList.doubleClicked.connect(self.topicListModel.newSelection)
+        self.topicList.hide()
 
-        self.topicDetailsBtn = QPushButton(self.tr("Details"))
-        self.topicDetailsBtn.hide()
+        topicLayout.addWidget(self.topicNameLbl)
+        topicLayout.addWidget(self.topicDetailsBtn)
+        topicLayout.addWidget(self.topicList)
 
         self.topicAddBtn = QPushButton(self.tr("Add"))
 
@@ -488,13 +477,7 @@ class MyMainWindow(QWidget):
         self.addDocumentsModel = model.AdditionalDocumentsModel()
         self.relTopModel = model.RelatedTopicsModel()
 
-        self.topicHLayout = QHBoxLayout(topicGroup)
-        self.topicHLayout.addWidget(self.topicList)
-        self.topicHLayout.addWidget(self.topicNameLabel)
-        self.topicHLayout.addWidget(self.topicDetailsBtn)
-        self.topicHLayout.addWidget(self.topicAddBtn)
-
-        return topicGroup
+        return topFrame
 
 
     def createCommentGroup(self):
@@ -560,9 +543,8 @@ class MyMainWindow(QWidget):
 
         logger.info("setting up view")
 
-        self.projectLabel.setText(model.getProjectName())
-        self.projectButton.setText(self.tr("Open other"))
-        self.topicGroup.show()
+        self.projOpenBtn.setText(self.tr("Open other"))
+        self.topicList.show()
 
     @Slot()
     def hideCommentSnapshotGroup(self):
@@ -590,27 +572,6 @@ class MyMainWindow(QWidget):
             model.openProjectBtnHandler(filename[0])
             self.openFilePath = filename[0]
             self.projectOpened.emit()
-
-
-    @Slot()
-    def replaceTopicList(self):
-
-        self.topicNameLabel.show()
-        self.topicList.hide()
-
-
-    @Slot()
-    def replaceTopicNameLabel(self):
-
-        self.topicNameLabel.hide()
-        self.topicDetailsBtn.hide()
-        self.topicList.show()
-
-
-    @Slot()
-    def setTopicName(self, topic):
-
-        self.topicNameLabel.setText(topic.title)
 
 
     @Slot()

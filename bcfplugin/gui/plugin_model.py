@@ -65,25 +65,24 @@ class TopicCBModel(QAbstractListModel):
 
 
     def rowCount(self, parent = QModelIndex()):
-        return len(self.items) + 1 # plus the dummy element
+        return len(self.items)
 
 
     def data(self, index, role = Qt.DisplayRole):
 
         idx = index.row()
         if role == Qt.DisplayRole:
-            if idx == 0:
-                return "-- Select your topic --"
-            return self.items[idx - 1].title # subtract the dummy element
+            return self.items[idx].title # subtract the dummy element
 
         else:
             return None
 
 
     def flags(self, index):
+
         flaggs = Qt.ItemIsEnabled
-        if index.row() != 0:
-            flaggs |= Qt.ItemIsSelectable
+        flaggs |= Qt.ItemIsSelectable
+
         return flaggs
 
 
@@ -107,7 +106,7 @@ class TopicCBModel(QAbstractListModel):
     def newSelection(self, index):
 
         if index.row() > 0: # 0 is the dummy element
-            self.selectionChanged.emit(self.items[index.row() - 1])
+            self.selectionChanged.emit(self.items[index.row()])
 
 
     @Slot()
