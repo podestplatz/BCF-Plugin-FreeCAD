@@ -6,8 +6,6 @@ import shutil
 import logging
 from enum import Enum
 from urllib.error import URLError
-from bcfplugin import FREECAD, GUI
-from bcfplugin import TMPDIR
 
 from PySide2.QtWidgets import QMessageBox, QApplication
 
@@ -177,7 +175,6 @@ def getSystemTmp(createNew: bool = False):
     """
 
     global tmpFilePathsFileName
-    global TMPDIR
     global PREFIX
 
     tmpDir = ""
@@ -189,7 +186,6 @@ def getSystemTmp(createNew: bool = False):
     else:
         tmpDir = readLine(fpath, 1)
 
-    TMPDIR = tmpDir
     return tmpDir
 
 
@@ -233,122 +229,17 @@ def deleteTmp():
                 pass
 
 
-def printErr(msg, toFile=False):
-
-    """ Print msg to stderr """
-
-    if not (verbosity == Verbosity.EVERYTHING or
-            verbosity == Verbosity.NODEBUG or
-            verbosity == Verbosity.IMPORTANTERRORS):
-        return
-
-    errmsg = "[ERROR] {}".format(msg)
-    if FREECAD:
-        import FreeCAD
-        FreeCAD.Console.PrintError("{}\n".format(errmsg))
-    else:
-        print(errmsg, file=sys.stderr)
-
-
-def printInfo(msg):
-
-    """ Print informative message to the user """
-
-    infomsg = "[INFO] {}".format(msg)
-    if FREECAD:
-        import FreeCAD
-        FreeCAD.Console.PrintMessage("{}\n".format(infomsg))
-    else:
-        print(infomsg)
-
-
-def printErrorList(errors, toFile=False):
-
-    """ Print every error message from errors """
-
-    if (verbosity == Verbosity.IMPORTANTERRORS or
-            verbosity == Verbosity.INFODEBUG):
-        return
-
-    for error in errors:
-        printErr(error, toFile)
-
-
-def printWarning(warning):
-
-    if FREECAD:
-        import FreeCAD
-        FreeCAD.Console.PrintWarning("{}\n".format(warning))
-    else:
-        print("[WARNING] {}".format(warning))
-
-
-def showError(msg):
-
-    msgBox = QMessageBox()
-    msgBox.critical(None, "ERROR", msg)
-
-
-def debug(msg):
-
-    """ Prints msg to the default output.
-
-    Default output is determined by FREECAD, if it is set to True then FreeCAD's
-    output system is used, Otherwise all messages are printed to stdout/stderr.
-    In addition to the message the name of the calling file, as well as the
-    functionname of the function that invoked debug is printed, to give context
-    to the message.
-    """
-
-    allowedModules = [ "project.py", "programmaticInterface.py",
-            "plugin_view.py", "plugin_model.py", "plugin_delegate.py"]
-
-    if not (verbosity == Verbosity.EVERYTHING or
-            verbosity == Verbosity.INFODEBUG):
-        return
-
-    callerStackFrame = inspect.stack()[1]
-    callerModule = inspect.getmodule(callerStackFrame[0])
-    callerModuleName = os.path.basename(callerModule.__file__)
-    if not callerModuleName in allowedModules:
-        return
-
-    callerName = inspect.stack()[1].function
-    debugmsg = "[DEBUG]{}:{}(): {}".format(callerModuleName, callerName, msg)
-    if FREECAD:
-        import FreeCAD
-        FreeCAD.Console.PrintMessage("{}\n".format(debugmsg))
-    else:
-        print(debugmsg)
-
-
-def printMembers(element):
-    for property, value in vars(element).items():
-        debug("{}.{}={}".format(element.__class__.__name__, property, value))
-
-
 def getCurrentQScreen():
 
     """ Return a reference to the QScreen object associated with the screen the
     application is currently running on. """
 
-    global qApp
+    from PySide2.QtWidgets import QMessageBox, QApplication
 
-    if GUI and False:
-        import FreeCADGui
-        return FreeCADGui.getMainWindow()
+    desktop = QApplication.desktop()
+    screenNumber = desktop.screenNumber()
 
-    # if running entirely outside of FreeCAD use QApplication to get the screen
-    elif not FREECAD or GUI:
-        from PySide2.QtWidgets import QMessageBox, QApplication
-
-        desktop = QApplication.desktop()
-        screenNumber = desktop.screenNumber()
-
-        return QApplication.screens()[screenNumber]
-
-    else:
-        return None
+    return QApplication.screens()[screenNumber]
 
 
 def isAuthorSet():

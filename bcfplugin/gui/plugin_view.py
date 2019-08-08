@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 import platform
 import pyperclip
 import subprocess
@@ -8,12 +9,15 @@ from PySide2.QtGui import *
 from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
         QDir, QPoint, QSize, QTimer)
 
+import bcfplugin
 import bcfplugin.gui.plugin_model as model
 import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
 from bcfplugin import DIRTY
 from bcfplugin.rdwr.viewpoint import Viewpoint
 
+
+logger = bcfplugin.createLogger(__name__)
 
 def tr(self, text):
 
@@ -137,7 +141,7 @@ class CommentView(QListView):
         """ Handler for deleting a comment when the comment delete button was
         pressed """
 
-        util.debug("Deleting element at index {}".format(index.row()))
+        logger.debug("Deleting element at index {}".format(index.row()))
         success = index.model().removeRow(index)
         if success:
             self.deleteDelBtn()
@@ -487,7 +491,7 @@ class MyMainWindow(QWidget):
     @Slot()
     def openedProjectUiHandler(self):
 
-        print("setting up view")
+        logger.info("setting up view")
 
         self.projectLabel.setText(model.getProjectName())
         self.projectButton.setText(self.tr("Open other"))
@@ -544,7 +548,7 @@ class MyMainWindow(QWidget):
         filename = QFileDialog.getSaveFileName(self, self.tr("Save BCF File"),
                 dflPath,  self.tr("BCF Files (*.bcf *.bcfzip)"))
         if filename[0] != "":
-            util.debug("Got a file to write to: {}.".format(filename))
+            logger.debug("Got a file to write to: {}.".format(filename))
             model.saveProject(filename[0])
 
 
@@ -560,7 +564,7 @@ class MyMainWindow(QWidget):
         if util.getDirtyBit():
             self.showExitSaveDialog()
 
-        util.debug("Deleting temporary directory {}".format(util.getSystemTmp()))
+        logger.debug("Deleting temporary directory {}".format(util.getSystemTmp()))
         util.deleteTmp()
 
 

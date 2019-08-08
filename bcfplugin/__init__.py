@@ -1,6 +1,12 @@
 import os
 import sys
+import logging
 import importlib
+from enum import Enum
+
+import bcfplugin.util as util
+from bcfplugin.loghandlers.freecadhandler import FreeCADHandler
+
 excPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, excPath)
 
@@ -24,6 +30,13 @@ PROJDIR = None
 dependencies = ["dateutil", "pytz", "pyperclip", "xmlschema"]
 """ Packages this plugin depends on. """
 
+LOGFORMAT = "[%(levelname)s]%(module)s.%(funcName)s(): %(message)s"
+""" Format of all logged messages """
+
+PREFIX = "bcfplugin_"
+
+LOGFILE = "{}log.txt".format(PREFIX)
+
 
 def printErr(msg):
 
@@ -43,6 +56,53 @@ def printInfo(msg):
         FreeCAD.Console.PrintMessage(msg)
     else:
         print(msg)
+
+
+def getFreeCADHandler():
+
+    handler = FreeCADHandler()
+    handler.setLevel(logging.DEBUG)
+
+    format = logging.Formatter(LOGFORMAT)
+    handler.setFormatter(format)
+
+    return handler
+
+
+def getStdoutHandler():
+
+    """ Returns a handler for the logging facility of python, writing the
+    messages to stdout """
+
+    handler = logging.StreamHandler(stream = sys.stdout)
+    handler.setLevel(logging.DEBUG)
+
+    format = logging.Formatter(LOGFORMAT)
+    handler.setFormatter(format)
+
+    return handler
+
+
+def getFileHandler(fpath):
+
+    """ Returns a handler for the logging facility of python, writing the
+    messages to file `fpath` """
+
+    handler = logging.FileHandler(fpath)
+    handler.setLevel(logging.DEBUG)
+
+    format = logging.Formatter(LOGFORMAT)
+    handler.setFormatter(format)
+
+    return handler
+
+
+def createLogger(name):
+
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+
+    return logger
 
 
 def check_dependencies():
@@ -93,6 +153,21 @@ frontend = None
 if not check_dependencies():
     raise ImportError
 
+# delete temporary artifacts
 import util
 util.deleteTmp()
+
+# create working directory
+path = util.getSystemTmp()
+logfile = os.path.join(path, LOGFILE)
+
+# generate config for root logger
+logHandlers = [getFileHandler(logfile)]
+if FREECAD:
+    logHandlers.append(getFreeCADHandler())
+else:
+    logHandlers.append(getStdoutHandler())
+logging.basicConfig(level=logging.DEBUG, handlers=logHandlers)
+
+# for nonGUI-mode import __all__ of pI into this namespace
 from programmaticInterface import *

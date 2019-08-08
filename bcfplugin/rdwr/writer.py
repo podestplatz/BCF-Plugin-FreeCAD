@@ -1,6 +1,7 @@
 import os
 import io # used for writing files in utf8
 import sys
+import logging
 import zipfile
 from uuid import UUID, uuid4
 from collections import deque
@@ -11,7 +12,7 @@ if __name__ == "__main__":
 import copy as c
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as MD
-from bcfplugin.util import DEBUG, debug
+import bcfplugin
 import bcfplugin.util as util
 import bcfplugin.rdwr.reader as reader
 import bcfplugin.rdwr.interfaces.hierarchy as iH
@@ -21,6 +22,7 @@ import bcfplugin.rdwr.markup as m
 import bcfplugin.rdwr.project as p
 import bcfplugin.rdwr.uri as u
 
+logger = bcfplugin.createLogger(__name__)
 
 projectFileName = "project.bcfp"
 markupFileName = "markup.bcf"
@@ -127,13 +129,13 @@ def getUniqueIdOfListElementInHierarchy(element):
     for item in elementHierarchy[1:]:
         if item.__class__.__name__ in listElements:
             listElement = item
-            debug("{} is a list element!".format(
+            logger.debug("{} is a list element!".format(
                     getUniqueIdOfListElementInHierarchy.__name__,
                         item))
             break
 
     if isinstance(listElement, iI.XMLIdentifiable):
-        debug("its id = {} element!".format(
+        logger.debug("its id = {} element!".format(
                 getUniqueIdOfListElementInHierarchy.__name__,
                     item.xmlId))
         return item.xmlId
@@ -146,20 +148,20 @@ def getFileOfElement(element):
     Returns the name of the file `element` was read from.
     """
 
-    debug("retrieving hierarchy of {}".format(element))
+    logger.debug("retrieving hierarchy of {}".format(element))
     elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy: # element cannot be modified
-        debug("Could not find a hierarchy {}")
+        logger.debug("Could not find a hierarchy {}")
         return None
 
-    debug("Hierarchy is {}".format(elementHierarchy))
+    logger.debug("Hierarchy is {}".format(elementHierarchy))
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
     if "Viewpoint" in strHierarchy:
         try:
             vpRefIndex = strHierarchy.index("ViewpointReference")
         except Exception as e:
-            util.printErr("ViewpointReference is not in Hierarchy of Viewpoint")
+            logger.error("ViewpointReference is not in Hierarchy of Viewpoint")
             raise e
         else:
             viewpointFile = elementHierarchy[vpRefIndex].file
@@ -185,7 +187,7 @@ def getTopicOfElement(element):
         return None
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
-    debug("hierarchy of {}:\n{}\n".format(
+    logger.debug("hierarchy of {}:\n{}\n".format(
         element.__class__.__name__, elementHierarchy))
     if "Markup" in strHierarchy:
         markupElem = None
@@ -205,7 +207,7 @@ def getEtElementById(elemId, elemName, etRoot):
     of `elemId`.
     """
 
-    debug("searching elementtree for .//{}[@Guid='{}']".format(
+    logger.debug("searching elementtree for .//{}[@Guid='{}']".format(
             elemName, elemId))
     etParent = etRoot.find(".//{}[@Guid='{}']".format(elemName,
             str(elemId)))
@@ -221,10 +223,10 @@ def searchEtByTag(etRoot, tag):
     Returns the first result as instance of ET.Element
     """
 
-    debug("searching elementtree for .//{} starting at {}".format(
+    logger.debug("searching elementtree for .//{} starting at {}".format(
             tag, etRoot.tag))
     result = etRoot.find(".//{}".format(tag))
-    debug("got {}".format(
+    logger.debug("got {}".format(
             result))
     return result
 
@@ -256,7 +258,7 @@ def getParentElement(element, etRoot):
 
     etParent = None
     listElemId = getUniqueIdOfListElementInHierarchy(element)
-    debug("got list id {} for {}".format(listElemId,
+    logger.debug("got list id {} for {}".format(listElemId,
         element.__class__.__name__))
 
     # parent can be found easily by tag
@@ -283,7 +285,7 @@ def getParentElement(element, etRoot):
                         "for element {} inside {}".format(element,
                             etListAncestor))
 
-    debug("found {} as parent of {}".format(etParent, element.xmlName))
+    logger.debug("found {} as parent of {}".format(etParent, element.xmlName))
     return etParent
 
 
@@ -302,10 +304,10 @@ def getInsertionIndex(element, etParent):
     actualSequence = [ elem.tag for elem in list(etParent) ]
     actualSequenceRev = list(reversed(actualSequence))
 
-    debug("writer.{}()\n\tdefined sequence: {}\n\tactual"\
+    logger.debug("writer.{}()\n\tdefined sequence: {}\n\tactual"\
                 " sequence: {}".format(getInsertionIndex.__name__,
                     definedSequence, actualSequence))
-    debug("writer.{}(): element is of type {}".format(
+    logger.debug("writer.{}(): element is of type {}".format(
             getInsertionIndex.__name__, type(element)))
 
     insertionIndex = len(actualSequenceRev)-1
@@ -324,14 +326,14 @@ def getInsertionIndex(element, etParent):
             insertionIndex = len(actualSequenceRev)
         else:
             for elem in definedSequence[elemIdxInDefinedSequence + 1:]:
-                debug("writer.getInsertionIndex(): is {} in" \
+                logger.debug("writer.getInsertionIndex(): is {} in" \
                         " actualSequence?".format(elem))
                 # first successor found. Insert it before it
                 if elem in actualSequence:
                     insertionIndex = actualSequence.index(elem)
                     break
 
-    debug("writer.{}(): index at which element is inserted {}".format(
+    logger.debug("writer.{}(): index at which element is inserted {}".format(
             getInsertionIndex.__name__, insertionIndex))
     return insertionIndex
 
@@ -349,7 +351,7 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
     for searching `rootElem` for the list of possible candidates.
     """
 
-    debug("searching {} for {}".format(rootElem, wantedElement))
+    logger.debug("searching {} for {}".format(rootElem, wantedElement))
     elementHierarchy = wantedElement.getHierarchyList()
     elementHierarchy.reverse()
 
@@ -365,7 +367,7 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
 
     xmlPathExpression = "./"
     for element in elementHierarchy:
-        debug("element is of type: {}".format(type(element)))
+        logger.debug("element is of type: {}".format(type(element)))
         if issubclass(type(element), p.Attribute):
             xmlPathExpression += "[@{}='{}']".format(element.xmlName,
                     element.value)
@@ -375,7 +377,7 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
         if issubclass(type(element), iI.XMLIdentifiable):
             # add guid for deterministicness
             xmlPathExpression += "[@Guid='{}']".format(element.xmlId)
-    debug("searching with XMLPath expression {}".format(xmlPathExpression))
+    logger.debug("searching with XMLPath expression {}".format(xmlPathExpression))
 
     return rootElem.findall(xmlPathExpression)
 
@@ -397,15 +399,15 @@ def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
     match is found then `None` is returned.
     """
 
-    debug("Getting xml element to {} in the tree {}".format(wantedElement,
+    logger.debug("Getting xml element to {} in the tree {}".format(wantedElement,
         rootElem))
     # candidates are the set of elements that have the same tag as
     # containingElement
     candidates = getXMLNodeCandidates(rootElem, wantedElement)
-    debug("Got possible list of candidates: {}".format(candidates))
+    logger.debug("Got possible list of candidates: {}".format(candidates))
     parentEt = wantedElement.getEtElement(ET.Element("", {}))
     parentEtChildren = list(parentEt)
-    debug("looking for {} element in: \n\t{}\n\twith the"\
+    logger.debug("looking for {} element in: \n\t{}\n\twith the"\
             " exceptions of: {}".format(
             ET.tostring(parentEt),
             [ ET.tostring(c) for c in candidates ],
@@ -546,7 +548,7 @@ def _addAttribute(element, xmlroot):
 
     # parent element of the attribute how it should be
     newParentEt = newParent.getEtElement(ET.Element(newParent.xmlName, {}))
-    debug("=========\nnew parent generated:\n{}\n=========".format(
+    logger.debug("=========\nnew parent generated:\n{}\n=========".format(
             ET.tostring(newParentEt)))
 
     # parent element of the attribute as is in the file, and ignore the new
@@ -599,7 +601,7 @@ def _createViewpoint(element, topicPath):
     visinfoRootEtElem = ET.Element("", {})
     vp.getEtElement(visinfoRootEtElem)
 
-    debug("Writing new viewpoint to"\
+    logger.debug("Writing new viewpoint to"\
                 " {}".format(element.file))
 
     vpFilePath = os.path.join(topicPath, str(element.file))
@@ -618,7 +620,7 @@ def _createMarkup(element, topicPath):
     if os.path.exists(topicPath):
         raise RuntimeError("The topic {} does already exist.")
 
-    debug("Creating new markup {}".format(topicPath))
+    logger.debug("Creating new markup {}".format(topicPath))
 
     os.mkdir(topicPath)
     markupPath = os.path.join(topicPath, markupFileName)
@@ -700,7 +702,7 @@ def addElement(element):
     else:
         filePath = os.path.join(bcfPath, fileName)
 
-    debug("adding new element {}".format(element))
+    logger.debug("adding new element {}".format(element))
     if isinstance(element, p.Project):
         _createProject(element, filePath)
         return
@@ -738,13 +740,13 @@ def deleteXMLIdentifiableElement(element, xmlroot):
 
     elemId = element.xmlId
     etElem = getEtElementById(elemId, element.xmlName, xmlroot)
-    debug("{} corresponds to ETElement {}".format(element, etElem))
+    logger.debug("{} corresponds to ETElement {}".format(element, etElem))
 
     etParent = getParentElement(element, xmlroot)
-    debug("parent of {} is {}".format(etElem, etParent))
+    logger.debug("parent of {} is {}".format(etElem, etParent))
 
     etParent.remove(etElem)
-    debug("removed {} from {}".format(etElem, etParent))
+    logger.debug("removed {} from {}".format(etElem, etParent))
 
     return xmlroot
 
@@ -757,9 +759,9 @@ def deleteElement(element):
     """
 
     elementHierarchy = element.getHierarchyList()
-    debug("Hierarchy of element {}".format(elementHierarchy))
+    logger.debug("Hierarchy of element {}".format(elementHierarchy))
 
-    debug("Deleting element {}".format(element))
+    logger.debug("Deleting element {}".format(element))
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
     if not fileName:
@@ -777,14 +779,14 @@ def deleteElement(element):
 
     # if identifiable then search for the guid using xmlpath.
     if issubclass(type(element), iI.XMLIdentifiable):
-        debug("{} inherits from XMLIdentifiable -> deleting by"\
+        logger.debug("{} inherits from XMLIdentifiable -> deleting by"\
                 " Id".format(element))
         deleteXMLIdentifiableElement(element, xmlroot)
 
         if isinstance(element, m.ViewpointReference):
             if element.viewpoint.state == iS.State.States.DELETED:
                 vpElem = element.viewpoint
-                debug("with viewpoint reference also the viewpoint {}"\
+                logger.debug("with viewpoint reference also the viewpoint {}"\
                         " gets deleted".format(vpElem))
 
                 vpFile = getFileOfElement(vpElem)
@@ -794,28 +796,28 @@ def deleteElement(element):
 
                 vpFilePath = os.path.join(topicPath, str(vpFile))
                 os.remove(vpFilePath)
-                debug("Removed file {}".format(vpFilePath))
+                logger.debug("Removed file {}".format(vpFilePath))
 
     # attributes have to be deleted from the attrib dictionary
     elif isinstance(element, p.Attribute):
         parentElem = element.containingObject
         parentEtElem = getEtElementFromFile(xmlroot, parentElem, [])
 
-        debug("Deleting {} from {}".format(element, parentEtElem))
-        debug("Available attributes in {} are: {}".format(parentEtElem,
+        logger.debug("Deleting {} from {}".format(element, parentEtElem))
+        logger.debug("Available attributes in {} are: {}".format(parentEtElem,
             list(parentEtElem.keys())))
         del parentEtElem.attrib[element.xmlName]
 
     # otherwise employ getEtElementFromFile to get the right element
     else:
-        debug("{} does not inherit from XMLIdentifiable".format(element))
+        logger.debug("{} does not inherit from XMLIdentifiable".format(element))
 
         fileEtElement = getEtElementFromFile(xmlroot, element, [])
         parentEtElement = getParentElement(element, xmlroot)
         #parentEtElement = getEtElementFromFile(xmlroot,
                 #element.containingObject, [])
 
-        debug("Element {}\ncorresponds to {}\nin file, and has parent"\
+        logger.debug("Element {}\ncorresponds to {}\nin file, and has parent"\
                 " {}".format(element, fileEtElement, parentEtElement))
         parentEtElement.remove(fileEtElement)
 
@@ -838,7 +840,7 @@ def modifyElement(element, previousValue):
                 " these two types can be updated. Actual type of element:"\
                 " {}".format(type(element)))
 
-    debug("Modifying element {}".format(element))
+    logger.debug("Modifying element {}".format(element))
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
     if not fileName:
@@ -906,10 +908,10 @@ def writeHandlerErrMsg(msg, err):
     writes an error message to stderr and prints a debug message
     """
 
-    debug(msg)
-    debug(str(err))
-    util.printErr(str(err))
-    util.printErr(msg)
+    logger.debug(msg)
+    logger.debug(str(err))
+    logger.error(str(err))
+    logger.error(msg)
 
 
 def handleAddElement(element, oldVal):
@@ -951,7 +953,7 @@ def handleDeleteElement(element, oldVal):
 
     try:
         elementHierarchy = element.getHierarchyList()
-        debug("Hierarchy of element {}".format(elementHierarchy))
+        logger.debug("Hierarchy of element {}".format(elementHierarchy))
 
         deleteElement(element)
     except ValueError as err:
@@ -1035,7 +1037,7 @@ def processProjectUpdates():
 
     global projectUpdates
 
-    debug("length of project updates: {}".format(len(projectUpdates)))
+    logger.debug("length of project updates: {}".format(len(projectUpdates)))
     # list of all updates that were successfully processed
     processedUpdates = list()
     # holds the update that failed to be able to revert back
@@ -1045,30 +1047,30 @@ def processProjectUpdates():
         oldVal = update[2]
         updateType = element.state
 
-        debug("State of element: {}".format(updateType))
-        debug("type(updateType) = {}".format(type(updateType)))
-        debug("type(ADDED) = {}".format(type(iS.State.States.ADDED)))
-        debug("State == ADDED: {}".format(updateType is iS.State.States.ADDED))
+        logger.debug("State of element: {}".format(updateType))
+        logger.debug("type(updateType) = {}".format(type(updateType)))
+        logger.debug("type(ADDED) = {}".format(type(iS.State.States.ADDED)))
+        logger.debug("State == ADDED: {}".format(updateType is iS.State.States.ADDED))
         if  updateType == iS.State.States.ADDED:
-            debug("Adding an element")
+            logger.debug("Adding an element")
             if handleAddElement(element, oldVal):
                 processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
 
-        debug("State == DELETED: {}".format(updateType is iS.State.States.DELETED))
+        logger.debug("State == DELETED: {}".format(updateType is iS.State.States.DELETED))
         if updateType == iS.State.States.DELETED:
-            debug("Deleting an element")
+            logger.debug("Deleting an element")
             if handleDeleteElement(element, oldVal):
                 processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
 
-        debug("State == MODIFIED: {}".format(updateType is iS.State.States.MODIFIED))
+        logger.debug("State == MODIFIED: {}".format(updateType is iS.State.States.MODIFIED))
         if updateType == iS.State.States.MODIFIED:
-            debug("Modifying an element")
+            logger.debug("Modifying an element")
             if handleModifyElement(element, oldVal):
                 processedUpdates.append(update)
             else:

@@ -1,11 +1,16 @@
+import logging
 from copy import copy
-from bcfplugin import TMPDIR
-import bcfplugin.util as util
 
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
 
+import bcfplugin
+import bcfplugin.util as util
+from bcfplugin import TMPDIR
+
+
+logger = bcfplugin.createLogger(__name__)
 
 dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
 emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
@@ -47,7 +52,7 @@ def openAuthorsDialog(parent):
     authorsDialog.exec()
 
     author = authorsDialog.author
-    util.debug("We got something very nice {}".format(author))
+    logger.debug("We got something very nice {}".format(author))
     util.setAuthor(author)
 
 
@@ -163,7 +168,7 @@ class CommentDelegate(QStyledItemDelegate):
         if not success:
             util.showError("The comment hast to be separated by '--' from the" \
                     " email address!")
-            util.printError("Here we have an invalid string")
+            logger.error("Here we have an invalid string")
 
 
     def sizeHint(self, option, index):
@@ -386,7 +391,7 @@ class TopicMetricsDelegate(QStyledItemDelegate):
             openAuthorsDialog(None)
             modAuthor = util.getAuthor()
 
-        util.debug("The email you entered is: {}".format(modAuthor))
+        logger.debug("The email you entered is: {}".format(modAuthor))
 
         model = index.model()
         dueDateIndex = model.members.index(model.topic._dueDate)
