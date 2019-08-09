@@ -6,6 +6,7 @@ from enum import Enum
 
 import bcfplugin.util as util
 from bcfplugin.loghandlers.freecadhandler import FreeCADHandler
+from bcfplugin.loghandlers.stdoutfilter import StdoutFilter
 
 excPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, excPath)
@@ -61,10 +62,12 @@ def printInfo(msg):
 def getFreeCADHandler():
 
     handler = FreeCADHandler()
-    handler.setLevel(logging.DEBUG)
+    handler.setLevel(logging.INFO)
 
+    filter = StdoutFilter()
     format = logging.Formatter(LOGFORMAT)
     handler.setFormatter(format)
+    handler.addFilter(filter)
 
     return handler
 
@@ -75,10 +78,12 @@ def getStdoutHandler():
     messages to stdout """
 
     handler = logging.StreamHandler(stream = sys.stdout)
-    handler.setLevel(logging.DEBUG)
+    handler.setLevel(logging.INFO)
 
+    filter = StdoutFilter()
     format = logging.Formatter(LOGFORMAT)
     handler.setFormatter(format)
+    handler.addFilter(filter)
 
     return handler
 
@@ -167,7 +172,7 @@ if FREECAD:
     logHandlers.append(getFreeCADHandler())
 else:
     logHandlers.append(getStdoutHandler())
-logging.basicConfig(level=logging.DEBUG, handlers=logHandlers)
+logging.basicConfig(level=logging.INFO, handlers=logHandlers)
 
 # for nonGUI-mode import __all__ of pI into this namespace
 from programmaticInterface import *
