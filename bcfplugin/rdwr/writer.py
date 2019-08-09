@@ -325,6 +325,8 @@ def getInsertionIndex(element, etParent):
         if elemIdxInDefinedSequence == len(definedSequence) - 1:
             insertionIndex = len(actualSequenceRev)
         else:
+            # default insertion point is as last element
+            insertionIndex = len(actualSequenceRev)
             for elem in definedSequence[elemIdxInDefinedSequence + 1:]:
                 logger.debug("writer.getInsertionIndex(): is {} in" \
                         " actualSequence?".format(elem))
