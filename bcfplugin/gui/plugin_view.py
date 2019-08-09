@@ -94,8 +94,7 @@ class CommentView(QListView):
         itemRect = self.rectForIndex(index)
         x = itemRect.width() - deleteButton.geometry().width()
         vOffset = self.verticalOffset() # scroll offset
-        y = itemRect.y() - vOffset + (itemRect.height() -
-                deleteButton.geometry().height()) / 2
+        y = itemRect.y() - vOffset + deleteButton.geometry().height()
         deleteButton.move(x, y)
 
         deleteButton.show()
@@ -308,6 +307,7 @@ class MyMainWindow(QWidget):
 
         self.projectGroup = self.createProjectGroup()
         self.mainLayout.addWidget(self.projectGroup)
+        self.mainLayout.addStretch()
 
         self.topicGroup = self.createTopicGroup()
         self.topicGroup.hide()
@@ -326,7 +326,9 @@ class MyMainWindow(QWidget):
         self.notificationLabel = createNotificationLabel()
         self.mainLayout.addWidget(self.notificationLabel)
 
-        # handlers for an opened project
+        """ handlers for an opened project """
+        # remove stretch added at the beginning
+        self.projectOpened.connect(self.deleteStretch)
         self.projectOpened.connect(self.topicCbModel.projectOpened)
         self.projectOpened.connect(self.openedProjectUiHandler)
         # reset models for every opened project
@@ -599,6 +601,17 @@ class MyMainWindow(QWidget):
         buttons.accepted.connect(lambda: self.closeSaveProject(dialog))
         buttons.rejected.connect(lambda: dialog.done(0))
         dialog.exec()
+
+
+    def deleteStretch(self):
+
+        """ Delete the first QSpacerItem found in mainLayout """
+
+        for idx in range(0, self.mainLayout.count()):
+            child = self.mainLayout.itemAt(idx)
+            if issubclass(type(child), QSpacerItem):
+                self.mainLayout.takeAt(idx)
+                break
 
 
 if __name__ == "__main__":
