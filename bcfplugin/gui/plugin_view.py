@@ -15,6 +15,7 @@ import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
 from bcfplugin import DIRTY
 from bcfplugin.rdwr.viewpoint import Viewpoint
+from bcfplugin.gui.views.topicadddialog import TopicAddDialog
 
 
 logger = bcfplugin.createLogger(__name__)
@@ -293,101 +294,6 @@ class TopicMetricsDialog(QDialog):
             showNotification(self, "Double click to open document.")
         elif index.column() == 1:
             showNotification(self, "Double click to copy path.")
-
-
-class TopicAddDialog(QDialog):
-
-    titleRegex = "^[a-zA-Z0-9]*$"
-    descRegex = titleRegex
-    typeRegex = titleRegex
-    statusRegex = titleRegex
-    prioRegex = titleRegex
-    idxRegex = "^[0-9]*$"
-    lblRegex = "^[a-zA-Z0-9]*(,\s?[a-zA-Z0-9]+)*$"
-    dueDateRegex = delegate.dueDateRegex
-    assigneeRegex = delegate.emailRegex
-    stageRegex = titleRegex
-
-    def __init__(self, parent = None):
-
-        QDialog.__init__(self, parent)
-
-        mainLayout = QVBoxLayout()
-        formLayout = QFormLayout()
-        btnLayout = QHBoxLayout()
-        self.setLayout(mainLayout)
-
-        self.createValidators()
-        self.createEditFields()
-        self.setupLayout(formLayout)
-
-        self.submitBtn = QPushButton("Submit")
-        btnLayout.addStretch()
-        btnLayout.addWidget(self.submitBtn)
-
-        mainLayout.addLayout(formLayout)
-        mainLayout.addLayout(btnLayout)
-
-
-    def setupLayout(self, formLayout):
-
-        formLayout.addRow(self.tr("Title"), self.titleEdit)
-        formLayout.addRow(self.tr("Description"), self.descEdit)
-        formLayout.addRow(self.tr("Type"), self.typeEdit)
-        formLayout.addRow(self.tr("Status"), self.statusEdit)
-        formLayout.addRow(self.tr("Index (default -1)"), self.idxEdit)
-        formLayout.addRow(self.tr("Labels (comma separated)"), self.lblEdit)
-        formLayout.addRow(self.tr("Due date"), self.dueDateEdit)
-        formLayout.addRow(self.tr("Assign to"), self.assigneeEdit)
-        formLayout.addRow(self.tr("Stage"), self.stageEdit)
-
-
-    def createEditFields(self):
-
-        self.titleEdit = QLineEdit()
-        self.titleEdit.setValidator(self.titleValidator)
-        self.typeEdit = QLineEdit()
-        self.typeEdit.setValidator(self.typeValidator)
-        self.statusEdit = QLineEdit()
-        self.statusEdit.setValidator(self.statusValidator)
-        self.prioEdit = QLineEdit()
-        self.prioEdit.setValidator(self.prioValidator)
-        self.idxEdit = QLineEdit()
-        self.idxEdit.setValidator(self.idxValidator)
-        self.lblEdit = QLineEdit()
-        self.lblEdit.setValidator(self.lblValidator)
-        self.dueDateEdit = QLineEdit()
-        self.dueDateEdit.setValidator(self.dueDateValidator)
-        self.assigneeEdit = QLineEdit()
-        self.assigneeEdit.setValidator(self.assigneeValidator)
-        self.descEdit = QLineEdit()
-        self.descEdit.setValidator(self.descValidator)
-        self.stageEdit = QLineEdit()
-        self.stageEdit.setValidator(self.stageValidator)
-
-
-    def createValidators(self):
-
-        self.titleValidator = QRegExpValidator()
-        self.titleValidator.setRegExp(self.titleRegex)
-        self.descValidator = QRegExpValidator()
-        self.descValidator.setRegExp(self.descRegex)
-        self.typeValidator = QRegExpValidator()
-        self.typeValidator.setRegExp(self.typeRegex)
-        self.statusValidator = QRegExpValidator()
-        self.statusValidator.setRegExp(self.statusRegex)
-        self.prioValidator = QRegExpValidator()
-        self.prioValidator.setRegExp(self.prioRegex)
-        self.idxValidator = QRegExpValidator()
-        self.idxValidator.setRegExp(self.idxRegex)
-        self.lblValidator = QRegExpValidator()
-        self.lblValidator.setRegExp(self.lblRegex)
-        self.dueDateValidator = QRegExpValidator()
-        self.dueDateValidator.setRegExp(self.dueDateRegex)
-        self.assigneeValidator = QRegExpValidator()
-        self.assigneeValidator.setRegExp(self.assigneeRegex)
-        self.stageValidator = QRegExpValidator()
-        self.stageValidator.setRegExp(self.stageRegex)
 
 
 class MyMainWindow(QWidget):
@@ -673,6 +579,7 @@ class MyMainWindow(QWidget):
 
         addTopicForm = TopicAddDialog(self)
         addTopicForm.exec()
+        self.topicCbModel.updateTopics()
 
 
     def closeEvent(self, event):

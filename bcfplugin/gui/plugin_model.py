@@ -39,6 +39,21 @@ def saveProject(dstFile):
     pI.saveProject(dstFile)
 
 
+def addTopic(newTopic: dict):
+
+    """ Adds a topic to the internal data model by using
+    programmaticInterface's addTopic() function """
+
+    result = pI.addTopic(newTopic["title"], newTopic["author"],
+            newTopic["type"], newTopic["description"], newTopic["status"],
+            newTopic["priority"], newTopic["index"], newTopic["labels"],
+            newTopic["dueDate"], newTopic["assignee"], newTopic["stage"])
+
+    if result == pI.OperationResults.FAILURE:
+        return False
+    return True
+
+
 class TopicCBModel(QAbstractListModel):
 
     selectionChanged = Signal((Topic,))
