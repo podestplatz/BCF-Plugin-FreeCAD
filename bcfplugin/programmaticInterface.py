@@ -52,7 +52,6 @@ Gui = None
 
 logger = bcfplugin.createLogger(__name__)
 
-
 if GUI:
     import frontend.viewController as vCtrl
     import FreeCADGui as Gui
@@ -659,6 +658,24 @@ def getTopicFromUUID(uid: UUID):
         return OperationResults.FAILURE
 
     return match
+
+
+def addProject(name: str, extensionSchemaUri: ""):
+
+    """ Adds a new project to the current working directory.
+
+    This means essentially creating a new folder named `name` and placing one
+    new file in it, namely `project.bcfp`."""
+
+    newProject = p.Project(uuid4(), name, extensionSchemaUri)
+    newProject.state = State.States.ADDED
+
+    writer.addProjectUpdate(newProject, newProject, None)
+    result = _handleProjectUpdate("Project could not be created", None)
+    if result == OperationResults.SUCCESS:
+        curProject = copy.deepcopy(newProject)
+
+    return result
 
 
 def addViewpointToComment(comment: Comment, viewpoint: ViewpointReference, author: str):

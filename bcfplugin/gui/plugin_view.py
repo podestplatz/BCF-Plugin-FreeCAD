@@ -16,6 +16,7 @@ import bcfplugin.util as util
 from bcfplugin import DIRTY
 from bcfplugin.rdwr.viewpoint import Viewpoint
 from bcfplugin.gui.views.topicadddialog import TopicAddDialog
+from bcfplugin.gui.views.projectcreatedialog import ProjectCreateDialog
 
 
 logger = bcfplugin.createLogger(__name__)
@@ -327,6 +328,13 @@ class MyMainWindow(QWidget):
         self.notificationLabel = createNotificationLabel()
         self.mainLayout.addWidget(self.notificationLabel)
 
+        """ Handlers before project gets opened """
+        self.projectButton.clicked.connect(self.openProjectBtnHandler)
+        self.projectButton.clicked.connect(self.projectCreateButton.hide)
+        self.projectButton.clicked.connect(self.projectSaveButton.show)
+        self.projectSaveButton.clicked.connect(self.saveProjectHandler)
+        self.projectCreateButton.clicked.connect(self.showCreateProjectDialog)
+
         """ handlers for an opened project """
         # remove stretch added at the beginning
         self.projectOpened.connect(self.deleteStretch)
@@ -401,16 +409,17 @@ class MyMainWindow(QWidget):
 
         self.projectSaveButton = QPushButton(self.tr("Save"))
         self.projectSaveButton.setObjectName("projectSaveButton")
-        self.projectSaveButton.clicked.connect(self.saveProjectHandler)
         self.projectSaveButton.hide()
 
         self.projectButton = QPushButton(self.tr("Open"))
         self.projectButton.setObjectName("projectButton")
-        self.projectButton.clicked.connect(self.openProjectBtnHandler)
-        self.projectButton.clicked.connect(self.projectSaveButton.show)
+
+        self.projectCreateButton = QPushButton(self.tr("Create"))
+        self.projectCreateButton.setObjectName("projectCreateButton")
 
         self.projectLayout.addWidget(self.projectButton)
         self.projectLayout.addWidget(self.projectSaveButton)
+        self.projectLayout.addWidget(self.projectCreateButton)
 
         return projectGroup
 
@@ -614,6 +623,14 @@ class MyMainWindow(QWidget):
         buttons.accepted.connect(lambda: self.closeSaveProject(dialog))
         buttons.rejected.connect(lambda: dialog.done(0))
         dialog.exec()
+
+
+    def showCreateProjectDialog(self):
+
+        dialog = ProjectCreateDialog(self)
+        dialog.exec()
+
+        self.projectOpened.emit()
 
 
     def deleteStretch(self):

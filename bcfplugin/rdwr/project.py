@@ -427,7 +427,7 @@ topicList='{}')""".format(str(self.xmlId),
         The search algorithm, effectively implemented, is a depth first search. """
 
         if not issubclass(type(object), Identifiable):
-            debug("object {} is not a subclass of Identifiable".format(object))
+            logger.debug("object {} is not a subclass of Identifiable".format(object))
             return None
 
         # check if itself is the wanted object

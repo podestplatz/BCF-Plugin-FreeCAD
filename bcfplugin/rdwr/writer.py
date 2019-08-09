@@ -637,21 +637,28 @@ def _createMarkup(element, topicPath):
         _createViewpoint(viewpoint, topicPath)
 
 
-def _createProject(element, filePath):
+def _createProject(element, workDir):
 
     """ Create a project file inside `bcfPath` with the contents of `element`
     """
 
+    # check if the project directory already exists and create it if not
+    newProjectDir = os.path.join(workDir, element.name)
+    if os.path.exists(newProjectDir):
+        raise RuntimeError("There already does exist a project with the name"\
+                " '{}'".format(element.name))
+    os.mkdir(newProjectDir)
 
-    if os.path.exists(filePath):
+    projectFilePath = os.path.join(newProjectDir, projectFileName)
+    if os.path.exists(projectFilePath):
         raise RuntimeError("The working directory already contains a project"\
-                " file ({})".format(filePath))
-    # jsut create the project file
-    with open(filePath, "w") as projectFile: pass
+                " file ({})".format(projectFilePath))
+    # just create the project file
+    with open(projectFilePath, "w") as projectFile: pass
 
     projectXMLRoot = ET.Element(element.xmlName, {})
     projectXMLRoot = element.getEtElement(projectXMLRoot)
-    writeXMLFile(projectXMLRoot, filePath)
+    writeXMLFile(projectXMLRoot, projectFilePath)
 
 
 def addElement(element):
@@ -675,8 +682,10 @@ def addElement(element):
     """
 
     addToProject = False
+    logger.debug("Starting to add element {}".format(element))
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
+    logger.debug("Filename: {}".format(fileName))
     if not fileName:
         raise ValueError("{} is not applicable to be added to anyone"\
             "file".format(element.xmlName))
@@ -688,6 +697,7 @@ def addElement(element):
                 " is not supported")
 
     bcfPath = util.getBcfDir()
+    logger.debug("BCF dir: {}".format(bcfPath))
     topicPath = ""
     if not addToProject:
         topicDir = getTopicDir(element)
@@ -701,12 +711,15 @@ def addElement(element):
     filePath = ""
     if not addToProject:
         filePath = os.path.join(topicPath, fileName)
-    else:
+    # file path shall only be set if an element shall be added to project.bcfp
+    # and not project.bcfp shall be created in the first place
+    elif addToProject and not isinstance(element, p.Project):
         filePath = os.path.join(bcfPath, fileName)
 
     logger.debug("adding new element {}".format(element))
     if isinstance(element, p.Project):
-        _createProject(element, filePath)
+        workDir = util.getSystemTmp()
+        _createProject(element, workDir)
         return
     # adds a complete new topic folder to the zip file
     if isinstance(element, m.Markup):
@@ -913,6 +926,7 @@ def writeHandlerErrMsg(msg, err):
     logger.debug(msg)
     logger.debug(str(err))
     logger.error(str(err))
+    raise err
     logger.error(msg)
 
 
@@ -925,6 +939,7 @@ def handleAddElement(element, oldVal):
     of a successful update `True` is returned.
     """
 
+    logger.debug("Start of add handler")
     try:
         addElement(element)
     except (RuntimeWarning, ValueError, NotImplementedError) as err:
@@ -1049,10 +1064,6 @@ def processProjectUpdates():
         oldVal = update[2]
         updateType = element.state
 
-        logger.debug("State of element: {}".format(updateType))
-        logger.debug("type(updateType) = {}".format(type(updateType)))
-        logger.debug("type(ADDED) = {}".format(type(iS.State.States.ADDED)))
-        logger.debug("State == ADDED: {}".format(updateType is iS.State.States.ADDED))
         if  updateType == iS.State.States.ADDED:
             logger.debug("Adding an element")
             if handleAddElement(element, oldVal):
@@ -1061,7 +1072,6 @@ def processProjectUpdates():
                 errorenousUpdate = update
                 break
 
-        logger.debug("State == DELETED: {}".format(updateType is iS.State.States.DELETED))
         if updateType == iS.State.States.DELETED:
             logger.debug("Deleting an element")
             if handleDeleteElement(element, oldVal):
@@ -1070,7 +1080,6 @@ def processProjectUpdates():
                 errorenousUpdate = update
                 break
 
-        logger.debug("State == MODIFIED: {}".format(updateType is iS.State.States.MODIFIED))
         if updateType == iS.State.States.MODIFIED:
             logger.debug("Modifying an element")
             if handleModifyElement(element, oldVal):
