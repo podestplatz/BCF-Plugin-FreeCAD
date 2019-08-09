@@ -15,6 +15,7 @@ import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
 from bcfplugin import DIRTY
 from bcfplugin.rdwr.viewpoint import Viewpoint
+from bcfplugin.gui.views.topicadddialog import TopicAddDialog
 
 
 logger = bcfplugin.createLogger(__name__)
@@ -371,6 +372,7 @@ class MyMainWindow(QWidget):
         self.commentList.specialCommentSelected.connect(self.viewpointList.selectViewpoint)
         # open the topic metrics window
         self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
+        self.topicAddBtn.pressed.connect(self.showAddTopicForm)
         # activate a viewpoint using viewController.py
         self.viewpointList.doubleClicked.connect(lambda x:
                 self.viewpointList.activateViewpoint(x, self.viewpointResetBtn))
@@ -428,6 +430,8 @@ class MyMainWindow(QWidget):
         self.topicDetailsBtn = QPushButton(self.tr("Details"))
         self.topicDetailsBtn.hide()
 
+        self.topicAddBtn = QPushButton(self.tr("Add"))
+
         # setup models for topic details window
         self.topicDetailsModel = model.TopicMetricsModel()
         self.topicDetailsDelegate = delegate.TopicMetricsDelegate()
@@ -438,6 +442,7 @@ class MyMainWindow(QWidget):
         self.topicHLayout.addWidget(self.topicLabel)
         self.topicHLayout.addWidget(self.topicCb)
         self.topicHLayout.addWidget(self.topicDetailsBtn)
+        self.topicHLayout.addWidget(self.topicAddBtn)
 
         return topicGroup
 
@@ -569,6 +574,14 @@ class MyMainWindow(QWidget):
 
         metricsWindow = TopicMetricsDialog(self)
         metricsWindow.show()
+
+
+    @Slot()
+    def showAddTopicForm(self):
+
+        addTopicForm = TopicAddDialog(self)
+        addTopicForm.exec()
+        self.topicCbModel.updateTopics()
 
 
     def closeEvent(self, event):
