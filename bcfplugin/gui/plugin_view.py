@@ -331,12 +331,13 @@ class MyMainWindow(QWidget):
         """ Handlers before project gets opened """
         self.projectButton.clicked.connect(self.openProjectBtnHandler)
         self.projectButton.clicked.connect(self.projectCreateButton.hide)
-        self.projectButton.clicked.connect(self.projectSaveButton.show)
         self.projectSaveButton.clicked.connect(self.saveProjectHandler)
         self.projectCreateButton.clicked.connect(self.showCreateProjectDialog)
 
         """ handlers for an opened project """
         # remove stretch added at the beginning
+        self.projectOpened.connect(self.projectSaveButton.show)
+        self.projectOpened.connect(self.projectCreateButton.hide)
         self.projectOpened.connect(self.deleteStretch)
         self.projectOpened.connect(self.topicCbModel.projectOpened)
         self.projectOpened.connect(self.openedProjectUiHandler)

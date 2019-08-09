@@ -667,6 +667,8 @@ def addProject(name: str, extensionSchemaUri: ""):
     This means essentially creating a new folder named `name` and placing one
     new file in it, namely `project.bcfp`."""
 
+    global curProject
+
     newProject = p.Project(uuid4(), name, extensionSchemaUri)
     newProject.state = State.States.ADDED
 

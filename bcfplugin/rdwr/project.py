@@ -512,12 +512,17 @@ topicList='{}')""".format(str(self.xmlId),
 
     def getEtElement(self, elem):
 
-        elem.tag = self.xmlName
-        elem.attrib["ProjectId"] = str(self.xmlId)
+        elem.tag = "ProjectExtension"
+
+        projectElem = ET.SubElement(elem, self.xmlName)
+        projectElem.attrib["ProjectId"] = str(self.xmlId)
 
         dflValue = self._name.defaultValue
         if self.name != dflValue:
-            nameElem = ET.SubElement(elem, self._name.xmlName)
+            nameElem = ET.SubElement(projectElem, self._name.xmlName)
             nameElem = self._name.getEtElement(nameElem)
+
+        # required element left empty
+        extSchemaElem = ET.SubElement(elem, "ExtensionSchema")
 
         return elem

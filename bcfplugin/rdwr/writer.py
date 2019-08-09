@@ -21,12 +21,13 @@ import bcfplugin.rdwr.interfaces.identifiable as iI
 import bcfplugin.rdwr.markup as m
 import bcfplugin.rdwr.project as p
 import bcfplugin.rdwr.uri as u
+import bcfplugin.rdwr.version as version
 
 logger = bcfplugin.createLogger(__name__)
 
 projectFileName = "project.bcfp"
 markupFileName = "markup.bcf"
-versionFilename = "bcf.version"
+versionFileName = "bcf.version"
 
 elementOrder = {"Markup": ["Header", "Topic", "Comment", "Viewpoints"],
         "Topic": ["ReferenceLink", "Title", "Priority", "Index", "Labels",
@@ -659,6 +660,14 @@ def _createProject(element, workDir):
     projectXMLRoot = ET.Element(element.xmlName, {})
     projectXMLRoot = element.getEtElement(projectXMLRoot)
     writeXMLFile(projectXMLRoot, projectFilePath)
+
+    versionFilePath = os.path.join(newProjectDir, versionFileName)
+    with open(versionFilePath, "w") as f:
+        f.write(version.version_str)
+    logger.info("version file created at {}".format(versionFilePath))
+
+    util.setBcfDir(newProjectDir)
+    logger.info("bcf directory set to {}".format(newProjectDir))
 
 
 def addElement(element):
