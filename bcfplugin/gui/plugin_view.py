@@ -360,6 +360,7 @@ class MyMainWindow(QWidget):
         self.projectOpened.connect(self.snapshotModel.resetItems)
         self.projectOpened.connect(self.viewpointsModel.resetItems)
         self.projectOpened.connect(self.relTopModel.resetItems)
+        self.projectOpened.connect(self.projSaveBtn.show)
 
         # reset both the combobox and the stacked widget beneath to the first
         # index for an opened project
@@ -415,6 +416,7 @@ class MyMainWindow(QWidget):
         # delete delete button if the view is scrolled
         self.commentList.verticalScrollBar().valueChanged.connect(lambda x:
                 self.commentList.deleteDelBtn())
+        self.projSaveBtn.pressed.connect(self.saveProjectHandler)
 
         self.setLayout(self.mainLayout)
 
@@ -437,7 +439,6 @@ class MyMainWindow(QWidget):
         self.projOpenBtn = QPushButton(self.tr("Open"))
         self.projOpenBtn.setObjectName("projOpenBtn")
         self.projOpenBtn.clicked.connect(self.openProjectBtnHandler)
-        self.projOpenBtn.clicked.connect(self.projSaveBtn.show)
 
         projSpacer = QSpacerItem(0, 0)
 
@@ -449,9 +450,17 @@ class MyMainWindow(QWidget):
         topicLayout = QVBoxLayout(topicFrame)
         topLayout.addWidget(topicFrame)
 
+        self.topicAddBtn = QPushButton(self.tr("Add Topic"))
+        self.topicAddBtn.setObjectName("addTopicBtn")
+        self.topicAddBtn.hide()
+
         self.topicDetailsBtn = QPushButton(self.tr("Details"))
         self.topicDetailsBtn.setObjectName("topicDetailsBtn")
         self.topicDetailsBtn.hide()
+
+        topicBtnLayout = QHBoxLayout()
+        topicBtnLayout.addWidget(self.topicAddBtn)
+        topicBtnLayout.addWidget(self.topicDetailsBtn)
 
         self.topicNameLbl = QLabel()
 
@@ -464,10 +473,8 @@ class MyMainWindow(QWidget):
         self.topicList.hide()
 
         topicLayout.addWidget(self.topicNameLbl)
-        topicLayout.addWidget(self.topicDetailsBtn)
+        topicLayout.addLayout(topicBtnLayout)
         topicLayout.addWidget(self.topicList)
-
-        self.topicAddBtn = QPushButton(self.tr("Add"))
 
         # setup models for topic details window
         self.topicDetailsModel = model.TopicMetricsModel()
@@ -543,6 +550,7 @@ class MyMainWindow(QWidget):
 
         self.projOpenBtn.setText(self.tr("Open other"))
         self.topicList.show()
+        self.topicAddBtn.show()
 
 
     @Slot()
@@ -623,7 +631,7 @@ class MyMainWindow(QWidget):
 
         addTopicForm = TopicAddDialog(self)
         addTopicForm.exec()
-        self.topicCbModel.updateTopics()
+        self.topicListModel.updateTopics()
 
 
     def closeEvent(self, event):
