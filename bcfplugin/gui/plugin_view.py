@@ -440,8 +440,6 @@ class MyMainWindow(QWidget):
         self.projOpenBtn.setObjectName("projOpenBtn")
         self.projOpenBtn.clicked.connect(self.openProjectBtnHandler)
 
-        projSpacer = QSpacerItem(0, 0)
-
         projLayout.addWidget(self.projOpenBtn)
         projLayout.addWidget(self.projSaveBtn)
         projLayout.addStretch(20)
@@ -491,6 +489,8 @@ class MyMainWindow(QWidget):
         commentGroup.setObjectName("commentGroup")
 
         self.commentLayout = QVBoxLayout(commentGroup)
+        self.commentLayout.setSpacing(0)
+        self.commentLayout.setMargin(0)
         self.commentList = CommentView()
 
         self.commentModel = model.CommentModel()
@@ -516,6 +516,8 @@ class MyMainWindow(QWidget):
 
         snGroup = QGroupBox()
         self.snGroupLayout = QVBoxLayout(snGroup)
+        self.snGroupLayout.setSpacing(0)
+        self.snGroupLayout.setMargin(0)
 
         self.snapshotModel = model.SnapshotModel()
         self.snapshotList = SnapshotView()
