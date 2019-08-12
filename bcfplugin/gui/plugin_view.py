@@ -237,6 +237,7 @@ class TopicMetricsDialog(QDialog):
 
         self.topicMetrics = QTableView()
         self.topicMetrics.setModel(parent.topicDetailsModel)
+        self.setMinVertTableSize(self.topicMetrics)
         self.topicMetrics.setItemDelegate(parent.topicDetailsDelegate)
         self.layout.addWidget(self.topicMetrics)
 
@@ -245,6 +246,7 @@ class TopicMetricsDialog(QDialog):
         self.addDocGroupLayout = QVBoxLayout(self.addDocGroup)
         self.addDocTable = QTableView()
         self.addDocTable.setModel(parent.addDocumentsModel)
+        self.setMinVertTableSize(self.addDocTable)
         self.addDocTable.doubleClicked.connect(self.openDocRef)
         self.addDocTable.clicked.connect(self.showDoubleClickHint)
         self.addDocGroupLayout.addWidget(self.addDocTable)
@@ -257,6 +259,7 @@ class TopicMetricsDialog(QDialog):
         self.relTopGroupLayout = QVBoxLayout(self.relTopGroup)
         self.relTopList = QListView()
         self.relTopList.setModel(parent.relTopModel)
+        self.setMinVertTableSize(self.relTopList)
         self.relTopGroupLayout.addWidget(self.relTopList)
         if parent.relTopModel.rowCount() == 0:
             self.relTopList.hide()
@@ -293,6 +296,32 @@ class TopicMetricsDialog(QDialog):
             showNotification(self, "Double click to open document.")
         elif index.column() == 1:
             showNotification(self, "Double click to copy path.")
+
+
+    def setMinVertTableSize(self, table):
+
+        """ This function calculates the minimum vertical size the table needs
+        to display its contents without a scrollbar and sets it.
+
+        This function assumes that it is called after the model is set.
+        This code was adapted from:
+        https://stackoverflow.com/questions/42458735/how-do-i-adjust-a-qtableview-height-according-to-contents
+        """
+
+        totalHeight = 0
+        for i in range(0, table.verticalHeader().count()):
+            if not table.verticalHeader().isSectionHidden(i):
+                totalHeight += table.verticalHeader().sectionSize(i)
+
+        if not table.horizontalScrollBar().isHidden():
+            totalHeight += table.horizontalScrollBar().height()
+
+        if not table.horizontalHeader().isHidden():
+            totalHeight += table.horizontalHeader().height()
+
+        logger.info("Setting size of AddDocTable to {}".format(totalHeight))
+        table.setMinimumHeight(totalHeight)
+
 
 
 class MyMainWindow(QWidget):
