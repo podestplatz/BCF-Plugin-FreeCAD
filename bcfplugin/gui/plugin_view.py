@@ -15,6 +15,7 @@ import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
 from bcfplugin.rdwr.viewpoint import Viewpoint
 from bcfplugin.gui.views.topicadddialog import TopicAddDialog
+from bcfplugin.gui.views.projectcreatedialog import ProjectCreateDialog
 
 
 logger = bcfplugin.createLogger(__name__)
@@ -361,7 +362,16 @@ class MyMainWindow(QWidget):
         self.notificationLabel = createNotificationLabel()
         self.mainLayout.addWidget(self.notificationLabel)
 
+        """ Handlers before project gets opened """
+        self.projectButton.clicked.connect(self.openProjectBtnHandler)
+        self.projectButton.clicked.connect(self.projectCreateButton.hide)
+        self.projectSaveButton.clicked.connect(self.saveProjectHandler)
+        self.projectCreateButton.clicked.connect(self.showCreateProjectDialog)
+
         """ handlers for an opened project """
+        self.projectOpened.connect(self.projectSaveButton.show)
+        self.projectOpened.connect(self.projectCreateButton.hide)
+        self.projectOpened.connect(self.topicListModel.projectOpened)
         self.projectOpened.connect(self.openedProjectUiHandler)
         # reset models for every opened project
         self.projectOpened.connect(self.commentModel.resetItems)
@@ -369,7 +379,6 @@ class MyMainWindow(QWidget):
         self.projectOpened.connect(self.snapshotModel.resetItems)
         self.projectOpened.connect(self.viewpointsModel.resetItems)
         self.projectOpened.connect(self.relTopModel.resetItems)
-        self.projectOpened.connect(self.projSaveBtn.show)
 
         # reset both the combobox and the stacked widget beneath to the first
         # index for an opened project
@@ -425,7 +434,6 @@ class MyMainWindow(QWidget):
         # delete delete button if the view is scrolled
         self.commentList.verticalScrollBar().valueChanged.connect(lambda x:
                 self.commentList.deleteDelBtn())
-        self.projSaveBtn.pressed.connect(self.saveProjectHandler)
 
         self.setLayout(self.mainLayout)
 
@@ -441,21 +449,25 @@ class MyMainWindow(QWidget):
         projLayout = QVBoxLayout(projFrame)
         topLayout.addWidget(projFrame)
 
-        self.projSaveBtn = QPushButton("Save")
-        self.projSaveBtn.setObjectName("projSaveBtn")
-        self.projSaveBtn.hide()
+        self.projectSaveButton = QPushButton(self.tr("Save"))
+        self.projectSaveButton.setObjectName("projectSaveButton")
+        self.projectSaveButton.hide()
 
-        self.projOpenBtn = QPushButton(self.tr("Open"))
-        self.projOpenBtn.setObjectName("projOpenBtn")
-        self.projOpenBtn.clicked.connect(self.openProjectBtnHandler)
+        self.projectButton = QPushButton(self.tr("Open"))
+        self.projectButton.setObjectName("projectButton")
 
-        projLayout.addWidget(self.projOpenBtn)
-        projLayout.addWidget(self.projSaveBtn)
+        self.projectCreateButton = QPushButton(self.tr("Create"))
+        self.projectCreateButton.setObjectName("projectCreateButton")
+
+        projLayout.addWidget(self.projectButton)
+        projLayout.addWidget(self.projectCreateButton)
+        projLayout.addWidget(self.projectSaveButton)
         projLayout.addStretch(20)
 
         topicFrame = QFrame()
         topicLayout = QVBoxLayout(topicFrame)
         topLayout.addWidget(topicFrame)
+
 
         self.topicAddBtn = QPushButton(self.tr("Add Topic"))
         self.topicAddBtn.setObjectName("addTopicBtn")
@@ -559,7 +571,7 @@ class MyMainWindow(QWidget):
 
         logger.info("setting up view")
 
-        self.projOpenBtn.setText(self.tr("Open other"))
+        self.projectButton.setText(self.tr("Open other"))
         self.topicList.show()
         self.topicAddBtn.show()
 
@@ -675,6 +687,14 @@ class MyMainWindow(QWidget):
         buttons.accepted.connect(lambda: self.closeSaveProject(dialog))
         buttons.rejected.connect(lambda: dialog.done(0))
         dialog.exec()
+
+
+    def showCreateProjectDialog(self):
+
+        dialog = ProjectCreateDialog(self)
+        dialog.exec()
+
+        self.projectOpened.emit()
 
 
     def deleteStretch(self):

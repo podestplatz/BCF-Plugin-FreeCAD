@@ -54,6 +54,20 @@ def addTopic(newTopic: dict):
     return True
 
 
+def createProject(name: str, extSchema: str):
+
+    """ Creates a new project by using programmaticInterface's addProject()
+    function.
+
+    `True` is returned if the project could be created, `False` otherwise."""
+
+    result = pI.addProject(name, extSchema)
+
+    if result == pI.OperationResults.SUCCESS:
+        return True
+    return False
+
+
 class TopicCBModel(QAbstractListModel):
 
     selectionChanged = Signal((Topic,))
