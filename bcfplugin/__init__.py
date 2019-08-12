@@ -19,15 +19,6 @@ FREECAD = False
 GUI = False
 """ Set by BCFPlugin.py when running in Gui mode """
 
-TMPDIR = None
-""" Temp directory used by the plugin as working directory """
-
-DIRTY = False
-""" Denotes whether there are unwritten changes in the data model """
-
-PROJDIR = None
-""" The directory into which the bcf file is extracted to """
-
 dependencies = ["dateutil", "pytz", "pyperclip", "xmlschema"]
 """ Packages this plugin depends on. """
 
@@ -41,6 +32,8 @@ LOGFILE = "{}log.txt".format(PREFIX)
 
 def printErr(msg):
 
+    """ Print an error using FreeCAD.Console or stderr. """
+
     global FREECAD
 
     if FREECAD:
@@ -51,6 +44,8 @@ def printErr(msg):
 
 def printInfo(msg):
 
+    """ Print an informational message using FreeCAD.Console or stdout. """
+
     global FREECAD
 
     if FREECAD:
@@ -60,6 +55,12 @@ def printInfo(msg):
 
 
 def getFreeCADHandler():
+
+    """ Create and return an instance of the FreeCAD logging handler.
+
+    This handler uses FreeCAD's Console system to print messages of the 5
+    different severity levels to the user.
+    """
 
     handler = FreeCADHandler()
     handler.setLevel(logging.DEBUG)
@@ -104,6 +105,11 @@ def getFileHandler(fpath):
 
 def createLogger(name):
 
+    """ Creates a new logger instance with module name = `name`.
+
+    The new instance is then returned.
+    """
+
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
@@ -111,6 +117,14 @@ def createLogger(name):
 
 
 def check_dependencies():
+
+    """ Checks whether all modules listed in `dependencies` are available.
+
+    To check, it is tried to import every module. If one fails an error message
+    will be printed in addition to an informational message about how to
+    install a missing dependency.
+    """
+
     available = True
 
     for dependency in dependencies:
@@ -122,12 +136,12 @@ def check_dependencies():
             break
 
     if not available:
-        printErr("Could not find the module `{}`. Install it through"\
+        logger.error("Could not find the module `{}`. Install it through"\
                 " pip\n\tpip install {}\nYou also might want to"\
                 " install it in a virtual environment. To create and initialise"\
                 " said env execute\n\tpython -m venv <NAME>\n\tsource"\
                 " ./<NAME>/bin/activate".format(pkg, pkg))
-        printInfo("If you already have it installed inside a virtual environment" \
+        logger.info("If you already have it installed inside a virtual environment" \
                 ", no problem we just need to modify the `sys.path` variable a"\
                 " bit. python inside FreeCAD, unfortunately, is not aware by" \
                 " default, of a virtual environment. To do that you have to " \

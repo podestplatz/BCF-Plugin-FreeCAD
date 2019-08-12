@@ -30,7 +30,7 @@ from bcfplugin.rdwr.interfaces.xmlname import XMLName
 from bcfplugin.frontend.viewController import CamType
 from bcfplugin import FREECAD, GUI
 
-__all__ = [ "CamType", "deleteObject", "openProject", "closeProject",
+__all__ = [ "CamType", "OperationResults", "deleteObject", "openProject", "closeProject",
         "getTopics", "getComments", "getViewpoints", "openIfcFile",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "activateViewpoint", "addCurrentViewpoint",
@@ -43,6 +43,7 @@ utc = pytz.UTC
 """ For localized times """
 
 curProject = None
+""" This variable holds the reference to the currently active data model. """
 
 App = None
 """ Alias for the FreeCAD module """
@@ -62,6 +63,11 @@ if FREECAD:
 
 
 class OperationResults(Enum):
+
+    """ This enum is used by the programmaticInterface to report whether an
+    operation has succeeded or failed. It is intended to be imported also by
+    every module using the programmaticInterface. """
+
     SUCCESS = 1
     FAILURE = 2
 
@@ -156,6 +162,14 @@ def openProject(bcfFile):
 
 
 def closeProject():
+
+    """ Encompasses an interactive CLI close project prompt.
+
+    First the user is given the choice to save the dirty state or discard it.
+    If he/she wants to save the state the path to the file (the state shall be
+    stored to) is requested. With this path the `saveProject` is then called.
+    After a successful operation, the data model is deleted.
+    """
 
     global curProject
 
@@ -635,6 +649,8 @@ def getTopic(element):
 
 
 def getTopicFromUUID(uid: UUID):
+
+    """ Search the data model for a topic where `topic.xmlId == uid` holds. """
 
     global curProject
 
@@ -1202,5 +1218,3 @@ def modifyElement(element, author=""):
     realElement.state = State.States.ORIGINAL
     return _handleProjectUpdate("Could not modify element {}".format(element.xmlName),
             projectBackup)
-
-

@@ -13,7 +13,6 @@ import bcfplugin
 import bcfplugin.gui.plugin_model as model
 import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
-from bcfplugin import DIRTY
 from bcfplugin.rdwr.viewpoint import Viewpoint
 from bcfplugin.gui.views.topicadddialog import TopicAddDialog
 

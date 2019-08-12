@@ -17,15 +17,6 @@ errorFile = "{}error.txt".format(PREFIX)
 logInitialized = False
 """ Logger object for errors """
 
-errorFilePath = ""
-""" Path of error file """
-
-DEBUG = False
-""" Enables debug outputs """
-
-qApp = None
-""" Reference to the current QApplication instance """
-
 MMPI = 25.4
 """ Millimeters per inch """
 
@@ -45,18 +36,6 @@ schemaPaths = {} # during runtime this will be a map like __schemaUrls
 tmpFilePathsFileName = "{}tmp.txt".format(PREFIX)
 """ Holds the path to the file that contains just the path to the created
 temporary directory """
-
-
-class Verbosity(Enum):
-    EVERYTHING = 1
-    NODEBUG = 2
-    IMPORTANTERRORS = 3
-    INFODEBUG = 4
-
-verbosity = Verbosity.EVERYTHING
-if (verbosity == Verbosity.EVERYTHING or verbosity == Verbosity.INFODEBUG):
-    # used to inspect the stack to get caller function and caller filename
-    import inspect
 
 
 class Schema(Enum):

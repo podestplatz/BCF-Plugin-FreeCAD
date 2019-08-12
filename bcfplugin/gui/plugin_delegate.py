@@ -7,7 +7,6 @@ from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
 
 import bcfplugin
 import bcfplugin.util as util
-from bcfplugin import TMPDIR
 
 
 logger = bcfplugin.createLogger(__name__)
