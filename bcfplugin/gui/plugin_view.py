@@ -95,7 +95,7 @@ class CommentView(QListView):
         itemRect = self.rectForIndex(index)
         x = itemRect.width() - deleteButton.geometry().width()
         vOffset = self.verticalOffset() # scroll offset
-        y = itemRect.y() - vOffset + deleteButton.geometry().height()
+        y = itemRect.y() - vOffset + itemRect.height() - deleteButton.geometry().height()
         deleteButton.move(x, y)
 
         deleteButton.show()
