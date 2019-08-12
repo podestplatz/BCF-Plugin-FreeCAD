@@ -182,11 +182,9 @@ class CommentModel(QAbstractListModel):
 
         elif role == Qt.ForegroundRole:
             # set the color if a viewpoint is linked to the comment
-            white = QColor("black")
-            vpCol = QColor("blue")
-            col = white if item.viewpoint is None else vpCol
-            brush = QBrush()
-            brush.setColor(col)
+            link = QApplication.palette().link()
+            normal = QApplication.palette().text()
+            brush = normal if item.viewpoint is None else link
 
             return brush
 
