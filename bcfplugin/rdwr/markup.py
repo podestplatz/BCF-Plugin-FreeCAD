@@ -724,6 +724,7 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
             header: Header = None,
             comments: List[Comment] = list(),
             viewpoints: List[ViewpointReference] = list(),
+            snapshotFiles: List[str] = list(),
             containingElement = None,
             state: State.States = State.States.ORIGINAL):
 
@@ -737,6 +738,7 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
         self.topic = topic
         self.comments = comments
         self.viewpoints = viewpoints
+        self.snapshotFiles = snapshotFiles
 
         # set containing object of members.
         listSetContainingElement(self.viewpoints, self)
@@ -840,7 +842,7 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
 
         snapshotList = [ str(vp.snapshot) for vp in self.viewpoints
                             if vp.snapshot ]
-        return snapshotList
+        return self.snapshotFiles
 
 
     def getEtElement(self, elem):

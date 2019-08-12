@@ -154,18 +154,29 @@ class SnapshotView(QListView):
     def __init__(self, parent = None):
 
         QListView.__init__(self, parent)
-        self.minIconSize = QSize(100, 100)
+        screen = util.getCurrentQScreen()
+        ppm = screen.logicalDotsPerInch() / util.MMPI
+
+        self.minIconSize = QSize(ppm * 20, ppm * 20)
         self.doubleClicked.connect(self.openSnapshot)
+        self.setFlow(QListView.LeftToRight)
 
 
     def resizeEvent(self, event):
 
+        QListView.resizeEvent(self, event)
+
         newSize = self.size()
         rowCount = self.model().rowCount()
         rowCount = rowCount if rowCount > 0 else 1
+        marginsLeftRight = (self.contentsMargins().left() +
+                self.contentsMargins().right())
 
-        newItemWidth = newSize.width() / rowCount
-        newItemWidth -= (rowCount - 1) * self.spacing()
+        logger.debug("Margins of snapshot list: {}".format(marginsLeftRight))
+        newItemWidth = newSize.width()
+        newItemWidth -= self.spacing() * (rowCount)
+        newItemWidth -= marginsLeftRight
+        newItemWidth /= rowCount
         newItemSize = QSize(newItemWidth, newSize.height())
 
         if (newItemWidth < self.minIconSize.width()):
@@ -175,7 +186,6 @@ class SnapshotView(QListView):
 
         self.model().setSize(newItemSize)
         self.setIconSize(newItemSize)
-        QListView.resizeEvent(self, event)
 
 
     @Slot()

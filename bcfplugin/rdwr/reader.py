@@ -385,6 +385,16 @@ def buildViewpointReference(viewpointDict):
     return vpReference
 
 
+def buildSnapshotList(topicDir: str):
+
+    isPNG = lambda img: ".png" in img or ".PNG" in img
+    snList = list()
+    for sn in filter(isPNG, os.listdir(topicDir)):
+        snList.append(os.path.join(topicDir, sn))
+
+    return snList
+
+
 def buildMarkup(markupFilePath: str, markupSchemaPath: str):
 
     markupSchema = XMLSchema(markupSchemaPath)
@@ -407,7 +417,9 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
     viewpoints = [ buildViewpointReference(vpDict)
                     for vpDict in viewpointList ]
 
-    markup = Markup(topic, header, comments, viewpoints)
+    markupDir = os.path.abspath(os.path.dirname(markupFilePath))
+    snapshotList = buildSnapshotList(markupDir)
+    markup = Markup(topic, header, comments, viewpoints, snapshotList)
 
     # Add the right viewpoint references to each comment
     for comment in comments:
