@@ -105,7 +105,10 @@ class TopicCBModel(QAbstractListModel):
     @Slot(int)
     def newSelection(self, index):
 
-        if index.row() > 0: # 0 is the dummy element
+        logger.debug("Wanting to emit selectionChanged signal for index:"\
+                " {}".format(index.row()))
+        if index.row() >= 0: # 0 is the dummy element
+            logger.debug("Emitting selectionChanged signal")
             self.selectionChanged.emit(self.items[index.row()])
 
 

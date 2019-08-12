@@ -259,7 +259,6 @@ class TopicMetricsDialog(QDialog):
         self.relTopGroupLayout = QVBoxLayout(self.relTopGroup)
         self.relTopList = QListView()
         self.relTopList.setModel(parent.relTopModel)
-        self.setMinVertTableSize(self.relTopList)
         self.relTopGroupLayout.addWidget(self.relTopList)
         if parent.relTopModel.rowCount() == 0:
             self.relTopList.hide()
@@ -337,7 +336,6 @@ class MyMainWindow(QWidget):
 
         self.projectGroup = self.createProjectTopicGroup()
         self.mainLayout.addWidget(self.projectGroup)
-        self.mainLayout.addStretch()
 
         self.commentGroup = self.createCommentGroup()
         self.commentGroup.hide()
@@ -355,8 +353,6 @@ class MyMainWindow(QWidget):
         self.mainLayout.addWidget(self.notificationLabel)
 
         """ handlers for an opened project """
-        # remove stretch added at the beginning
-        self.projectOpened.connect(self.deleteStretch)
         self.projectOpened.connect(self.openedProjectUiHandler)
         # reset models for every opened project
         self.projectOpened.connect(self.commentModel.resetItems)
@@ -383,6 +379,7 @@ class MyMainWindow(QWidget):
 
         # reset ui after a topic switch, to not display any artifacts from the
         # previous topic
+        self.topicListModel.selectionChanged.connect(self.showCommentSnapshotGroup)
         self.topicListModel.selectionChanged.connect(self.commentModel.resetItems)
         self.topicListModel.selectionChanged.connect(self.commentList.deleteDelBtn)
         self.topicListModel.selectionChanged.connect(self.snapshotModel.resetItems)
@@ -463,6 +460,7 @@ class MyMainWindow(QWidget):
         self.topicList.setModel(self.topicListModel)
         self.topicList.setObjectName("topicList")
         self.topicList.doubleClicked.connect(self.topicListModel.newSelection)
+        logger.debug("Connected double click signal to newSelection slot")
         self.topicList.hide()
 
         topicLayout.addWidget(self.topicNameLbl)
@@ -545,6 +543,7 @@ class MyMainWindow(QWidget):
 
         self.projOpenBtn.setText(self.tr("Open other"))
         self.topicList.show()
+
 
     @Slot()
     def hideCommentSnapshotGroup(self):

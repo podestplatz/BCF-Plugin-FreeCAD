@@ -62,7 +62,7 @@ def printInfo(msg):
 def getFreeCADHandler():
 
     handler = FreeCADHandler()
-    handler.setLevel(logging.INFO)
+    handler.setLevel(logging.DEBUG)
 
     filter = StdoutFilter()
     format = logging.Formatter(LOGFORMAT)
@@ -78,7 +78,7 @@ def getStdoutHandler():
     messages to stdout """
 
     handler = logging.StreamHandler(stream = sys.stdout)
-    handler.setLevel(logging.INFO)
+    handler.setLevel(logging.DEBUG)
 
     filter = StdoutFilter()
     format = logging.Formatter(LOGFORMAT)
