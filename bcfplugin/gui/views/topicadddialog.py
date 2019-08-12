@@ -19,7 +19,7 @@ logger = bcfplugin.createLogger(__name__)
 class TopicAddDialog(QDialog):
 
     titleRegex = "^[a-zA-Z0-9]+$"
-    descRegex = "^[a-zA-Z0-9]*$"
+    descRegex = "^[ a-zA-Z0-9]*$"
     typeRegex = descRegex
     statusRegex = descRegex
     prioRegex = descRegex
