@@ -2,10 +2,12 @@ import sys
 import bcfplugin.util as util
 from bcfplugin import FREECAD, GUI
 
+
 def setup_gui():
 
     import gui.plugin_panel as panel
-    panel.launch_ui()
+    qtWindow = panel.launch_ui()
+    return qtWindow
 
 
 def setup_nonGui():
@@ -48,9 +50,9 @@ def start():
     sys.path.append("../")
 
     if GUI:
-        setup_gui()
+        return setup_gui()
     else:
-        setup_nonGui()
+        return setup_nonGui()
 
 """
 If run in the command line a little help shall be printed on what the user is

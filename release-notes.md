@@ -1,3 +1,21 @@
+v0.3:
+General:
+  - No error is reported when parsing camera nodes with field of view values >
+    60
+  - python's logging library replaces the custom logging solution
+
+GUI:
+  - Notifications are displayed in the topicMetrics window informing the user
+    about the behavior of the additional documents table
+  - Topics can be added
+  - Projects can be created
+  - Fix issues with a dark theme. 
+  - The topic drop down list was replaced by an always present ordinary list 
+  - The mainLayout got replaced by a QSplitter, dividing the ui now in three
+    sections. 
+  - Margins on the outside were removed to use more of the screen real estate. 
+
+
 v0.2:
 General:
   - E-Mails are now optional

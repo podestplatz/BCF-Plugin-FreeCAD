@@ -4,17 +4,19 @@ from uuid import UUID
 from datetime import datetime, date
 from typing import List # used for custom type annotations
 
+import bcfplugin
 from bcfplugin.rdwr.uri import Uri
 from bcfplugin.rdwr.modification import (ModificationDate, ModificationAuthor, ModificationType)
 from bcfplugin.rdwr.topic import Topic
 from bcfplugin.rdwr.project import (SimpleElement, Attribute,
         listSetContainingElement, searchListObject)
 from bcfplugin.rdwr.viewpoint import (Viewpoint)
-from util import debug, DEBUG
 from bcfplugin.rdwr.interfaces.state import State
 from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
 from bcfplugin.rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
 from bcfplugin.rdwr.interfaces.xmlname import XMLName
+
+logger = bcfplugin.createLogger(__name__)
 
 
 class HeaderFile(Hierarchy, State, XMLName, Identifiable):
@@ -373,20 +375,6 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         if type(self) != type(other):
             return False
 
-        if DEBUG:
-            if self.xmlId != other.xmlId:
-                print("Viewpoint: id is different {} {}".format(self.xmlId,
-                    other.xmlId))
-            if self.file != other.file:
-                print("Viewpoint: file is different {} {}".format(
-                    self.file, other.file))
-            if self.snapshot != other.snapshot:
-                print("Viewpoint: snapshot is different {} {}".format(
-                    self.snapshot, other.snapshot))
-            if self.index != other.index:
-                print("Viewpoint: index is different {} {}".format(
-                    self.index, other.index))
-
         return (self.xmlId == other.xmlId and
                 self.file == other.file and
                 self.snapshot == other.snapshot and
@@ -568,7 +556,7 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         if cpy.viewpoint is not None:
             members.append(cpy.viewpoint)
 
-        debug("Containing object of modAuthor = {}, self = {}".format(
+        logger.debug("Containing object of modAuthor = {}, self = {}".format(
             id(self._modAuthor.containingObject), id(self)))
 
         listSetContainingElement(members, cpy)
@@ -586,22 +574,6 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         if type(self) != type(other):
             return False
-
-        if DEBUG:
-            if not self.idEquals(other.xmlId):
-                print("Id is different")
-            if self.author != other.author:
-                print("Author is different")
-            if self.date != other.date:
-                print("Date is different")
-            if self.comment != other.comment:
-                print("Comment is different")
-            if self.viewpoint != other.viewpoint:
-                print("Viewpoint is different")
-            if self.modDate != other.modDate:
-                print("modDate is different")
-            if self.modAuthor != other.modAuthor:
-                print("modAuthor is different")
 
         return (self.idEquals(other.xmlId) and
                 (self.date == other.date or
@@ -663,7 +635,7 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
     @modAuthor.setter
     def modAuthor(self, newVal):
-        debug("setting modAuthor to {}".format(newVal))
+        logger.debug("setting modAuthor to {}".format(newVal))
         self._modAuthor.author = newVal
 
     @property
@@ -752,6 +724,7 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
             header: Header = None,
             comments: List[Comment] = list(),
             viewpoints: List[ViewpointReference] = list(),
+            snapshotFiles: List[str] = list(),
             containingElement = None,
             state: State.States = State.States.ORIGINAL):
 
@@ -765,6 +738,7 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
         self.topic = topic
         self.comments = comments
         self.viewpoints = viewpoints
+        self.snapshotFiles = snapshotFiles
 
         # set containing object of members.
         listSetContainingElement(self.viewpoints, self)
@@ -868,7 +842,7 @@ class Markup(Hierarchy, State, XMLName, Identifiable):
 
         snapshotList = [ str(vp.snapshot) for vp in self.viewpoints
                             if vp.snapshot ]
-        return snapshotList
+        return self.snapshotFiles
 
 
     def getEtElement(self, elem):

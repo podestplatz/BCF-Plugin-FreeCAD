@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 import platform
 import pyperclip
 import subprocess
@@ -8,11 +9,19 @@ from PySide2.QtGui import *
 from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
         QDir, QPoint, QSize, QTimer)
 
+import bcfplugin
 import bcfplugin.gui.plugin_model as model
 import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
-from bcfplugin import DIRTY
 from bcfplugin.rdwr.viewpoint import Viewpoint
+from bcfplugin.gui.views.topicadddialog import TopicAddDialog
+from bcfplugin.gui.views.projectcreatedialog import ProjectCreateDialog
+
+
+logger = bcfplugin.createLogger(__name__)
+
+
+OBJECTNAME = "bcfplugin"
 
 
 def tr(self, text):
@@ -90,8 +99,7 @@ class CommentView(QListView):
         itemRect = self.rectForIndex(index)
         x = itemRect.width() - deleteButton.geometry().width()
         vOffset = self.verticalOffset() # scroll offset
-        y = itemRect.y() - vOffset + (itemRect.height() -
-                deleteButton.geometry().height()) / 2
+        y = itemRect.y() - vOffset + itemRect.height() - deleteButton.geometry().height()
         deleteButton.move(x, y)
 
         deleteButton.show()
@@ -137,7 +145,7 @@ class CommentView(QListView):
         """ Handler for deleting a comment when the comment delete button was
         pressed """
 
-        util.debug("Deleting element at index {}".format(index.row()))
+        logger.debug("Deleting element at index {}".format(index.row()))
         success = index.model().removeRow(index)
         if success:
             self.deleteDelBtn()
@@ -150,18 +158,29 @@ class SnapshotView(QListView):
     def __init__(self, parent = None):
 
         QListView.__init__(self, parent)
-        self.minIconSize = QSize(100, 100)
+        screen = util.getCurrentQScreen()
+        ppm = screen.logicalDotsPerInch() / util.MMPI
+
+        self.minIconSize = QSize(ppm * 20, ppm * 20)
         self.doubleClicked.connect(self.openSnapshot)
+        self.setFlow(QListView.LeftToRight)
 
 
     def resizeEvent(self, event):
 
+        QListView.resizeEvent(self, event)
+
         newSize = self.size()
         rowCount = self.model().rowCount()
         rowCount = rowCount if rowCount > 0 else 1
+        marginsLeftRight = (self.contentsMargins().left() +
+                self.contentsMargins().right())
 
-        newItemWidth = newSize.width() / rowCount
-        newItemWidth -= (rowCount - 1) * self.spacing()
+        logger.debug("Margins of snapshot list: {}".format(marginsLeftRight))
+        newItemWidth = newSize.width()
+        newItemWidth -= self.spacing() * (rowCount)
+        newItemWidth -= marginsLeftRight
+        newItemWidth /= rowCount
         newItemSize = QSize(newItemWidth, newSize.height())
 
         if (newItemWidth < self.minIconSize.width()):
@@ -171,7 +190,6 @@ class SnapshotView(QListView):
 
         self.model().setSize(newItemSize)
         self.setIconSize(newItemSize)
-        QListView.resizeEvent(self, event)
 
 
     @Slot()
@@ -233,6 +251,7 @@ class TopicMetricsDialog(QDialog):
 
         self.topicMetrics = QTableView()
         self.topicMetrics.setModel(parent.topicDetailsModel)
+        self.setMinVertTableSize(self.topicMetrics)
         self.topicMetrics.setItemDelegate(parent.topicDetailsDelegate)
         self.layout.addWidget(self.topicMetrics)
 
@@ -241,7 +260,9 @@ class TopicMetricsDialog(QDialog):
         self.addDocGroupLayout = QVBoxLayout(self.addDocGroup)
         self.addDocTable = QTableView()
         self.addDocTable.setModel(parent.addDocumentsModel)
+        self.setMinVertTableSize(self.addDocTable)
         self.addDocTable.doubleClicked.connect(self.openDocRef)
+        self.addDocTable.clicked.connect(self.showDoubleClickHint)
         self.addDocGroupLayout.addWidget(self.addDocTable)
         if parent.addDocumentsModel.rowCount() == 0:
             self.addDocTable.hide()
@@ -281,6 +302,41 @@ class TopicMetricsDialog(QDialog):
             showNotification(self, "Copied path to clipboard.")
 
 
+    @Slot(QModelIndex)
+    def showDoubleClickHint(self, index):
+
+        if index.column() == 0:
+            showNotification(self, "Double click to open document.")
+        elif index.column() == 1:
+            showNotification(self, "Double click to copy path.")
+
+
+    def setMinVertTableSize(self, table):
+
+        """ This function calculates the minimum vertical size the table needs
+        to display its contents without a scrollbar and sets it.
+
+        This function assumes that it is called after the model is set.
+        This code was adapted from:
+        https://stackoverflow.com/questions/42458735/how-do-i-adjust-a-qtableview-height-according-to-contents
+        """
+
+        totalHeight = 0
+        for i in range(0, table.verticalHeader().count()):
+            if not table.verticalHeader().isSectionHidden(i):
+                totalHeight += table.verticalHeader().sectionSize(i)
+
+        if not table.horizontalScrollBar().isHidden():
+            totalHeight += table.horizontalScrollBar().height()
+
+        if not table.horizontalHeader().isHidden():
+            totalHeight += table.horizontalHeader().height()
+
+        logger.info("Setting size of AddDocTable to {}".format(totalHeight))
+        table.setMinimumHeight(totalHeight)
+
+
+
 class MyMainWindow(QWidget):
 
     projectOpened = Signal()
@@ -288,32 +344,43 @@ class MyMainWindow(QWidget):
     def __init__(self):
         QWidget.__init__(self, None)
 
+        self.setObjectName(OBJECTNAME)
+
         self.mainLayout = QVBoxLayout()
         self.mainLayout.setObjectName("mainLayout")
         self.setWindowTitle("BCF-Plugin")
 
-        self.projectGroup = self.createProjectGroup()
-        self.mainLayout.addWidget(self.projectGroup)
+        self.mainSplitter = self.setupSplitter()
+        self.mainLayout.addWidget(self.mainSplitter)
 
-        self.topicGroup = self.createTopicGroup()
-        self.topicGroup.hide()
-        self.mainLayout.addWidget(self.topicGroup)
+        self.projectGroup = self.createProjectTopicGroup()
+        self.mainSplitter.addWidget(self.projectGroup)
 
         self.commentGroup = self.createCommentGroup()
         self.commentGroup.hide()
-        self.mainLayout.addWidget(self.commentGroup)
+        self.mainSplitter.addWidget(self.commentGroup)
 
         # snapshotArea is a stacked widget and will be used for the viewpoint
         # area too
         self.snapshotArea = self.createSnapshotGroup()
         self.snapshotArea.hide()
-        self.mainLayout.addWidget(self.snapshotArea)
+        self.mainSplitter.addWidget(self.snapshotArea)
 
+        # handlers for an opened project
+        self.projectOpened.connect(self.topicListModel.projectOpened)
         self.notificationLabel = createNotificationLabel()
         self.mainLayout.addWidget(self.notificationLabel)
 
-        # handlers for an opened project
-        self.projectOpened.connect(self.topicCbModel.projectOpened)
+        """ Handlers before project gets opened """
+        self.projectButton.clicked.connect(self.openProjectBtnHandler)
+        self.projectButton.clicked.connect(self.projectCreateButton.hide)
+        self.projectSaveButton.clicked.connect(self.saveProjectHandler)
+        self.projectCreateButton.clicked.connect(self.showCreateProjectDialog)
+
+        """ handlers for an opened project """
+        self.projectOpened.connect(self.projectSaveButton.show)
+        self.projectOpened.connect(self.projectCreateButton.hide)
+        self.projectOpened.connect(self.topicListModel.projectOpened)
         self.projectOpened.connect(self.openedProjectUiHandler)
         # reset models for every opened project
         self.projectOpened.connect(self.commentModel.resetItems)
@@ -321,30 +388,42 @@ class MyMainWindow(QWidget):
         self.projectOpened.connect(self.snapshotModel.resetItems)
         self.projectOpened.connect(self.viewpointsModel.resetItems)
         self.projectOpened.connect(self.relTopModel.resetItems)
+
         # reset both the combobox and the stacked widget beneath to the first
         # index for an opened project
         self.projectOpened.connect(lambda: self.snStack.setCurrentIndex(0))
         self.projectOpened.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
+        self.projectOpened.connect(self.hideCommentSnapshotGroup)
+        self.projectOpened.connect(self.topicNameLbl.hide)
+
         # create editor for a double left click on a comment
         self.commentList.doubleClicked.connect(
                 lambda idx: self.commentList.edit(idx))
-        # enable the new comment line edit
-        self.topicCbModel.selectionChanged.connect(lambda x:
+
+        self.topicListModel.selectionChanged.connect(lambda x:
+                self.showCommentSnapshotGroup())
+        self.topicListModel.selectionChanged.connect(lambda x:
                 self.newCommentEdit.setDisabled(False))
+
         # reset ui after a topic switch, to not display any artifacts from the
         # previous topic
-        self.topicCbModel.selectionChanged.connect(self.commentModel.resetItems)
-        self.topicCbModel.selectionChanged.connect(self.commentList.deleteDelBtn)
-        self.topicCbModel.selectionChanged.connect(self.snapshotModel.resetItems)
-        self.topicCbModel.selectionChanged.connect(self.viewpointsModel.resetItems)
-        self.topicCbModel.selectionChanged.connect(self.topicDetailsBtn.show)
-        self.topicCbModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
-        self.topicCbModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
-        self.topicCbModel.selectionChanged.connect(self.relTopModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.showCommentSnapshotGroup)
+        self.topicListModel.selectionChanged.connect(self.commentModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.commentList.deleteDelBtn)
+        self.topicListModel.selectionChanged.connect(self.snapshotModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.viewpointsModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.topicDetailsBtn.show)
+        self.topicListModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
+        self.topicListModel.selectionChanged.connect(self.relTopModel.resetItems)
+        self.topicListModel.selectionChanged.connect(lambda x:
+                self.topicNameLbl.show())
+        self.topicListModel.selectionChanged.connect(lambda topic:
+                self.topicNameLbl.setText(topic.title))
         # reset both the combobox and the stacked widget beneath to the first
         # index for a topic switch
-        self.topicCbModel.selectionChanged.connect(lambda: self.snStack.setCurrentIndex(0))
-        self.topicCbModel.selectionChanged.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
+        self.topicListModel.selectionChanged.connect(lambda: self.snStack.setCurrentIndex(0))
+        self.topicListModel.selectionChanged.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
         # connect the stacked widget with the combobox
         self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
         # select a viewpoint if a referncing comment is selected
@@ -355,6 +434,7 @@ class MyMainWindow(QWidget):
         self.commentList.specialCommentSelected.connect(self.viewpointList.selectViewpoint)
         # open the topic metrics window
         self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
+        self.topicAddBtn.pressed.connect(self.showAddTopicForm)
         # activate a viewpoint using viewController.py
         self.viewpointList.doubleClicked.connect(lambda x:
                 self.viewpointList.activateViewpoint(x, self.viewpointResetBtn))
@@ -369,48 +449,80 @@ class MyMainWindow(QWidget):
         self.openFilePath = ""
 
 
-    def createProjectGroup(self):
+    def setupSplitter(self):
 
-        projectGroup = QGroupBox()
-        projectGroup.setObjectName("projectGroup")
+        splitter = QSplitter(self)
+        splitter.setOrientation(Qt.Vertical)
+        return splitter
 
-        self.projectLayout = QHBoxLayout(projectGroup)
-        self.projectLayout.setObjectName("projectLayout")
 
-        self.projectLabel = QLabel(self.tr("Open Project"))
-        self.projectLabel.setObjectName("projectLabel")
-        self.projectLayout.addWidget(self.projectLabel)
+    def createProjectTopicGroup(self):
+
+        topFrame = QFrame()
+        topLayout = QHBoxLayout(topFrame)
+        topLayout.setSpacing(0)
+        topMargins = topLayout.contentsMargins()
+        topMargins.setBottom(0)
+        topMargins.setLeft(0)
+        topMargins.setRight(0)
+        topLayout.setContentsMargins(topMargins)
+
+        projFrame = QFrame()
+        projLayout = QVBoxLayout(projFrame)
+        projMargins = projLayout.contentsMargins()
+        projMargins.setLeft(0)
+        projMargins.setBottom(0)
+        projLayout.setContentsMargins(projMargins)
+        topLayout.addWidget(projFrame)
 
         self.projectSaveButton = QPushButton(self.tr("Save"))
         self.projectSaveButton.setObjectName("projectSaveButton")
-        self.projectSaveButton.clicked.connect(self.saveProjectHandler)
         self.projectSaveButton.hide()
 
         self.projectButton = QPushButton(self.tr("Open"))
         self.projectButton.setObjectName("projectButton")
-        self.projectButton.clicked.connect(self.openProjectBtnHandler)
-        self.projectButton.clicked.connect(self.projectSaveButton.show)
 
-        self.projectLayout.addWidget(self.projectButton)
-        self.projectLayout.addWidget(self.projectSaveButton)
+        self.projectCreateButton = QPushButton(self.tr("Create"))
+        self.projectCreateButton.setObjectName("projectCreateButton")
 
-        return projectGroup
+        projLayout.addWidget(self.projectButton)
+        projLayout.addWidget(self.projectCreateButton)
+        projLayout.addWidget(self.projectSaveButton)
+        projLayout.addStretch(20)
 
+        topicFrame = QFrame()
+        topicLayout = QVBoxLayout(topicFrame)
+        topicMargins = topicLayout.contentsMargins()
+        topicMargins.setRight(0)
+        topicMargins.setBottom(0)
+        topicLayout.setContentsMargins(topicMargins)
+        topLayout.addWidget(topicFrame)
 
-    def createTopicGroup(self):
-
-        topicGroup = QGroupBox()
-        topicGroup.setObjectName("topicGroup")
-
-        self.topicLabel = QLabel(self.tr("Topic: "))
-
-        self.topicCb = QComboBox()
-        self.topicCbModel = model.TopicCBModel()
-        self.topicCb.setModel(self.topicCbModel)
-        self.topicCb.currentIndexChanged.connect(self.topicCbModel.newSelection)
+        self.topicAddBtn = QPushButton(self.tr("Add Topic"))
+        self.topicAddBtn.setObjectName("addTopicBtn")
+        self.topicAddBtn.hide()
 
         self.topicDetailsBtn = QPushButton(self.tr("Details"))
+        self.topicDetailsBtn.setObjectName("topicDetailsBtn")
         self.topicDetailsBtn.hide()
+
+        topicBtnLayout = QHBoxLayout()
+        topicBtnLayout.addWidget(self.topicAddBtn)
+        topicBtnLayout.addWidget(self.topicDetailsBtn)
+
+        self.topicNameLbl = QLabel()
+
+        self.topicList = QListView()
+        self.topicListModel = model.TopicCBModel()
+        self.topicList.setModel(self.topicListModel)
+        self.topicList.setObjectName("topicList")
+        self.topicList.doubleClicked.connect(self.topicListModel.newSelection)
+        logger.debug("Connected double click signal to newSelection slot")
+        self.topicList.hide()
+
+        topicLayout.addWidget(self.topicNameLbl)
+        topicLayout.addLayout(topicBtnLayout)
+        topicLayout.addWidget(self.topicList)
 
         # setup models for topic details window
         self.topicDetailsModel = model.TopicMetricsModel()
@@ -418,20 +530,17 @@ class MyMainWindow(QWidget):
         self.addDocumentsModel = model.AdditionalDocumentsModel()
         self.relTopModel = model.RelatedTopicsModel()
 
-        self.topicHLayout = QHBoxLayout(topicGroup)
-        self.topicHLayout.addWidget(self.topicLabel)
-        self.topicHLayout.addWidget(self.topicCb)
-        self.topicHLayout.addWidget(self.topicDetailsBtn)
-
-        return topicGroup
+        return topFrame
 
 
     def createCommentGroup(self):
 
-        commentGroup = QGroupBox()
+        commentGroup = QFrame()
         commentGroup.setObjectName("commentGroup")
 
         self.commentLayout = QVBoxLayout(commentGroup)
+        self.commentLayout.setSpacing(0)
+        self.commentLayout.setMargin(0)
         self.commentList = CommentView()
 
         self.commentModel = model.CommentModel()
@@ -455,8 +564,10 @@ class MyMainWindow(QWidget):
 
     def createSnapshotGroup(self):
 
-        snGroup = QGroupBox()
+        snGroup = QFrame()
         self.snGroupLayout = QVBoxLayout(snGroup)
+        self.snGroupLayout.setSpacing(0)
+        self.snGroupLayout.setMargin(0)
 
         self.snapshotModel = model.SnapshotModel()
         self.snapshotList = SnapshotView()
@@ -487,11 +598,23 @@ class MyMainWindow(QWidget):
     @Slot()
     def openedProjectUiHandler(self):
 
-        print("setting up view")
+        logger.info("setting up view")
 
-        self.projectLabel.setText(model.getProjectName())
         self.projectButton.setText(self.tr("Open other"))
-        self.topicGroup.show()
+        self.topicList.show()
+        self.topicAddBtn.show()
+
+
+    @Slot()
+    def hideCommentSnapshotGroup(self):
+
+        self.commentGroup.hide()
+        self.snapshotArea.hide()
+
+
+    @Slot()
+    def showCommentSnapshotGroup(self):
+
         self.commentGroup.show()
         self.snapshotArea.show()
 
@@ -544,7 +667,7 @@ class MyMainWindow(QWidget):
         filename = QFileDialog.getSaveFileName(self, self.tr("Save BCF File"),
                 dflPath,  self.tr("BCF Files (*.bcf *.bcfzip)"))
         if filename[0] != "":
-            util.debug("Got a file to write to: {}.".format(filename))
+            logger.debug("Got a file to write to: {}.".format(filename))
             model.saveProject(filename[0])
 
 
@@ -555,12 +678,20 @@ class MyMainWindow(QWidget):
         metricsWindow.show()
 
 
+    @Slot()
+    def showAddTopicForm(self):
+
+        addTopicForm = TopicAddDialog(self)
+        addTopicForm.exec()
+        self.topicListModel.updateTopics()
+
+
     def closeEvent(self, event):
 
         if util.getDirtyBit():
             self.showExitSaveDialog()
 
-        util.debug("Deleting temporary directory {}".format(util.getSystemTmp()))
+        logger.debug("Deleting temporary directory {}".format(util.getSystemTmp()))
         util.deleteTmp()
 
 
@@ -585,6 +716,25 @@ class MyMainWindow(QWidget):
         buttons.accepted.connect(lambda: self.closeSaveProject(dialog))
         buttons.rejected.connect(lambda: dialog.done(0))
         dialog.exec()
+
+
+    def showCreateProjectDialog(self):
+
+        dialog = ProjectCreateDialog(self)
+        dialog.exec()
+
+        self.projectOpened.emit()
+
+
+    def deleteStretch(self):
+
+        """ Delete the first QSpacerItem found in mainLayout """
+
+        for idx in range(0, self.mainLayout.count()):
+            child = self.mainLayout.itemAt(idx)
+            if issubclass(type(child), QSpacerItem):
+                self.mainLayout.takeAt(idx)
+                break
 
 
 if __name__ == "__main__":

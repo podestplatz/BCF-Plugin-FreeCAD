@@ -1,3 +1,8 @@
+import logging
+
+import bcfplugin
+import bcfplugin.rdwr.project as p
+
 from copy import deepcopy
 from enum import Enum
 from datetime import datetime
@@ -5,7 +10,7 @@ from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
 from bcfplugin.rdwr.interfaces.state import State
 from bcfplugin.rdwr.interfaces.identifiable import Identifiable
 
-import bcfplugin.rdwr.project as p
+logger = bcfplugin.createLogger(__name__)
 
 
 class ModificationType(Enum):
@@ -53,7 +58,7 @@ class ModificationAuthor(p.SimpleElement):
 
     @author.setter
     def author(self, newVal):
-        p.debug("set author to {}".format(newVal))
+        logger.debug("set author to {}".format(newVal))
         if not isinstance(newVal, str):
             raise ValueError("Author has to be of type string, current type"\
                     " {}".format(type(newVal)))
@@ -128,7 +133,7 @@ class ModificationDate(p.SimpleElement):
 
     @date.setter
     def date(self, newVal):
-        p.debug("set date to {}".format(newVal))
+        logger.debug("set date to {}".format(newVal))
         if not isinstance(newVal, datetime):
             raise ValueError("Date has to be of type datetime, current type"\
                     " {}".format(type(newVal)))

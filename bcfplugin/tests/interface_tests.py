@@ -3,6 +3,7 @@ import sys
 import copy
 import pprint
 import difflib
+import logging
 import unittest
 import xmlschema
 import dateutil.parser
@@ -28,6 +29,8 @@ import rdwr.viewpoint as viewpoint
 import rdwr.modification as modification
 import programmaticInterface as pI
 import rdwr.interfaces.hierarchy as hierarchy
+
+logger = bcfplugin.createLogger(__name__)
 
 
 def setupBCFFile(testFile, testFileDir, testTopicDir, testBCFName):
@@ -84,12 +87,12 @@ class DeleteObjectTest(unittest.TestCase):
             print("Could not open file")
             self.assertTrue(False)
 
-        util.debug("Id of created project is {}".format(id(pI.curProject)))
+        logger.debug("Id of created project is {}".format(id(pI.curProject)))
         topics = [ topic[1] for topic in pI.getTopics() ]
         comments = [ comment[1] for comment in pI.getComments(topics[0]) ]
 
         commentToDelete = comments[0]
-        util.debug("Id of the comment copy {}".format(id(commentToDelete)))
+        logger.debug("Id of the comment copy {}".format(id(commentToDelete)))
         pI.deleteObject(commentToDelete)
 
         self.assertTrue(len(pI.curProject.topicList[0].comments)==0)
@@ -115,7 +118,7 @@ class DeleteObjectTest(unittest.TestCase):
         objectToDelete.state = s.State.States.DELETED
         pI.deleteObject(objectToDelete)
         elementHierarchy = hierarchy.Hierarchy.checkAndGetHierarchy(objectToDelete)
-        util.debug("Hierarchy of element {}".format(elementHierarchy))
+        logger.debug("Hierarchy of element {}".format(elementHierarchy))
 
         newObject = pI.curProject.topicList[0].header.files[1]._ifcProjectId
         newObjectValue = newObject.value
@@ -318,7 +321,7 @@ class ModifyElementTests(unittest.TestCase):
         newComments = self.retrieveComments(newTopics[0])
         updatedComment = newComments[0]
 
-        util.debug(updatedComment.state)
+        logger.debug(updatedComment.state)
         self.assertTrue(updatedComment.state == s.State.States.ORIGINAL)
 
 

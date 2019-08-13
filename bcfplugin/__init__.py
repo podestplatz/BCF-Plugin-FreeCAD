@@ -1,6 +1,13 @@
 import os
 import sys
+import logging
 import importlib
+from enum import Enum
+
+import bcfplugin.util as util
+from bcfplugin.loghandlers.freecadhandler import FreeCADHandler
+from bcfplugin.loghandlers.stdoutfilter import StdoutFilter
+
 excPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, excPath)
 
@@ -12,20 +19,20 @@ FREECAD = False
 GUI = False
 """ Set by BCFPlugin.py when running in Gui mode """
 
-TMPDIR = None
-""" Temp directory used by the plugin as working directory """
-
-DIRTY = False
-""" Denotes whether there are unwritten changes in the data model """
-
-PROJDIR = None
-""" The directory into which the bcf file is extracted to """
-
 dependencies = ["dateutil", "pytz", "pyperclip", "xmlschema"]
 """ Packages this plugin depends on. """
 
+LOGFORMAT = "[%(levelname)s]%(module)s.%(funcName)s(): %(message)s"
+""" Format of all logged messages """
+
+PREFIX = "bcfplugin_"
+
+LOGFILE = "{}log.txt".format(PREFIX)
+
 
 def printErr(msg):
+
+    """ Print an error using FreeCAD.Console or stderr. """
 
     global FREECAD
 
@@ -37,6 +44,8 @@ def printErr(msg):
 
 def printInfo(msg):
 
+    """ Print an informational message using FreeCAD.Console or stdout. """
+
     global FREECAD
 
     if FREECAD:
@@ -45,7 +54,77 @@ def printInfo(msg):
         print(msg)
 
 
+def getFreeCADHandler():
+
+    """ Create and return an instance of the FreeCAD logging handler.
+
+    This handler uses FreeCAD's Console system to print messages of the 5
+    different severity levels to the user.
+    """
+
+    handler = FreeCADHandler()
+    handler.setLevel(logging.DEBUG)
+
+    filter = StdoutFilter()
+    format = logging.Formatter(LOGFORMAT)
+    handler.setFormatter(format)
+    handler.addFilter(filter)
+
+    return handler
+
+
+def getStdoutHandler():
+
+    """ Returns a handler for the logging facility of python, writing the
+    messages to stdout """
+
+    handler = logging.StreamHandler(stream = sys.stdout)
+    handler.setLevel(logging.DEBUG)
+
+    filter = StdoutFilter()
+    format = logging.Formatter(LOGFORMAT)
+    handler.setFormatter(format)
+    handler.addFilter(filter)
+
+    return handler
+
+
+def getFileHandler(fpath):
+
+    """ Returns a handler for the logging facility of python, writing the
+    messages to file `fpath` """
+
+    handler = logging.FileHandler(fpath)
+    handler.setLevel(logging.DEBUG)
+
+    format = logging.Formatter(LOGFORMAT)
+    handler.setFormatter(format)
+
+    return handler
+
+
+def createLogger(name):
+
+    """ Creates a new logger instance with module name = `name`.
+
+    The new instance is then returned.
+    """
+
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+
+    return logger
+
+
 def check_dependencies():
+
+    """ Checks whether all modules listed in `dependencies` are available.
+
+    To check, it is tried to import every module. If one fails an error message
+    will be printed in addition to an informational message about how to
+    install a missing dependency.
+    """
+
     available = True
 
     for dependency in dependencies:
@@ -57,12 +136,12 @@ def check_dependencies():
             break
 
     if not available:
-        printErr("Could not find the module `{}`. Install it through"\
+        logger.error("Could not find the module `{}`. Install it through"\
                 " pip\n\tpip install {}\nYou also might want to"\
                 " install it in a virtual environment. To create and initialise"\
                 " said env execute\n\tpython -m venv <NAME>\n\tsource"\
                 " ./<NAME>/bin/activate".format(pkg, pkg))
-        printInfo("If you already have it installed inside a virtual environment" \
+        logger.info("If you already have it installed inside a virtual environment" \
                 ", no problem we just need to modify the `sys.path` variable a"\
                 " bit. python inside FreeCAD, unfortunately, is not aware by" \
                 " default, of a virtual environment. To do that you have to " \
@@ -93,6 +172,21 @@ frontend = None
 if not check_dependencies():
     raise ImportError
 
+# delete temporary artifacts
 import util
 util.deleteTmp()
+
+# create working directory
+path = util.getSystemTmp()
+logfile = os.path.join(path, LOGFILE)
+
+# generate config for root logger
+logHandlers = [getFileHandler(logfile)]
+if FREECAD:
+    logHandlers.append(getFreeCADHandler())
+else:
+    logHandlers.append(getStdoutHandler())
+logging.basicConfig(level=logging.INFO, handlers=logHandlers)
+
+# for nonGUI-mode import __all__ of pI into this namespace
 from programmaticInterface import *

@@ -7,7 +7,6 @@ from datetime import date
 from xmlschema import XMLSchema
 
 import bcfplugin.util
-from bcfplugin.util import DEBUG, debug
 from bcfplugin.rdwr.modification import (ModificationDate, ModificationAuthor,
         ModificationType)
 from bcfplugin.rdwr.uri import Uri
@@ -863,8 +862,6 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         if self.bimSnippet is not None:
             stateList += self.bimSnippet.getStateList()
 
-        if DEBUG:
-            debug("Topic.getStateList(): returning {}".format(stateList))
         return stateList
 
 

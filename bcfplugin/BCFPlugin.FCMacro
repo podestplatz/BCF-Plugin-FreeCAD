@@ -14,4 +14,9 @@ __Communication__ = "https://github.com/podestplatz/BCF-Plugin-FreeCAD/issues"
 
 import bcfplugin
 import bcfplugin.BCFPlugin as plugin
+
+import FreeCAD
+FreeCAD.addImportType("BCF-Document (*.bcf *.bcfzip)",
+    "bcfplugin.filehandlers")
+
 plugin.start()

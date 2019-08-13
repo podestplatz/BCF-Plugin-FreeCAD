@@ -1,18 +1,21 @@
 import os
 import copy
+import logging
+from uuid import uuid4
 
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import (QAbstractListModel, QAbstractTableModel,
         QModelIndex, Slot, Signal, Qt, QSize)
 
+import bcfplugin
 import bcfplugin.programmaticInterface as pI
 import bcfplugin.util as util
-
-from uuid import uuid4
 from bcfplugin.rdwr.topic import Topic
 from bcfplugin.rdwr.markup import Comment
 from bcfplugin.frontend.viewController import CamType
+
+logger = bcfplugin.createLogger(__name__)
 
 
 def openProjectBtnHandler(file):
@@ -36,6 +39,35 @@ def saveProject(dstFile):
     pI.saveProject(dstFile)
 
 
+def addTopic(newTopic: dict):
+
+    """ Adds a topic to the internal data model by using
+    programmaticInterface's addTopic() function """
+
+    result = pI.addTopic(newTopic["title"], newTopic["author"],
+            newTopic["type"], newTopic["description"], newTopic["status"],
+            newTopic["priority"], newTopic["index"], newTopic["labels"],
+            newTopic["dueDate"], newTopic["assignee"], newTopic["stage"])
+
+    if result == pI.OperationResults.FAILURE:
+        return False
+    return True
+
+
+def createProject(name: str, extSchema: str):
+
+    """ Creates a new project by using programmaticInterface's addProject()
+    function.
+
+    `True` is returned if the project could be created, `False` otherwise."""
+
+    result = pI.addProject(name, extSchema)
+
+    if result == pI.OperationResults.SUCCESS:
+        return True
+    return False
+
+
 class TopicCBModel(QAbstractListModel):
 
     selectionChanged = Signal((Topic,))
@@ -47,25 +79,24 @@ class TopicCBModel(QAbstractListModel):
 
 
     def rowCount(self, parent = QModelIndex()):
-        return len(self.items) + 1 # plus the dummy element
+        return len(self.items)
 
 
     def data(self, index, role = Qt.DisplayRole):
 
         idx = index.row()
         if role == Qt.DisplayRole:
-            if idx == 0:
-                return "-- Select your topic --"
-            return self.items[idx - 1].title # subtract the dummy element
+            return self.items[idx].title # subtract the dummy element
 
         else:
             return None
 
 
     def flags(self, index):
+
         flaggs = Qt.ItemIsEnabled
-        if index.row() != 0:
-            flaggs |= Qt.ItemIsSelectable
+        flaggs |= Qt.ItemIsSelectable
+
         return flaggs
 
 
@@ -88,8 +119,11 @@ class TopicCBModel(QAbstractListModel):
     @Slot(int)
     def newSelection(self, index):
 
-        if index > 0: # 0 is the dummy element
-            self.selectionChanged.emit(self.items[index - 1])
+        logger.debug("Wanting to emit selectionChanged signal for index:"\
+                " {}".format(index.row()))
+        if index.row() >= 0: # 0 is the dummy element
+            logger.debug("Emitting selectionChanged signal")
+            self.selectionChanged.emit(self.items[index.row()])
 
 
     @Slot()
@@ -164,11 +198,9 @@ class CommentModel(QAbstractListModel):
 
         elif role == Qt.ForegroundRole:
             # set the color if a viewpoint is linked to the comment
-            white = QColor("black")
-            vpCol = QColor("blue")
-            col = white if item.viewpoint is None else vpCol
-            brush = QBrush()
-            brush.setColor(col)
+            link = QApplication.palette().link()
+            normal = QApplication.palette().text()
+            brush = normal if item.viewpoint is None else link
 
             return brush
 
@@ -222,7 +254,7 @@ class CommentModel(QAbstractListModel):
 
         if not pI.isProjectOpen():
             util.showError("First you have to open a project.")
-            util.printErr("First you have to open a project.")
+            logger.error("First you have to open a project.")
             self.endResetModel()
             return
 
@@ -230,7 +262,7 @@ class CommentModel(QAbstractListModel):
         if comments == pI.OperationResults.FAILURE:
             util.showError("Could not get any comments for topic" \
                     " {}".format(str(topic)))
-            util.printErr("Could not get any comments for topic" \
+            logger.error("Could not get any comments for topic" \
                     " {}".format(str(topic)))
             self.endResetModel()
             return
@@ -285,7 +317,7 @@ class CommentModel(QAbstractListModel):
 
     def getAuthor(self):
 
-        util.debug("This is the current temp directory:"\
+        logger.debug("This is the current temp directory:"\
                 " {}".format(util.getSystemTmp()))
 
         modAuthor = None
@@ -641,7 +673,7 @@ class TopicMetricsModel(QAbstractTableModel):
         try:
             self.members[index.row()].value = value[0]
         except Exception as err:
-            util.printErr(str(err))
+            logger.error(str(err))
             return False
 
         result = pI.modifyElement(self.topic, value[1])
@@ -836,7 +868,7 @@ class RelatedTopicsModel(QAbstractListModel):
             return None
 
         if index.row() >= len(self.relTopics):
-            util.printInfo("A too large index was passed! Please report the"\
+            logger.info("A too large index was passed! Please report the"\
                     " steps you did as issue on the plugin's github page.")
             return None
 
@@ -874,11 +906,11 @@ class RelatedTopicsModel(QAbstractListModel):
         for t in relatedTopics:
             # in this list only the uid of a topic is stored
             tUId = t.value
-            util.debug("Getting topic to: {}:{}".format(tUId, tUId.__class__))
+            logger.debug("Getting topic to: {}:{}".format(tUId, tUId.__class__))
             match = pI.getTopicFromUUID(tUId)
             if match != pI.OperationResults.FAILURE:
                 self.relTopics.append(match)
-                util.debug("Got a match {}".format(match.title))
+                logger.debug("Got a match {}".format(match.title))
             else:
-                util.debug("Got nothing back")
+                logger.debug("Got nothing back")
 

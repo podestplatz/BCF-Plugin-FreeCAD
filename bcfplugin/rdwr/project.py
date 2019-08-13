@@ -1,14 +1,18 @@
 import os
+import logging
+import datetime
 import xml.etree.ElementTree as ET
+from uuid import UUID
 from copy import deepcopy
 
-from uuid import UUID
-from util import debug, printErr
+import bcfplugin
 from bcfplugin.rdwr.uri import Uri
 from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
 from bcfplugin.rdwr.interfaces.state import State
 from bcfplugin.rdwr.interfaces.xmlname import XMLName
 from bcfplugin.rdwr.interfaces.identifiable import XMLIdentifiable, Identifiable
+
+logger = bcfplugin.createLogger(__name__)
 
 
 def listSetContainingElement(itemList, containingObject):
@@ -27,12 +31,6 @@ def listSetContainingElement(itemList, containingObject):
     for item in itemList:
         if not issubclass(type(item), Hierarchy):
             index = itemList.index(item)
-            """
-            printErr("{} is not a subclass of Hierarchy! Element of"\
-                    " the wrong type has index {}. Not setting containing" \
-                    "Object then. Called by {}.{}: {}".format(type(item),
-                        index, callerModuleName, callerFunction, callerLine))
-            """
             ignoreList.append(index)
 
     for item in itemList:
@@ -141,7 +139,10 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
         """
 
         elem.tag = self.xmlName
-        elem.text = str(self.value)
+        if isinstance(self.value, datetime.datetime):
+            elem.text = self.value.isoformat()
+        else:
+            elem.text = str(self.value)
 
         return elem
 
@@ -430,7 +431,7 @@ topicList='{}')""".format(str(self.xmlId),
         The search algorithm, effectively implemented, is a depth first search. """
 
         if not issubclass(type(object), Identifiable):
-            debug("object {} is not a subclass of Identifiable".format(object))
+            logger.debug("object {} is not a subclass of Identifiable".format(object))
             return None
 
         # check if itself is the wanted object
@@ -462,7 +463,7 @@ topicList='{}')""".format(str(self.xmlId),
         are assigned their default value and complex objects are set to None.
         """
 
-        debug("My id is {}".format(id(self)))
+        logger.debug("My id is {}".format(id(self)))
         parent = object.containingObject
 
         memberName = ""
@@ -488,20 +489,20 @@ topicList='{}')""".format(str(self.xmlId),
         if memberName == "":
             msg = ("The name referencing {} in its parent {} could"\
                     " not be found").format(object.__class__, parent.__class__)
-            debug(msg)
-            printErr(msg)
+            logger.debug(msg)
+            logger.error(msg)
             return None
 
         # remove the object fom the list
         if isList:
             l = getattr(parent, memberName)
-            debug("Object to delete has id {}".format(id(object)))
+            logger.debug("Object to delete has id {}".format(id(object)))
             objIdx = l.index(object)
             l.remove(object)
 
         # set the object back to its default state
         else:
-            debug("Removing {} from {}".format(memberName, object))
+            logger.debug("Removing {} from {}".format(memberName, object))
             objType = type(object)
             if (issubclass(objType, Attribute) or
                     issubclass(objType, SimpleElement)):
@@ -515,12 +516,17 @@ topicList='{}')""".format(str(self.xmlId),
 
     def getEtElement(self, elem):
 
-        elem.tag = self.xmlName
-        elem.attrib["ProjectId"] = str(self.xmlId)
+        elem.tag = "ProjectExtension"
+
+        projectElem = ET.SubElement(elem, self.xmlName)
+        projectElem.attrib["ProjectId"] = str(self.xmlId)
 
         dflValue = self._name.defaultValue
         if self.name != dflValue:
-            nameElem = ET.SubElement(elem, self._name.xmlName)
+            nameElem = ET.SubElement(projectElem, self._name.xmlName)
             nameElem = self._name.getEtElement(nameElem)
+
+        # required element left empty
+        extSchemaElem = ET.SubElement(elem, "ExtensionSchema")
 
         return elem

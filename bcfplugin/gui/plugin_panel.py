@@ -1,9 +1,14 @@
+import logging
+
+import FreeCADGui
+import FreeCAD
+from PySide2.QtWidgets import QDialogButtonBox, QWidget, QPushButton, QApplication
+
+import bcfplugin
 import bcfplugin.util as util
 from bcfplugin.gui import plugin_view as view
 
-from PySide2.QtWidgets import QDialogButtonBox, QWidget, QPushButton, QApplication
-import FreeCADGui
-import FreeCAD
+logger = bcfplugin.createLogger(__name__)
 
 
 def launch_ui():
@@ -12,6 +17,8 @@ def launch_ui():
 
     panel = BCFPluginPanel()
     FreeCADGui.Control.showDialog(panel)
+
+    return panel
 
 
 class BCFPluginPanel:
@@ -79,7 +86,7 @@ class BCFPluginPanel:
         """ Called when the 'Close' button of the task dialog is pressed,
         closes the panel and returns nothing """
 
-        util.printInfo("Closing the dialog")
+        logger.info("Closing the dialog")
 
         FreeCADGui.Control.closeDialog()
         if FreeCAD.ActiveDocument:
