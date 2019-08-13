@@ -205,7 +205,7 @@ class SnapshotView(QListView):
         marginsLeftRight = (self.contentsMargins().left() +
                 self.contentsMargins().right())
         marginsTopBottom = (self.contentsMargins().top() +
-                self.contentsMargints().bottom())
+                self.contentsMargins().bottom())
 
         logger.debug("Margins of snapshot list: {}".format(marginsLeftRight))
         newItemWidth = newSize.width()
