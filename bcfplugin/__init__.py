@@ -136,12 +136,12 @@ def check_dependencies():
             break
 
     if not available:
-        logger.error("Could not find the module `{}`. Install it through"\
+        printError("Could not find the module `{}`. Install it through"\
                 " pip\n\tpip install {}\nYou also might want to"\
                 " install it in a virtual environment. To create and initialise"\
                 " said env execute\n\tpython -m venv <NAME>\n\tsource"\
                 " ./<NAME>/bin/activate".format(pkg, pkg))
-        logger.info("If you already have it installed inside a virtual environment" \
+        printInfo("If you already have it installed inside a virtual environment" \
                 ", no problem we just need to modify the `sys.path` variable a"\
                 " bit. python inside FreeCAD, unfortunately, is not aware by" \
                 " default, of a virtual environment. To do that you have to " \
