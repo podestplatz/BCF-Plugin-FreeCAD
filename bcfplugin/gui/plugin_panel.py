@@ -18,6 +18,8 @@ def launch_ui():
     panel = BCFPluginPanel()
     FreeCADGui.Control.showDialog(panel)
 
+    return panel
+
 
 class BCFPluginPanel:
 

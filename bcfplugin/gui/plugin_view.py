@@ -20,6 +20,10 @@ from bcfplugin.gui.views.projectcreatedialog import ProjectCreateDialog
 
 logger = bcfplugin.createLogger(__name__)
 
+
+OBJECTNAME = "bcfplugin"
+
+
 def tr(self, text):
 
     """ Placeholder for the Qt translate function. """
@@ -339,6 +343,8 @@ class MyMainWindow(QWidget):
 
     def __init__(self):
         QWidget.__init__(self, None)
+
+        self.setObjectName(OBJECTNAME)
 
         self.mainLayout = QVBoxLayout()
         self.mainLayout.setObjectName("mainLayout")
