@@ -344,18 +344,21 @@ class MyMainWindow(QWidget):
         self.mainLayout.setObjectName("mainLayout")
         self.setWindowTitle("BCF-Plugin")
 
+        self.mainSplitter = self.setupSplitter()
+        self.mainLayout.addWidget(self.mainSplitter)
+
         self.projectGroup = self.createProjectTopicGroup()
-        self.mainLayout.addWidget(self.projectGroup)
+        self.mainSplitter.addWidget(self.projectGroup)
 
         self.commentGroup = self.createCommentGroup()
         self.commentGroup.hide()
-        self.mainLayout.addWidget(self.commentGroup)
+        self.mainSplitter.addWidget(self.commentGroup)
 
         # snapshotArea is a stacked widget and will be used for the viewpoint
         # area too
         self.snapshotArea = self.createSnapshotGroup()
         self.snapshotArea.hide()
-        self.mainLayout.addWidget(self.snapshotArea)
+        self.mainSplitter.addWidget(self.snapshotArea)
 
         # handlers for an opened project
         self.projectOpened.connect(self.topicListModel.projectOpened)
@@ -440,13 +443,30 @@ class MyMainWindow(QWidget):
         self.openFilePath = ""
 
 
+    def setupSplitter(self):
+
+        splitter = QSplitter(self)
+        splitter.setOrientation(Qt.Vertical)
+        return splitter
+
+
     def createProjectTopicGroup(self):
 
         topFrame = QFrame()
         topLayout = QHBoxLayout(topFrame)
+        topLayout.setSpacing(0)
+        topMargins = topLayout.contentsMargins()
+        topMargins.setBottom(0)
+        topMargins.setLeft(0)
+        topMargins.setRight(0)
+        topLayout.setContentsMargins(topMargins)
 
         projFrame = QFrame()
         projLayout = QVBoxLayout(projFrame)
+        projMargins = projLayout.contentsMargins()
+        projMargins.setLeft(0)
+        projMargins.setBottom(0)
+        projLayout.setContentsMargins(projMargins)
         topLayout.addWidget(projFrame)
 
         self.projectSaveButton = QPushButton(self.tr("Save"))
@@ -466,8 +486,11 @@ class MyMainWindow(QWidget):
 
         topicFrame = QFrame()
         topicLayout = QVBoxLayout(topicFrame)
+        topicMargins = topicLayout.contentsMargins()
+        topicMargins.setRight(0)
+        topicMargins.setBottom(0)
+        topicLayout.setContentsMargins(topicMargins)
         topLayout.addWidget(topicFrame)
-
 
         self.topicAddBtn = QPushButton(self.tr("Add Topic"))
         self.topicAddBtn.setObjectName("addTopicBtn")
@@ -506,7 +529,7 @@ class MyMainWindow(QWidget):
 
     def createCommentGroup(self):
 
-        commentGroup = QGroupBox()
+        commentGroup = QFrame()
         commentGroup.setObjectName("commentGroup")
 
         self.commentLayout = QVBoxLayout(commentGroup)
@@ -535,7 +558,7 @@ class MyMainWindow(QWidget):
 
     def createSnapshotGroup(self):
 
-        snGroup = QGroupBox()
+        snGroup = QFrame()
         self.snGroupLayout = QVBoxLayout(snGroup)
         self.snGroupLayout.setSpacing(0)
         self.snGroupLayout.setMargin(0)
