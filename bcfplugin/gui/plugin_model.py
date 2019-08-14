@@ -68,31 +68,42 @@ def createProject(name: str, extSchema: str):
     return False
 
 
-class TopicCBModel(QAbstractListModel):
+class TopicListModel(QAbstractListModel):
+
+    """ Model for the list view displaying the topics. """
 
     selectionChanged = Signal((Topic,))
+    """ Signal emitted when a new topic was selected. """
 
     def __init__(self):
+
         QAbstractListModel.__init__(self)
         self.updateTopics()
         self.items = []
 
 
     def rowCount(self, parent = QModelIndex()):
+        """ Returns the number of items the model is able to supply. """
+
         return len(self.items)
 
 
     def data(self, index, role = Qt.DisplayRole):
 
+        """ Function used for retrieving data to display. """
+
         idx = index.row()
         if role == Qt.DisplayRole:
-            return self.items[idx].title # subtract the dummy element
+            return self.items[idx].title
 
         else:
             return None
 
 
     def flags(self, index):
+
+        """ Function defining that all elements shall be selectable and
+        enabled. """
 
         flaggs = Qt.ItemIsEnabled
         flaggs |= Qt.ItemIsSelectable
@@ -102,6 +113,8 @@ class TopicCBModel(QAbstractListModel):
 
     @Slot()
     def updateTopics(self):
+
+        """ Updates the internal list of topics. """
 
         self.beginResetModel()
 
@@ -119,19 +132,28 @@ class TopicCBModel(QAbstractListModel):
     @Slot(int)
     def newSelection(self, index):
 
-        logger.debug("Wanting to emit selectionChanged signal for index:"\
-                " {}".format(index.row()))
+        """ Handler invoked when a new topic in the list was double clicked.
+        """
+
         if index.row() >= 0: # 0 is the dummy element
-            logger.debug("Emitting selectionChanged signal")
             self.selectionChanged.emit(self.items[index.row()])
 
 
-    @Slot()
-    def projectOpened(self):
-        self.updateTopics()
-
-
 class CommentModel(QAbstractListModel):
+
+    """ Model for the comment list.
+
+    Ever comment item is comprised of three values:
+        - the comment text itself,
+        - the E-Mail address of the person that last modified it, or if it was
+          not modified till now the one of the original creator, and
+        - the date of the last modification, or creation if no modification has
+          taken place.
+
+    Also this model introduces the notion of a 'special comment'. A special
+    comment is a comment object where the 'viewpoint' member references an
+    actual instance of ViewpointReference.
+    """
 
     def __init__(self, parent = None):
 
@@ -141,6 +163,14 @@ class CommentModel(QAbstractListModel):
 
 
     def removeRow(self, index):
+
+        """ Removes a comment at `index` from the model.
+
+        `True` is returned if the comment could be deleted successfully,
+        `False` is returned otherwise.
+        If the deletion was successful the internal list of comments is
+        refreshed.
+        """
 
         if not index.isValid():
             return False
@@ -162,10 +192,29 @@ class CommentModel(QAbstractListModel):
 
     def rowCount(self, parent = QModelIndex()):
 
+        """ Returns the amount of comments that are stored in the model. """
+
         return len(self.items)
 
 
     def data(self, index, role=Qt.DisplayRole):
+
+        """ Returns the data to be displayed by the comment view.
+
+        A comment element returned is a tuple consisting of three elements:
+            - the comment text itself,
+            - the author of the last modification or of the creation if no
+              modification has taken place
+            - the date of the last modification or the creation respectively
+
+        Per default the this function returns the brush used for drawing normal
+        text. But special comments are drawn with the colour associated with
+        links defined in the global colour palette.
+        For example consider a light theme then the text colour of an ordinary
+        comment would be plain old black and the text colour of a special
+        comment would be the hyperlink blue (on a standard system). However
+        these values are dependant on the current Qt theme that is configured.
+        """
 
         if not index.isValid() or index.row() >= len(self.items):
             return None
@@ -209,6 +258,12 @@ class CommentModel(QAbstractListModel):
 
     def flags(self, index):
 
+        """ Every comment shall be selectable, editable and be enabled.
+
+        The modification of special comments does not alter the link between
+        the comment and the instance of `ViewpointReference`.
+        """
+
         fl = Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
         return fl
 
@@ -216,8 +271,9 @@ class CommentModel(QAbstractListModel):
     def setData(self, index, value, role=Qt.EditRole):
         # https://doc.qt.io/qtforpython/PySide2/QtCore/QAbstractItemModel.html#PySide2.QtCore.PySide2.QtCore.QAbstractItemModel.roleNames
 
-        """ `value` is assumed to be a tuple constructed by `CommentDelegate`.
+        """ Updates a comment specified by `index` with the new `value`.
 
+        `value` is assumed to be a tuple constructed by `CommentDelegate`.
         The first value contains the text of the comment, the second contains
         the email address of the author who did the modification.
         """
@@ -239,10 +295,12 @@ class CommentModel(QAbstractListModel):
     @Slot(Topic)
     def resetItems(self, topic = None):
 
-        """ Load comments from `topic`.
+        """ Either updates the internal list of comments depending on topic or
+        deletes the internal list.
 
         If topic is set to `None` then all elements will be deleted from the
-        model."""
+        model. Otherwise all comments of `topic` are retrieved and stored in
+        `items`."""
 
         self.beginResetModel()
 
@@ -273,18 +331,10 @@ class CommentModel(QAbstractListModel):
         self.endResetModel()
 
 
-    def checkValue(self, text):
-
-        splitText = [ textItem.strip() for textItem in text.split("--") ]
-        if len(splitText) != 2:
-            return None
-
-        return splitText
-
-
     def addComment(self, value):
 
-        """ Add a new comment to the items list.
+        """ Add a new comment to the items list and to the underlying data
+        model using the programmaticInterface.
 
         For the addition the programmatic Interface is used. It creates a unique
         UUID for the comment, as well as it takes the current time stamp
@@ -306,8 +356,7 @@ class CommentModel(QAbstractListModel):
 
     def referencedViewpoint(self, index):
 
-        """ Return true if the comment, specified by `index` references a
-        viewpoint. False otherwise """
+        """ Checks whether a comment is special or not. """
 
         if not index.isValid():
             return None
@@ -315,38 +364,37 @@ class CommentModel(QAbstractListModel):
         return self.items[index.row()].viewpoint
 
 
-    def getAuthor(self):
-
-        logger.debug("This is the current temp directory:"\
-                " {}".format(util.getSystemTmp()))
-
-        modAuthor = None
-        if util.isAuthorSet():
-            modAuthor = util.getAuthor()
-        else:
-            openAuthorsDialog(None)
-            modAuthor = util.getAuthor()
-
-        return modAuthor
-
-
 class SnapshotModel(QAbstractListModel):
 
+    """ Model only returning picutes.
+
+    It is intended for a list that only shows the icons and no text.
+    Every image returned is scaled down to 100x100 pixels.
+    Since the loading of images can be resource intensive, a lazy loading
+    approach is followed here.
+    """
 
     def __init__(self, parent = None):
 
         QAbstractListModel.__init__(self, parent)
-        # Size of an icon
+
         self.size = QSize(100, 100)
-        # currently open topic
+        """ Size of an icon """
         self.currentTopic = None
-        # list of the snapshot files
+        """ Currently open topic """
         self.snapshotList = []
-        # buffer of the already loaded images
+        """ List of the snapshot files """
         self.snapshotImgs = []
+        """ Buffer of the already loaded images """
 
 
     def data(self, index, role = Qt.DisplayRole):
+
+        """ Only implements the DecorationRole and returns images scaled to
+        100x100 pixels.
+
+        The images itself are returned as instances of QPixmap.
+        """
 
         if not index.isValid():
             return None
@@ -371,7 +419,9 @@ class SnapshotModel(QAbstractListModel):
 
     def rowCount(self, parent = QModelIndex()):
 
-        # only show the first three snapshots.
+        """ Returns the amount of items the model can return, capped at three
+        items """
+
         return len(self.snapshotList) if len(self.snapshotList) < 3 else 3
 
 
@@ -410,7 +460,7 @@ class SnapshotModel(QAbstractListModel):
         self.endResetModel()
 
 
-    def imgFromFilename(self, filename):
+    def imgFromFilename(self, filename: str):
 
         """ Returns the image with `filename`. It is loaded if it isn't at the
         point of inquiry.
@@ -442,16 +492,17 @@ class SnapshotModel(QAbstractListModel):
         if not index.isValid():
             return None
 
-        if self.snapshotImgs[index.row()] is None:
+        if (index.row() > len(self.snapshotImgs.keys()) or
+                self.snapshotImgs[index.row()] is None):
             return None
 
         img = self.snapshotImgs[index.row()]
         return img
 
 
-    def loadImage(self, path):
+    def loadImage(self, path: str):
 
-        """ Load the image behind `path` and return a QPixmap """
+        """ Load the image from `path` and return a QPixmap """
 
         if not os.path.exists(path):
             QMessageBox.information(None, tr("Image Load"), tr("The image {}"\
@@ -488,18 +539,25 @@ class ViewpointsListModel(QAbstractListModel):
     def __init__(self, snapshotModel, parent = None):
 
         QAbstractListModel.__init__(self, parent = None)
-        # holds instances of ViewpointReference
         self.viewpoints = []
+        """ List of instances of `ViewpointReference` """
         # used to retrieve the snapshot icons.
         self.snapshotModel = snapshotModel
+        """ Reference to SnapshotModel used to retrieve icons of the snapshots
+        """
 
         # set up the sizes and offsets
-        self._iconQSize = None # size in pixels
-        self._iconSize = QSize(10, 10) # size in millimeters
+        self._iconQSize = None
+        """ Size in pixels """
+        self._iconSize = QSize(10, 10)
+        """ Size in millimeters """
         self.calcSizes()
 
 
     def data(self, index, role = Qt.DisplayRole):
+
+        """ Returns the file name and an icon of the snapshot associated to a
+        viewpoint. """
 
         if not index.isValid():
             return None
@@ -521,6 +579,9 @@ class ViewpointsListModel(QAbstractListModel):
 
 
     def rowCount(self, parent = QModelIndex()):
+
+        """ Returns the amount of viewpoints that shall be listed in the view
+        """
 
         return len(self.viewpoints)
 
@@ -568,6 +629,9 @@ class ViewpointsListModel(QAbstractListModel):
     @Slot(QModelIndex)
     def activateViewpoint(self, index):
 
+        """ Manipulates FreeCAD's object viewer according to the setting of the
+        viewpoint. """
+
         if not index.isValid() or index.row() >= len(self.viewpoints):
             return False
 
@@ -600,13 +664,20 @@ class TopicMetricsModel(QAbstractTableModel):
 
 
     def __init__(self, parent = None):
+
         QAbstractTableModel.__init__(self, parent)
         self.disabledIndices = [ 1, 2, 7, 8 ]
+        """ Indices of items that cannot be edited and shall be disabled. """
         self.topic = None
+        """ Currently open topic """
         self.members = []
+        """ List of all names of members of a topic that shall be displayed.
+        """
 
 
     def data(self, index, role = Qt.DisplayRole):
+
+        """ Returns the value for a member topic specified by `index`. """
 
         if not index.isValid():
             return None
@@ -620,11 +691,14 @@ class TopicMetricsModel(QAbstractTableModel):
         elif index.column() == 1:
             return str(member.value)
         else:
-            # I don't know that an additional column could display actually
+            # I don't know what an additional column could display actually
             return None
 
 
     def headerData(self, section, orientation, role = Qt.DisplayRole):
+
+        """ Returns the data that shall be displayed in the horiz. header row.
+        """
 
         header = None
         if role != Qt.DisplayRole:
@@ -641,7 +715,7 @@ class TopicMetricsModel(QAbstractTableModel):
 
     def flags(self, index):
 
-        """ All items in the second column can be edited and selected """
+        """ Items, if not in the disabled list, can be edited and selected. """
 
         flags = Qt.NoItemFlags
         if not index.isValid():
@@ -687,19 +761,30 @@ class TopicMetricsModel(QAbstractTableModel):
 
     def rowCount(self, parent = QModelIndex()):
 
+        """ Returns the number of properties the view shall display.
+
+        There are exactly only 12 members whose values can be displayed in the
+        property value tableview. """
+
         return 12
 
 
     def columnCount(self, parent = QModelIndex()):
 
-        """ Only two columns will be shown. The first contains the name of the
-        value, the second one the value itself """
+        """ Returns the number of columns to be displayed in the tableview.
+
+        Only two columns will be shown. The first contains the name of the
+        value, the second one the value itself.
+        """
 
         return 2
 
 
     @Slot(Topic)
     def resetItems(self, topic = None):
+
+        """ Resets the internal state of the model to the new topic, or its
+        initial state. """
 
         self.beginResetModel()
 
@@ -733,6 +818,14 @@ class TopicMetricsModel(QAbstractTableModel):
 
 class AdditionalDocumentsModel(QAbstractTableModel):
 
+    """ Model intended to supply a table view with data about the additional
+    document references of a topic.
+
+    As with comments, here also the notion of a special reference is
+    introduced. A special reference is one whose associated path does exist on
+    the local system. It thus is painted in blue. Other references are painted
+    in black.
+    """
 
     def __init__(self, parent = None):
 
@@ -766,10 +859,10 @@ class AdditionalDocumentsModel(QAbstractTableModel):
         path = self.getFilePath(index)
         isPath = os.path.exists(path)
         if role == Qt.ForegroundRole:
-            brush = QBrush(QColor("black"))
+            brush = QApplication.palette().text()
             if index.column() == 0:
                 if isPath:
-                    brush = QBrush(QColor("blue"))
+                    brush = QApplication.palette().link()
 
             ret_val = brush
 
