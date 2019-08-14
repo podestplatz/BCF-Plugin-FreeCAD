@@ -7,52 +7,10 @@ from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
 
 import bcfplugin
 import bcfplugin.util as util
+from bcfplugin.gui.views import openAuthorsDialog
 
 
 logger = bcfplugin.createLogger(__name__)
-
-dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
-emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
-
-author = ""
-""" Holds the entered email address of the author """
-
-authorsDialog = None
-authorsLineEdit = None
-@Slot()
-def setAuthor():
-
-    global authorsDialog
-    global authorsLineEdit
-
-    author = authorsLineEdit.text()
-    authorsDialog.author = author
-    authorsDialog.done(0)
-
-
-def openAuthorsDialog(parent):
-
-    global authorsDialog
-    global authorsLineEdit
-
-    authorsDialog = QDialog(parent)
-    authorsDialog.setWindowTitle("Enter your e-Mail")
-
-    form = QFormLayout()
-    emailValidator = QRegExpValidator()
-    emailValidator.setRegExp(emailRegex)
-
-    authorsLineEdit = QLineEdit(parent)
-    authorsLineEdit.setValidator(emailValidator)
-    authorsLineEdit.editingFinished.connect(setAuthor)
-
-    form.addRow("E-Mail:", authorsLineEdit)
-    authorsDialog.setLayout(form)
-    authorsDialog.exec()
-
-    author = authorsDialog.author
-    logger.debug("We got something very nice {}".format(author))
-    util.setAuthor(author)
 
 
 class CommentDelegate(QStyledItemDelegate):
@@ -363,55 +321,3 @@ class CommentDelegate(QStyledItemDelegate):
                 self.sizeHintChanged.emit(index)
                 # mark the changed size hint for recomputation
                 self.sizeHints[index] = None
-
-
-class TopicMetricsDelegate(QStyledItemDelegate):
-
-    """
-    This delegate class is used for controlling the data entry of in the topic
-    metrics window.
-
-    It also, like the comment delegate, checks whether the user already has
-    entered his/her email address that will be set inserted ModifiedAuthor in
-    the data model.
-    """
-
-    def __init__(self, parent = None):
-
-        QStyledItemDelegate.__init__(self, parent)
-
-
-    def createEditor(self, parent, option, index):
-
-        modAuthor = ""
-        if util.isAuthorSet():
-            modAuthor = util.getAuthor()
-        else:
-            openAuthorsDialog(None)
-            modAuthor = util.getAuthor()
-
-        logger.debug("The email you entered is: {}".format(modAuthor))
-
-        model = index.model()
-        dueDateIndex = model.members.index(model.topic._dueDate)
-
-        startValue = "" # TODO: use current value
-        editor = QLineEdit(startValue, parent)
-        if index.row() == dueDateIndex:
-            validator = QRegExpValidator()
-            validator.setRegExp(dueDateRegex)
-
-            editor.setValidator(validator)
-            editor.setFrame(True)
-        return editor
-
-
-    def setModelData(self, editor, model, index):
-
-        """ Updates the model at `index` with the current text of the editor """
-
-        text = editor.text()
-        value = (text, util.getAuthor())
-        success = model.setData(index, value)
-        if not success:
-            util.showError("The value could not be updated.")

@@ -8,9 +8,9 @@ from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
 
 import bcfplugin
 import bcfplugin.util as util
-import bcfplugin.gui.plugin_delegate as delegate
-import bcfplugin.gui.plugin_view as view
-import bcfplugin.gui.plugin_model as model
+import bcfplugin.gui.views as view
+import bcfplugin.gui.models as model
+from bcfplugin.gui.regex import dueDateRegex, emailRegex
 from bcfplugin.rdwr.topic import Topic
 
 logger = bcfplugin.createLogger(__name__)
@@ -25,8 +25,8 @@ class TopicAddDialog(QDialog):
     prioRegex = descRegex
     idxRegex = "^[0-9]*$"
     lblRegex = "^[a-zA-Z0-9]*(,\s?[a-zA-Z0-9]+)*$"
-    dueDateRegex = delegate.dueDateRegex
-    assigneeRegex = delegate.emailRegex
+    dueDateRegex = dueDateRegex
+    assigneeRegex = emailRegex
     stageRegex = descRegex
 
 
@@ -138,7 +138,7 @@ class TopicAddDialog(QDialog):
             return
 
         if not util.isAuthorSet():
-            delegate.openAuthorsDialog(None)
+            view.openAuthorsDialog(None)
         creationAuthor = util.getAuthor()
 
         dueDate = None

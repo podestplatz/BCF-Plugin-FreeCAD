@@ -5,9 +5,8 @@ from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
 
 import bcfplugin
 import bcfplugin.util as util
-import bcfplugin.gui.plugin_delegate as delegate
-import bcfplugin.gui.plugin_view as view
-import bcfplugin.gui.plugin_model as model
+import bcfplugin.gui.views as view
+import bcfplugin.gui.models as model
 from bcfplugin.rdwr.topic import Topic
 
 logger = bcfplugin.createLogger(__name__)
