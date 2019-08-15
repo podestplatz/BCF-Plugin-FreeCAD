@@ -23,7 +23,9 @@ from bcfplugin import FREECAD, GUI
 
 def setup_gui():
 
-    import gui.plugin_panel as panel
+    """ Starts the Qt part of the plugin. """
+
+    import bcfplugin.gui.plugin_panel as panel
     qtWindow = panel.launch_ui()
     return qtWindow
 
@@ -65,12 +67,15 @@ can be imported:
 
 def start():
 
+    """ Starts the plugin either in gui or non-gui mode """
+
     sys.path.append("../")
 
     if GUI:
         return setup_gui()
     else:
         return setup_nonGui()
+
 
 """
 If run in the command line a little help shall be printed on what the user is

@@ -33,6 +33,29 @@ logger = bcfplugin.createLogger(__name__)
 
 class CommentDelegate(QStyledItemDelegate):
 
+    """ This delegate draws the custom comment elements and handles udpates.
+
+    The offsets/distances used in for drawing are all configured in Millimeter.
+    These Mm values are then converted to pixels depending on the screen the
+    application is viewed upon. Thus every variable describing an
+    offset/distance does have a counterpart which is equally named except for
+    a 'Q' inserted before the last word of the variable name.
+
+    Comments are drawn with two (logical) rows. The first row containing the
+    comment text, and the second row houses the date of last modification as
+    well as the author of the last change. These two rows are separated by a
+    separation line. Consider the following depiction as an example.
+
+    This is some example text.
+    ---------------------------------
+    e@mail.com YYYY-MM-DD
+
+    For correct resizing, this class maintains a dictionary with one entry for
+    every comment. The values are the sizes of the bounding rectangle of anyone
+    comment. If during some event, one value changes the
+    `self.sizeHintChanged()` event is emitted.
+    """
+
 
     def __init__(self, parent = None):
 
@@ -61,6 +84,8 @@ class CommentDelegate(QStyledItemDelegate):
 
 
     def paint(self, painter, option, index):
+
+        """ Paints the comment element specified by `index`. """
 
         if option.state & QStyle.State_Selected:
             painter.fillRect(option.rect, option.palette.highlight())
@@ -237,6 +262,8 @@ class CommentDelegate(QStyledItemDelegate):
 
     def computeSizes(self):
 
+        """ Converts the offsets/distances from millimeters to pixels. """
+
         screen = util.getCurrentQScreen()
         # pixels per millimeter
         ppm = screen.logicalDotsPerInch() / util.MMPI
@@ -250,6 +277,8 @@ class CommentDelegate(QStyledItemDelegate):
 
 
     def drawComment(self, comment, painter, option, fontMetric, leftX, topY, brush):
+
+        """ Helper function of `self.paint()` drawing only the comment text. """
 
         painter.save()
         pen = painter.pen()
@@ -275,6 +304,7 @@ class CommentDelegate(QStyledItemDelegate):
 
     def drawSeparationLine(self, painter, pen, start: QPoint, width):
 
+        """ Helper function for `self.paint()`, drawing the separation line """
         end = QPoint(start.x() + width,
                 start.y() + self._separationLineQThickness)
         separationRect = QRect(start, end)
@@ -284,6 +314,8 @@ class CommentDelegate(QStyledItemDelegate):
     def drawAuthorDate(self, comment,
             painter, pen,
             start: QPoint, end: QPoint):
+
+        """ Helper function for `self.paint()`, drawing author and date """
 
         fontMetric = QFontMetrics(self.authorFont)
         pen.setColor(QColor("#666699"))
@@ -312,6 +344,9 @@ class CommentDelegate(QStyledItemDelegate):
 
     @Slot()
     def setWidth(self, newWidth):
+
+        """ Sets the width of the plugin and recomputes the sizes of the
+        comments. """
 
         self.width = newWidth
         self.checkSizes()

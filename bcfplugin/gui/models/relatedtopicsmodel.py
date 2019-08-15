@@ -132,11 +132,7 @@ class RelatedTopicsModel(QAbstractListModel):
         for t in relatedTopics:
             # in this list only the uid of a topic is stored
             tUId = t.value
-            logger.debug("Getting topic to: {}:{}".format(tUId, tUId.__class__))
             match = pI.getTopicFromUUID(tUId)
             if match != pI.OperationResults.FAILURE:
                 self.relTopics.append(match)
-                logger.debug("Got a match {}".format(match.title))
-            else:
-                logger.debug("Got nothing back")
 

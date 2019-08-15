@@ -90,7 +90,10 @@ class ThreeDVector(Hierarchy, State, XMLName):
 
 class Point(ThreeDVector):
 
-    """ Represents a point in the three dimensional space """
+    """ Represents the XML type visinfo.xsd:Point.
+
+    Therefore it represents a point in the three dimensional space
+    """
 
     def __init__(self,
             x: float,
@@ -127,7 +130,10 @@ class Point(ThreeDVector):
 
 class Direction(ThreeDVector, XMLName):
 
-    """ Represents a vector in the three dimensional space """
+    """ Represents the XML type visinfo.xsd:Direction.
+
+    Therefore it represents a vector in the three dimensional space
+    """
 
     def __init__(self,
             x: float,
@@ -153,10 +159,11 @@ class Direction(ThreeDVector, XMLName):
 
     def getEtElement(self, elem):
 
-        """
-        Convert the contents of the object to an xml.etree.ElementTree.Element
-        representation. `element` is the object of type xml.e...Tree.Element
-        which shall be modified and returned.
+        """ Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation.
+
+        `element` is the object of type xml.e...Tree.Element which shall be
+        modified and returned.
         """
 
         return ThreeDVector.getEtElement(self, elem)
@@ -164,7 +171,10 @@ class Direction(ThreeDVector, XMLName):
 
 class Line(Hierarchy, State, XMLName):
 
-    """ Represents a line that goes throught the three dimensional space """
+    """ Represents the XML type visinfo.xsd:Line.
+
+    Represents a line that goes throught the three dimensional space.
+    """
 
     def __init__(self,
             start: Point,
@@ -230,6 +240,13 @@ class Line(Hierarchy, State, XMLName):
 
 
 class ClippingPlane(Hierarchy, State, XMLName):
+
+    """ Represents the XML type visinfo.xsd:ClippingPlane.
+
+    It represents a plane through one or more objects. Everything pointing from
+    the plane in `direction` shall be "clipped" away from the object,
+    everything else shall be left visible.
+    """
 
     def __init__(self,
             location: Point,

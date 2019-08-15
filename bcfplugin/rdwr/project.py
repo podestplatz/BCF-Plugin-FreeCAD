@@ -35,12 +35,8 @@ logger = bcfplugin.createLogger(__name__)
 
 def listSetContainingElement(itemList, containingObject):
 
-    import inspect
-    callerStackFrame = inspect.stack()[1]
-    callerFunction = callerStackFrame.function
-    callerLine = callerStackFrame.lineno
-    callerModule = inspect.getmodule(callerStackFrame[0])
-    callerModuleName = os.path.basename(callerModule.__file__)
+    """ Sets the `containingElement` member of every item of `itemList` to
+    `containingObject`. """
 
     if len(itemList) == 0:
         return None
@@ -57,6 +53,9 @@ def listSetContainingElement(itemList, containingObject):
 
 
 def searchListObject(object, elementList):
+
+    """ Invokes the `searchObject` algorithm of every element in `elementList`
+    to search for `object`. """
 
     if not issubclass(type(object), Identifiable):
         return None
@@ -78,6 +77,11 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
     """
     Used for representing elements that are defined to be simple elements
     in the corresponding xsd file
+
+    Every simple element is assigned a default value.
+    If `value` contains `defaultValue`, that indicates to the
+    containing object, that this member does not have to be serialized into an
+    XML node.
     """
 
     typeDict = { "int": int, "float": float, "str": str }
@@ -88,7 +92,8 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         Identifiable.__init__(self)
-        self._value = value
+        # set value to default if it is None
+        self._value = value if value else defaultValue
         self.defaultValue = defaultValue
 
 
@@ -121,7 +126,11 @@ class SimpleElement(XMLName, Hierarchy, State, Identifiable):
 
 
     def __str__(self):
+
+        """ Return a stirng of the form '<Name>: <Value>' """
+
         return "{}: {}".format(self.xmlName, self.value)
+
 
     @property
     def value(self):
@@ -260,7 +269,7 @@ class SimpleList(list, XMLName, Hierarchy, State, Identifiable):
 
 class Attribute(XMLName, Hierarchy, State, Identifiable):
 
-    """ Attribute is used to represent XML attributes.
+    """ Class used to represent XML attributes.
 
     Apart from the value of the attribute, also its Hierarchy, State (was it
     recently added, modified, deleted and name are stored. As well as all other
@@ -274,7 +283,8 @@ class Attribute(XMLName, Hierarchy, State, Identifiable):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         Identifiable.__init__(self)
-        self.value = value
+        # use default value if `value is None`
+        self.value = value if value else defaultValue
         self.defaultValue = defaultValue
 
 
@@ -313,14 +323,16 @@ class Attribute(XMLName, Hierarchy, State, Identifiable):
 
 class Project(Hierarchy, State, XMLName, XMLIdentifiable, Identifiable):
 
-    """ Class representing a complete BCF file.
+    """ Represents for one the XML type project.xsd:Project and for the other
+    the complete BCF file.
 
     From it a path to every other, properly instantiated object of the data
     model can be found.
 
     Deepcopies of project are created in the usual fashion, copying everything.
-    However a deepcopy of just an element somewhere down the path, only copy
-    downwards, and not back upwards again. This would be the case, because
+    However a deepcopy of just an element somewhere down the path, only copies
+    downwards, and not back upwards again; which would be the case in the
+    default implementation, because
     nearly every object inherits from `Hierarchy` supplying the class with a
     reference to its containing object.
     For example consider this graph:
@@ -449,7 +461,7 @@ topicList='{}')""".format(str(self.xmlId),
         The search algorithm, effectively implemented, is a depth first search. """
 
         if not issubclass(type(object), Identifiable):
-            logger.debug("object {} is not a subclass of Identifiable".format(object))
+            logger.error("object {} is not a subclass of Identifiable".format(object))
             return None
 
         # check if itself is the wanted object
@@ -481,7 +493,6 @@ topicList='{}')""".format(str(self.xmlId),
         are assigned their default value and complex objects are set to None.
         """
 
-        logger.debug("My id is {}".format(id(self)))
         parent = object.containingObject
 
         memberName = ""
@@ -507,20 +518,17 @@ topicList='{}')""".format(str(self.xmlId),
         if memberName == "":
             msg = ("The name referencing {} in its parent {} could"\
                     " not be found").format(object.__class__, parent.__class__)
-            logger.debug(msg)
             logger.error(msg)
             return None
 
         # remove the object fom the list
         if isList:
             l = getattr(parent, memberName)
-            logger.debug("Object to delete has id {}".format(id(object)))
             objIdx = l.index(object)
             l.remove(object)
 
         # set the object back to its default state
         else:
-            logger.debug("Removing {} from {}".format(memberName, object))
             objType = type(object)
             if (issubclass(objType, Attribute) or
                     issubclass(objType, SimpleElement)):

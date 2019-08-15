@@ -28,6 +28,7 @@ from urllib.error import URLError
 from PySide2.QtWidgets import QMessageBox, QApplication
 
 PREFIX = "bcfplugin_"
+""" Prefix for every created folder and file. """
 
 errorFile = "{}error.txt".format(PREFIX)
 """ File to print errors to """
@@ -57,15 +58,22 @@ temporary directory """
 
 
 class Schema(Enum):
+
+    """ Enum defining the 5 schema types. """
+
     EXTENSION = 1
     VISINFO = 2 # viewpoint info
     MARKUP = 3
     PROJECT = 4
     VERSION = 5
 
+
 __schemaSrc = "https://raw.githubusercontent.com/buildingSMART/BCF-XML/{0}/{1}Schemas/{2}"
+""" Src URL-template for all the schema files """
+
 __schemaVersion = "release_2_1"
-""" Names of the schema files necessary """
+""" Version for which the files shall be retrieved. """
+
 __schemaNames = {
         Schema.EXTENSION: "extensions.xsd",
         Schema.PROJECT: "project.xsd",
@@ -73,8 +81,8 @@ __schemaNames = {
         Schema.VERSION: "version.xsd",
         Schema.VISINFO: "visinfo.xsd"
         }
+""" Names of the schema files necessary """
 
-""" URLs of the schema files, from where they can be retrieved """
 __schemaUrls = {
         Schema.EXTENSION: __schemaSrc.format(__schemaVersion,
             "Extension%20",
@@ -91,9 +99,12 @@ __schemaUrls = {
         Schema.VISINFO: __schemaSrc.format(__schemaVersion,
             "",
             __schemaNames[Schema.VISINFO])}
+""" URLs of the schema files, from where they can be retrieved """
 
 
-def getTmpFilePath(filename):
+def getTmpFilePath(filename: str):
+
+    """ Returns the path to the temporary directory joined with `filename` """
 
     # get platform specific temporary directory
     sysTmp = tempfile.gettempdir()
@@ -102,7 +113,10 @@ def getTmpFilePath(filename):
     return filepath
 
 
-def appendLineBreak(line):
+def appendLineBreak(line: str):
+
+    """ Appends to `line` a linebreak character if none is present at the end.
+    """
 
     if line.endswith("\n"):
         return line
@@ -138,6 +152,9 @@ def storeLine(file, text, lineno):
 
 
 def storeTmpPath(tmpPath):
+
+    """ Wrapper for `storeLine()` which stores `tmpPath` in line 1 of the
+    temporary paths file. """
 
     global tmpFilePathsFileName
 
@@ -188,6 +205,9 @@ def getSystemTmp(createNew: bool = False):
 
 def setBcfDir(dir):
 
+    """ Wrapper for `storeLine()` storing `dir` in the second line of the
+    temporary file paths file. """
+
     global tmpFilePathsFileName
 
     fpath = getTmpFilePath(tmpFilePathsFileName)
@@ -198,6 +218,9 @@ def setBcfDir(dir):
 
 
 def getBcfDir():
+
+    """ Wrapper for `readLine()`, returning the directory in which the BCF file
+    got extracted to. """
 
     global tmpFilePathsFileName
 
@@ -438,6 +461,8 @@ def doesFileExistInProject(file: str):
 
 def setDirty(bit: bool):
 
+    """ Sets the dirty bit in the `DIRTY_FILE` """
+
     global DIRTY_FILE
 
     filepath = getTmpFilePath(DIRTY_FILE)
@@ -450,6 +475,12 @@ def setDirty(bit: bool):
 
 
 def getDirtyBit():
+
+    """ Returns the dirty bit as stored in the `DIRTY_FILE`.
+
+    Per default `False` is returned indicating that the current state is not
+    dirty.
+    """
 
     global DIRTY_FILE
 
@@ -469,10 +500,14 @@ def getDirtyBit():
 
 def loggingReady():
 
+    """ Returns `True` or `False` whether the log file is created or not. """
+
     return logInitialized
 
 
 def initializeErrorLog():
+
+    """ Creates the log file `errorFile` in the temporary directory. """
 
     global logInitialized
 

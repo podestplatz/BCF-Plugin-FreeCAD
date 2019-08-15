@@ -49,7 +49,6 @@ def open(file):
         return
 
 
-
 def insert(file, doc):
 
     """ Wrapper for `open()`. """

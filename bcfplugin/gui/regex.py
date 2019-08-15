@@ -17,4 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
 dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
+""" RegExp for the DueDate field """
+
 emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
+""" RegExp to check entered E-Mail addresses for validity. """

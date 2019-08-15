@@ -308,7 +308,6 @@ def activateViewpoint(viewpoint: Viewpoint,
     # selection is set.
     # NOTE: ViewSetupHints are not applied atm
     if viewpoint.components is not None:
-        logger.debug("applying components settings")
         components = viewpoint.components
         vCtrl.applyVisibilitySettings(components.visibilityDefault,
                 components.visibilityExceptions)
@@ -346,8 +345,6 @@ def _isIfcGuid(guid: str):
 
     if len(guid) != 22:
         return False
-
-    logger.debug("checking {} of type {}".format(guid, type(guid)))
 
     pattern = re.compile("[0-9,A-Z,a-z,_$]*")
     if pattern.fullmatch(guid) is None:
@@ -597,7 +594,6 @@ def getRelevantIfcFiles(topic: Topic):
         return []
 
     files = copy.deepcopy(markup.header.files)
-    logger.debug("files are {}".format(files))
 
     hasIfcProjectId = lambda file: file.ifcProjectId != file._ifcProjectId.defaultValue
     hasReference = lambda file: file.reference != file._reference.defaultValue
@@ -1127,8 +1123,6 @@ def deleteObject(object):
             object.__class__, curProject.__class__))
         return OperationResults.FAILURE
 
-    logger.debug("Deleting element {} from {}".format(realObject.__class__,
-        curProject.__class__))
     realObject.state = State.States.DELETED
     writer.addProjectUpdate(curProject, realObject, None)
     result = _handleProjectUpdate("Object could not be deleted from "\
@@ -1143,7 +1137,6 @@ def deleteObject(object):
 
     # otherwise the updated project is returned
     else:
-        logger.debug("Deleting from project with id {}".format(id(curProject)))
         curProject = curProject.deleteObject(realObject)
         return OperationResults.SUCCESS
 
@@ -1233,23 +1226,16 @@ def modifyElement(element, author=""):
     realElement.state = State.States.DELETED
     writer.addProjectUpdate(curProject, realElement, None)
 
-    logger.debug("Setting state of {} to equal {}".format(realElement, element))
     # copy the state of the given element to the real element
     for property, value in vars(element).items():
         if property == "containingObject":
-            logger.debug("Set comment.{}={}".format(property,
-                realElement.containingObject.__class__))
             continue
         setattr(realElement, property, copy.deepcopy(value))
-        logger.debug("Set comment.{}={}".format(property, value))
 
     # if topic/comment was modified update `modDate` and `modAuthor`
     if isinstance(realElement, Topic) or isinstance(realElement, Comment):
         setModDateAuthor(realElement, author, False)
-        logger.debug("ModAuthor: {}; ModDate: {}".format(realElement.modAuthor,
-            realElement.modDate))
 
-    logger.debug("Add {} as new project update".format(realElement))
     realElement.state = State.States.ADDED
     writer.addProjectUpdate(curProject, realElement, None)
     realElement.state = State.States.ORIGINAL

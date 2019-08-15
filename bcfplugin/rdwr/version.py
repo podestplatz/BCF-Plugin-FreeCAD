@@ -19,3 +19,4 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 version_str = """<?xml version="1.0" encoding="UTF-8"?>
 <Version VersionId="2.1"/>
 """
+""" Content of the bcf.version file. """

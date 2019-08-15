@@ -64,6 +64,7 @@ class Uri(Hierarchy, State, Identifiable):
         return self.uri == other.uri
 
     def __str__(self):
+
         ret_str = "{}".format(self.uri)
         return ret_str
 

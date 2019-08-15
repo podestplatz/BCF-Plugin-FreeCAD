@@ -16,12 +16,5 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
-import os
-
-bcfDir = os.path.dirname(__file__)
-srcDir = os.path.abspath(os.path.join(bcfDir, os.pardir))
-interfacesDir = os.path.join(srcDir, "interfaces")
-__path__.append(bcfDir)
-__path__.append(interfacesDir)
 __all__ = ["reader", "writer"]
 

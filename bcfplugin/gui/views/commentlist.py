@@ -130,11 +130,10 @@ class CommentView(QListView):
         """ Handler for deleting a comment when the comment delete button was
         pressed """
 
-        logger.debug("Deleting element at index {}".format(index.row()))
         success = index.model().removeRow(index)
         if success:
             self.deleteDelBtn()
         else:
-            util.showError("Could not delete comment.")
+            logger.error("Could not delete comment.")
 
 

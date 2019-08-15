@@ -272,7 +272,6 @@ class MyMainWindow(QWidget):
         self.topicList.setModel(self.topicListModel)
         self.topicList.setObjectName("topicList")
         self.topicList.doubleClicked.connect(self.topicListModel.newSelection)
-        logger.debug("Connected double click signal to newSelection slot")
         self.topicList.hide()
 
         topicLayout.addWidget(self.topicNameLbl)
@@ -456,7 +455,6 @@ class MyMainWindow(QWidget):
         filename = QFileDialog.getSaveFileName(self, self.tr("Save BCF File"),
                 dflPath,  self.tr("BCF Files (*.bcf *.bcfzip)"))
         if filename[0] != "":
-            logger.debug("Got a file to write to: {}.".format(filename))
             model.saveProject(filename[0])
 
 
@@ -497,7 +495,6 @@ class MyMainWindow(QWidget):
         if util.getDirtyBit():
             self.showExitSaveDialog()
 
-        logger.debug("Deleting temporary directory {}".format(util.getSystemTmp()))
         util.deleteTmp()
 
 

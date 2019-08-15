@@ -37,6 +37,9 @@ from bcfplugin.rdwr.interfaces.xmlname import XMLName
 
 
 class DocumentReference(Hierarchy, State, XMLName, Identifiable):
+
+    """ Represents the XML type markup.xsd:DocumentReference """
+
     def __init__(self,
                 guid: UUID = None,
                 external: bool = False,
@@ -154,7 +157,7 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
 
         # guid is optional in DocumentReference
         defaultValue = self._guid.defaultValue
-        if self.guid != defaultValue and not self.guid is None:
+        if self.guid != defaultValue:
             elem.attrib["Guid"] = str(self.guid)
 
         defaultValue = self._external.defaultValue
@@ -204,6 +207,9 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
 
 
 class BimSnippet(Hierarchy, State, XMLName, Identifiable):
+
+    """ Represents the XML type markup.xsd:BimSnippet """
+
     def __init__(self,
             type: str = "",
             external: bool = False,
@@ -359,7 +365,7 @@ class BimSnippet(Hierarchy, State, XMLName, Identifiable):
 
 class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
-    """ Topic contains all metadata about one ... topic """
+    """ Represents the XML type markup.xsd:Topic """
 
     def __init__(self,
             id: UUID,
@@ -492,28 +498,6 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         if type(self) != type(other):
             return False
 
-        self.__printEquality(self.xmlId == other.xmlId, "id")
-        self.__printEquality(self.title == other.title, "title")
-        self.__printEquality(self.date == other.date, "date")
-        self.__printEquality(self.author == other.author, "author")
-        self.__printEquality(self.type == other.type, "type")
-        self.__printEquality(self.status == other.status, "status")
-        self.__printEquality(self.docRefs == other.docRefs, "docRefs")
-        self.__printEquality(self.priority == other.priority, "priority")
-        self.__printEquality(self.index == other.index, "index")
-        self.__printEquality(self.labels == other.labels, "labels")
-        self.__printEquality(self.assignee == other.assignee, "assignee")
-        self.__printEquality(self.description == other.description, "description")
-        self.__printEquality(self.stage == other.stage, "stage")
-        self.__printEquality(self.relatedTopics == other.relatedTopics,
-                "relatedTopics")
-        self.__printEquality(self.modDate == other.modDate, "ModificationDate")
-        self.__printEquality(self.modAuthor == other.modAuthor, "ModificationAuthor")
-        self.__printEquality(self.__checkNone(self.dueDate,
-            other.dueDate), "dueDate")
-        self.__printEquality(self.__checkNone(self.bimSnippet,
-            other.bimSnippet), "bimSnippet")
-
         return (self.xmlId == other.xmlId and
                 self.title == other.title and
                 self.__checkNone(self.date, other.date) and
@@ -534,7 +518,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
                 self.bimSnippet == other.bimSnippet)
 
     def __str__(self):
-        import pprint
+
         doc_ref_str = "None"
         if self.docRefs:
             doc_ref_str = "["
@@ -675,18 +659,15 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
     def __checkNone(self, this, that):
 
+        """ Checks whether `this` and `that` are equal considering "None"
+        values """
+
         equal = False
         if this and that:
             equal = this == that
         elif (this is None and that is None):
             equal = True
         return equal
-
-
-    def __printEquality(self, equal, name):
-
-        if not equal and False:
-            print("{} is not equal".format(name))
 
 
     def __eq__(self, other):
@@ -697,28 +678,6 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
         if type(self) != type(other):
             return False
-
-        self.__printEquality(self.xmlId == other.xmlId, "id")
-        self.__printEquality(self.title == other.title, "title")
-        self.__printEquality(self.date == other.date, "date")
-        self.__printEquality(self.author == other.author, "author")
-        self.__printEquality(self.type == other.type, "type")
-        self.__printEquality(self.status == other.status, "status")
-        self.__printEquality(self.docRefs == other.docRefs, "docRefs")
-        self.__printEquality(self.priority == other.priority, "priority")
-        self.__printEquality(self.index == other.index, "index")
-        self.__printEquality(self.labels == other.labels, "labels")
-        self.__printEquality(self.assignee == other.assignee, "assignee")
-        self.__printEquality(self.description == other.description, "description")
-        self.__printEquality(self.stage == other.stage, "stage")
-        self.__printEquality(self.relatedTopics == other.relatedTopics,
-                "relatedTopics")
-        self.__printEquality(self.modDate == other.modDate, "ModificationDate")
-        self.__printEquality(self.modAuthor == other.modAuthor, "ModificationAuthor")
-        self.__printEquality(self.__checkNone(self.dueDate,
-            other.dueDate), "dueDate")
-        self.__printEquality(self.__checkNone(self.bimSnippet,
-            other.bimSnippet), "bimSnippet")
 
         return (self.xmlId == other.xmlId and
                 self.title == other.title and
@@ -740,7 +699,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
                 self.bimSnippet == other.bimSnippet)
 
     def __str__(self):
-        import pprint
+
         doc_ref_str = "None"
         if self.docRefs:
             doc_ref_str = "["
@@ -777,8 +736,10 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
     def _createSimpleNode(self, parentNode: ET.Element,
             classMember: SimpleElement):
 
-        """
-        Create a simple xml node with the content of `classMember`.
+        """ Create an ET.Element containing the serialized content of
+        `classMember`.
+
+        The new element will be a sub-element of `parentNode`.
         """
 
         newNode = None
@@ -862,13 +823,13 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         stateList += self.creation.getStateList()
         stateList += self._type.getStateList()
         stateList += self._status.getStateList()
-        stateList += self.referenceLinks.getStateList() #TODO: better solution with simple list. Objects in simple list are not inherited from State
+        stateList += self.referenceLinks.getStateList()
         for ref in self.refs:
             stateList += ref.getStateList()
 
         stateList += self._priority.getStateList()
         stateList += self._index.getStateList()
-        stateList += self.labels.getStateList() #TODO: better solution with simple list. Objects in simple list are not inherited from State
+        stateList += self.labels.getStateList()
         if self.lastModification is not None:
             stateList += self.lastModification.getStateList()
 
@@ -876,7 +837,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         stateList += self._assignee.getStateList()
         stateList += self._description.getStateList()
         stateList += self._stage.getStateList()
-        stateList += self.relatedTopics.getStateList() #TODO: better solution with simple list. Objects in simple list are not inherited from State
+        stateList += self.relatedTopics.getStateList()
         if self.bimSnippet is not None:
             stateList += self.bimSnippet.getStateList()
 

@@ -24,9 +24,6 @@ import zipfile
 from uuid import UUID, uuid4
 from collections import deque
 
-if __name__ == "__main__":
-    sys.path.insert(0, "../")
-    print(sys.path)
 import copy as c
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as MD
@@ -44,8 +41,13 @@ import bcfplugin.rdwr.version as version
 logger = bcfplugin.createLogger(__name__)
 
 projectFileName = "project.bcfp"
+""" Name of the project file """
+
 markupFileName = "markup.bcf"
+""" Name of the markup file """
+
 versionFileName = "bcf.version"
+""" Name of the version file """
 
 elementOrder = {"Markup": ["Header", "Topic", "Comment", "Viewpoints"],
         "Topic": ["ReferenceLink", "Title", "Priority", "Index", "Labels",
@@ -94,6 +96,8 @@ This list will contain all updates that were not processed.
 """
 
 SNAPSHOT_CNT = 5
+""" Amount of snapshots that will be kept in memory. """
+
 projectSnapshots = deque([None]*SNAPSHOT_CNT, SNAPSHOT_CNT)
 """ An ordered list of N elements.
 
@@ -104,33 +108,10 @@ It therefore serves as storage past plugin states and enables undo operations.
 """
 
 
-################## DEPRECATED ##################
-"""
-Contains elements that have the state iS.State.States.ADDED. This list gets
-filled by writer.compileChanges() and the elements get consumed by
-writer.addElement()
-"""
-addedObjects = list()
-
-"""
-Contains elements that have the state iS.State.States.DELETED. This list gets
-filled by writer.compileChanges() and the elements get consumed by
-writer.deleteElement()
-"""
-deletedObjects = list()
-
-"""
-Contains elements that have the state iS.State.States.MODIFIED. This list gets
-filled by writer.compileChanges() and the elements get consumed by
-writer.modifyElement()
-"""
-modifiedObjects = list()
-################################################
-
-
 def getUniqueIdOfListElementInHierarchy(element):
 
-    """
+    """ Returns the id of the list element `element` is a child of.
+
     Looks through the hierarchy of an object up to the project. If somewhere on
     the way up an element is identified as list element (may occur more than
     once inside the same XML element) then the id of that element is returned.
@@ -148,32 +129,22 @@ def getUniqueIdOfListElementInHierarchy(element):
     for item in elementHierarchy[1:]:
         if item.__class__.__name__ in listElements:
             listElement = item
-            logger.debug("{} is a list element!".format(
-                    getUniqueIdOfListElementInHierarchy.__name__,
-                        item))
             break
 
     if isinstance(listElement, iI.XMLIdentifiable):
-        logger.debug("its id = {} element!".format(
-                getUniqueIdOfListElementInHierarchy.__name__,
-                    item.xmlId))
         return item.xmlId
     return None
 
 
 def getFileOfElement(element):
 
-    """
-    Returns the name of the file `element` was read from.
-    """
+    """ Returns the name of the file `element` has to be written to. """
 
-    logger.debug("retrieving hierarchy of {}".format(element))
+    logger.debug("retrieving hierarchy for {}".format(element))
     elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy: # element cannot be modified
         logger.debug("Could not find a hierarchy {}")
         return None
-
-    logger.debug("Hierarchy is {}".format(elementHierarchy))
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
     if "Viewpoint" in strHierarchy:
@@ -196,9 +167,9 @@ def getFileOfElement(element):
 
 def getTopicOfElement(element):
 
-    """
-    Returns the topic of an element. This is used to generate the right path to
-    the file that shall be edited.
+    """ Returns the topic an element is associated to.
+
+    This is used to generate the right path to the file that shall be edited.
     """
 
     elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
@@ -206,8 +177,6 @@ def getTopicOfElement(element):
         return None
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
-    logger.debug("hierarchy of {}:\n{}\n".format(
-        element.__class__.__name__, elementHierarchy))
     if "Markup" in strHierarchy:
         markupElem = None
         for item in elementHierarchy:
@@ -221,9 +190,8 @@ def getTopicOfElement(element):
 
 def getEtElementById(elemId, elemName, etRoot):
 
-    """
-    Searches for an element with the attribute `Guid` that has the value
-    of `elemId`.
+    """ Searches for an element with the attribute `Guid` that has the value of
+    `elemId`.
     """
 
     logger.debug("searching elementtree for .//{}[@Guid='{}']".format(
@@ -252,13 +220,12 @@ def searchEtByTag(etRoot, tag):
 
 def getParentElement(element, etRoot):
 
-    """
-    Searches `etRoot` for the parent of `element` and returns it if found.
-    Element is expected to be an instance of one class of the data model, and
-    not already an instance of ET.Element.
-    If the element turns out to be itself a root element of a file (e.g.:
-    VisualizationInfo in viewpoint.bcfv) then a NotImplementedError is raised.
+    """ Searches `etRoot` for the parent of `element` and returns it if found.
 
+    Element is expected to be an instance of one class of the data model, and
+    not already an instance of ET.Element.  If the element turns out to be
+    itself a root element of a file (e.g.: VisualizationInfo in viewpoint.bcfv)
+    then a NotImplementedError is raised.
     Returns the XML parent of `element` if found.
     """
 
@@ -277,8 +244,6 @@ def getParentElement(element, etRoot):
 
     etParent = None
     listElemId = getUniqueIdOfListElementInHierarchy(element)
-    logger.debug("got list id {} for {}".format(listElemId,
-        element.__class__.__name__))
 
     # parent can be found easily by tag
     if not listElemId:
@@ -310,8 +275,9 @@ def getParentElement(element, etRoot):
 
 def getInsertionIndex(element, etParent):
 
-    """
-    Returns the index at which `element` shall be inserted into `etParent`.
+    """ Returns the index of the xml node before which `element` shall be
+    inserted.
+
     This index is always the greatest possible one complying with the schema
     file.
     Therefore if already multiple elements with the same tag as `element` exist
@@ -322,12 +288,6 @@ def getInsertionIndex(element, etParent):
     # order of elements how they are found in the file in etParent
     actualSequence = [ elem.tag for elem in list(etParent) ]
     actualSequenceRev = list(reversed(actualSequence))
-
-    logger.debug("writer.{}()\n\tdefined sequence: {}\n\tactual"\
-                " sequence: {}".format(getInsertionIndex.__name__,
-                    definedSequence, actualSequence))
-    logger.debug("writer.{}(): element is of type {}".format(
-            getInsertionIndex.__name__, type(element)))
 
     insertionIndex = len(actualSequenceRev)-1
     # element is already contained => insert it after the last occurence
@@ -347,8 +307,6 @@ def getInsertionIndex(element, etParent):
             # default insertion point is as last element
             insertionIndex = len(actualSequenceRev)
             for elem in definedSequence[elemIdxInDefinedSequence + 1:]:
-                logger.debug("writer.getInsertionIndex(): is {} in" \
-                        " actualSequence?".format(elem))
                 # first successor found. Insert it before it
                 if elem in actualSequence:
                     insertionIndex = actualSequence.index(elem)
@@ -372,7 +330,7 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
     for searching `rootElem` for the list of possible candidates.
     """
 
-    logger.debug("searching {} for {}".format(rootElem, wantedElement))
+    logger.debug("searching in {} for {}".format(rootElem, wantedElement))
     elementHierarchy = wantedElement.getHierarchyList()
     elementHierarchy.reverse()
 
@@ -388,7 +346,6 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
 
     xmlPathExpression = "./"
     for element in elementHierarchy:
-        logger.debug("element is of type: {}".format(type(element)))
         if issubclass(type(element), p.Attribute):
             xmlPathExpression += "[@{}='{}']".format(element.xmlName,
                     element.value)
@@ -405,19 +362,19 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
 
 def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
 
-    """
-    This function searches `rootElem` for all occurences for
-    wantedElement.xmlName. This set of elements is then searched for the
-    best match against `wantedElement`. `wantedElement` is expected to be an
-    instance of a class of the data model not one of ET.Element.
-    The first strategy that is attempted is matching on the child elements.
-    If the element is empty then matching on the attributes of `wantedElement`
-    is attempted.
+    """ This function searches `rootElem` for all occurences for
+    wantedElement.xmlName.
+
+    This set of elements is then searched for the best match against
+    `wantedElement`. `wantedElement` is expected to be an instance of a class
+    of the data model not one of ET.Element.  The first strategy that is
+    attempted is matching on the child elements.  If the element is empty then
+    matching on the attributes of `wantedElement` is attempted.
     If both strategies fail then a last attempt is made by matching on the text
     of the element.
-    For both strategies it holds that the first match is returned. If a match is
-    found it is returned as object of type xml.etree.ElementTree.Element. If no
-    match is found then `None` is returned.
+    For both strategies it holds that the first match is returned. If a match
+    is found it is returned as object of type xml.etree.ElementTree.Element. If
+    no match is found then `None` is returned.
     """
 
     logger.debug("Getting xml element to {} in the tree {}".format(wantedElement,
@@ -425,14 +382,8 @@ def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
     # candidates are the set of elements that have the same tag as
     # containingElement
     candidates = getXMLNodeCandidates(rootElem, wantedElement)
-    logger.debug("Got possible list of candidates: {}".format(candidates))
     parentEt = wantedElement.getEtElement(ET.Element("", {}))
     parentEtChildren = list(parentEt)
-    logger.debug("looking for {} element in: \n\t{}\n\twith the"\
-            " exceptions of: {}".format(
-            ET.tostring(parentEt),
-            [ ET.tostring(c) for c in candidates ],
-            ignoreNames))
     match = None
     # find the right candidate
     for candidate in candidates:
@@ -518,8 +469,9 @@ def generateViewpointFileName(markup: m.Markup):
 
 def xmlPrettify(element: ET.Element):
 
-    """
-    uses xml.dom.minidom to parse the string output of element and then again
+    """ Formats the serialized `element`.
+
+    Uses xml.dom.minidom to parse the string output of element and then again
     convert it to a string, but now nicely formatted.
     The formatted string is returned.
     """
@@ -535,9 +487,8 @@ def xmlPrettify(element: ET.Element):
 
 def getTopicDir(element):
 
-    """
-    Retrieves the xmlID of the topic that contains `element` and returns the
-    working topic directory path. This path is located in the temp directory
+    """ Returns the absolute path to the parent directory of the file `element`
+    is part of.
     """
 
     topic = getTopicOfElement(element)
@@ -550,9 +501,7 @@ def getTopicDir(element):
 
 def writeXMLFile(xmlroot, filePath):
 
-    """
-    Formats `xmlroot` and then writes it to `filePath` (UTF8 encoded)
-    """
+    """ Formats `xmlroot` and then writes it to `filePath` (UTF8 encoded) """
 
     xmlPrettyText = xmlPrettify(xmlroot)
     with open(filePath, "wb") as f:
@@ -561,16 +510,13 @@ def writeXMLFile(xmlroot, filePath):
 
 def _addAttribute(element, xmlroot):
 
-    """
-    Helper function for `addElement`. Handles the addition of an attribute.
+    """ Helper function for `addElement`. Handles the addition of an attribute.
     """
 
     newParent = element.containingObject
 
     # parent element of the attribute how it should be
     newParentEt = newParent.getEtElement(ET.Element(newParent.xmlName, {}))
-    logger.debug("=========\nnew parent generated:\n{}\n=========".format(
-            ET.tostring(newParentEt)))
 
     # parent element of the attribute as is in the file, and ignore the new
     # attribute if the element is searched by its attributes
@@ -590,9 +536,7 @@ def _addAttribute(element, xmlroot):
 
 def _addElement(element, xmlroot):
 
-    """
-    Helper function for `addElement`. Adds a new element inside xmlroot.
-    """
+    """ Helper function for `addElement`. Adds a new element inside xmlroot. """
 
     # parent element read from file
     etParent = getParentElement(element, xmlroot)
@@ -607,8 +551,7 @@ def _addElement(element, xmlroot):
 
 def _createViewpoint(element, topicPath):
 
-    """
-    Helper function for `addElement`. Adds a new viewpoint file with the
+    """ Helper function for `addElement`. Adds a new viewpoint file with the
     contents of `element.viewpoint`.
     """
 
@@ -631,9 +574,10 @@ def _createViewpoint(element, topicPath):
 
 def _createMarkup(element, topicPath):
 
-    """
-    Helper function for `addElement`.
-    For the markup `element` create a new topic folder and the markup.bcf file.
+    """ Helper function for `addElement`.
+
+    Create a new folder `topicPath` for to place a new markup.bcf file, with
+    the serialized contents of `element` in it.
     If already viewpoints are referenced then also create the new viewpoint
     files.
     """
@@ -690,7 +634,8 @@ def _createProject(element, workDir):
 
 def addElement(element):
 
-    """
+    """ Adds a new element to the correct file in the working directory.
+
     In this context an element can be a simple or complex xml element as well as
     just an attribute of an element that was added to the datamodel and shall
     now be added to the file as well.
@@ -709,10 +654,8 @@ def addElement(element):
     """
 
     addToProject = False
-    logger.debug("Starting to add element {}".format(element))
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
-    logger.debug("Filename: {}".format(fileName))
     if not fileName:
         raise ValueError("{} is not applicable to be added to anyone"\
             "file".format(element.xmlName))
@@ -724,7 +667,6 @@ def addElement(element):
                 " is not supported")
 
     bcfPath = util.getBcfDir()
-    logger.debug("BCF dir: {}".format(bcfPath))
     topicPath = ""
     if not addToProject:
         topicDir = getTopicDir(element)
@@ -775,33 +717,31 @@ def addElement(element):
 
 def deleteXMLIdentifiableElement(element, xmlroot):
 
-    """
-    Deletes an element that can be identified by an id.
+    """ Deletes an element that can be identified by an xmlId (i.e.: it has a
+    GUId).
+
     Returns the updated xmlroot
     """
 
     elemId = element.xmlId
     etElem = getEtElementById(elemId, element.xmlName, xmlroot)
-    logger.debug("{} corresponds to ETElement {}".format(element, etElem))
 
     etParent = getParentElement(element, xmlroot)
-    logger.debug("parent of {} is {}".format(etElem, etParent))
 
     etParent.remove(etElem)
-    logger.debug("removed {} from {}".format(etElem, etParent))
 
     return xmlroot
 
 
 def deleteElement(element):
 
-    """
+    """ Deletes `element` from the correct file in the working directory.
+
     Viewpoint files are only deleted if they are flagged with the state DELETED
     and their accompanying viewpoint references are also deleted.
     """
 
     elementHierarchy = element.getHierarchyList()
-    logger.debug("Hierarchy of element {}".format(elementHierarchy))
 
     logger.debug("Deleting element {}".format(element))
     # filename in which `element` will be found
@@ -821,15 +761,11 @@ def deleteElement(element):
 
     # if identifiable then search for the guid using xmlpath.
     if issubclass(type(element), iI.XMLIdentifiable):
-        logger.debug("{} inherits from XMLIdentifiable -> deleting by"\
-                " Id".format(element))
         deleteXMLIdentifiableElement(element, xmlroot)
 
         if isinstance(element, m.ViewpointReference):
             if element.viewpoint.state == iS.State.States.DELETED:
                 vpElem = element.viewpoint
-                logger.debug("with viewpoint reference also the viewpoint {}"\
-                        " gets deleted".format(vpElem))
 
                 vpFile = getFileOfElement(vpElem)
                 if not vpFile:
@@ -845,22 +781,15 @@ def deleteElement(element):
         parentElem = element.containingObject
         parentEtElem = getEtElementFromFile(xmlroot, parentElem, [])
 
-        logger.debug("Deleting {} from {}".format(element, parentEtElem))
-        logger.debug("Available attributes in {} are: {}".format(parentEtElem,
-            list(parentEtElem.keys())))
         del parentEtElem.attrib[element.xmlName]
 
     # otherwise employ getEtElementFromFile to get the right element
     else:
-        logger.debug("{} does not inherit from XMLIdentifiable".format(element))
-
         fileEtElement = getEtElementFromFile(xmlroot, element, [])
         parentEtElement = getParentElement(element, xmlroot)
         #parentEtElement = getEtElementFromFile(xmlroot,
                 #element.containingObject, [])
 
-        logger.debug("Element {}\ncorresponds to {}\nin file, and has parent"\
-                " {}".format(element, fileEtElement, parentEtElement))
         parentEtElement.remove(fileEtElement)
 
     writeXMLFile(xmlroot, filePath)
@@ -869,11 +798,12 @@ def deleteElement(element):
 
 def modifyElement(element, previousValue):
 
-    """
-    Modifies the xml node corresponding to `element`. `element` has to be of
-    type Attribute or SimpleElement. Other elements (e.g. comments, viewpoints,
-    etc.) must not be of state modified since the modification is inside an
-    child-member.
+    """ Updates the xml node corresponding to `element` in the correct file in
+    the working directory.
+
+    `element` has to be of type Attribute or SimpleElement. Other elements
+    (e.g. comments, viewpoints, etc.) must not be of state modified since the
+    modification is inside an child-member.
     """
 
     if not (issubclass(type(element), p.SimpleElement) or
@@ -916,8 +846,7 @@ def modifyElement(element, previousValue):
 
 def addProjectUpdate(project: p.Project, element, prevVal):
 
-    """
-    Adds `project`, `element` and `prevVal` as tuple to `projectUpdates` iff
+    """ Adds `project`, `element` and `prevVal` as tuple to `projectUpdates` iff
     `element` actually has changed since the last read/write.
     """
 
@@ -946,27 +875,22 @@ def addProjectUpdate(project: p.Project, element, prevVal):
 
 def writeHandlerErrMsg(msg, err):
 
-    """
-    writes an error message to stderr and prints a debug message
-    """
+    """ Writes `msg` and `err` to the error log. """
 
-    logger.debug(msg)
-    logger.debug(str(err))
     logger.error(str(err))
-    raise err
     logger.error(msg)
 
 
 def handleAddElement(element, oldVal):
 
-    """
+    """ Wrapper for `addElement()` that handles raised exceptions.
+
     Calls `addElement` on `element` and handles the errors that might be raised.
     Every error is printed to dbg output and stderr. If an error is catched then
     `False` is returned to indicate that the update was not successful. In case
     of a successful update `True` is returned.
     """
 
-    logger.debug("Start of add handler")
     try:
         addElement(element)
     except (RuntimeWarning, ValueError, NotImplementedError) as err:
@@ -988,7 +912,8 @@ def handleAddElement(element, oldVal):
 
 def handleDeleteElement(element, oldVal):
 
-    """
+    """ Wrapper for `deleteElement()` that handles raised exceptions.
+
     Calls `deleteElement` on `element` and handles the errors that might be raised.
     Every error is printed to dbg output and stderr. If an error is catched then
     `False` is returned to indicate that the update was not successful. In case
@@ -997,26 +922,28 @@ def handleDeleteElement(element, oldVal):
 
     try:
         elementHierarchy = element.getHierarchyList()
-        logger.debug("Hierarchy of element {}".format(elementHierarchy))
-
         deleteElement(element)
+
     except ValueError as err:
         msg = ("Element {} could not be deleted. Reverting to previous "\
                 "state".format(element))
         writeHandlerErrMsg(msg, err)
         return False
+
     except Exception as exc:
         msg = "An unknown excption occured while adding"\
             " {}".format(element)
         writeHandlerErrMsg(msg, exc)
         return False
+
     else:
         return True
 
 
 def handleModifyElement(element, prevVal):
 
-    """
+    """ Wrapper for `modifyElement()` that handles raised exceptions.
+
     Calls `modifyElement` on `element` and handles the errors that might be raised.
     Every error is printed to dbg output and stderr. If an error is catched then
     `False` is returned to indicate that the update was not successful. In case
@@ -1041,15 +968,8 @@ def handleModifyElement(element, prevVal):
 
 def updateProjectSnapshots(newUpdates):
 
-    """
-    Adds the project copies to `projectSnapshots`, but preserves its length of
-    `SNAPSHOT_CNT` elements.
-    If the list `newUpdates` is longer than five elements all elements of
-    `projectSnapshots` are replaced with the last `SNAPSHOT_CNT` elements of
-    `newUpdates`. Otherwise the contents of `projectSnapshots` are shifted by
-    `len(newUpdates)` (i.e.: the `len(newUpdates)` oldest elements are deleted)
-    and the contents of newUpdates are pasted.
-    """
+    """ Adds the elements of processed updates (`newUpdates`) to the snapshot
+    deque. """
 
     for newUpdate in newUpdates:
         projectSnapshots.append(newUpdate)
@@ -1057,9 +977,7 @@ def updateProjectSnapshots(newUpdates):
 
 def updateProjectUpdates(successfullyProcessed):
 
-    """
-    Remove all elements in `successfullyProcessed` from `projectUpdates`
-    """
+    """ Remove all elements in `successfullyProcessed` from `projectUpdates` """
 
     global projectUpdates
 
@@ -1069,11 +987,11 @@ def updateProjectUpdates(successfullyProcessed):
 
 def processProjectUpdates():
 
-    """
-    Process to process all updates stored in `projectUpdates`. The updates are
-    processed in chronological order in a loop. If one update fails the
-    processing is stopped. Every update that was processed in a successful
-    manner is added to the `processedUpdates`.
+    """ Process all updates stored in `projectUpdates`.
+
+    The updates are processed in chronological order in a loop. If one update
+    fails the processing is stopped. Every update that was processed in a
+    successful manner is added to the `processedUpdates`.
 
     If all updates were processed successfully then `None` is returned.
     Otherwise the failed update will be returned.
@@ -1081,7 +999,6 @@ def processProjectUpdates():
 
     global projectUpdates
 
-    logger.debug("length of project updates: {}".format(len(projectUpdates)))
     # list of all updates that were successfully processed
     processedUpdates = list()
     # holds the update that failed to be able to revert back

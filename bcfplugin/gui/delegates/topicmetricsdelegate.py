@@ -51,6 +51,12 @@ class TopicMetricsDelegate(QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
 
+        """ Creates an QLineEdit object and returns it as editor to the view.
+
+        The QLineEdit is supplied with a validator object if the editor shall
+        be created for dueDate field.
+        """
+
         modAuthor = ""
         if util.isAuthorSet():
             modAuthor = util.getAuthor()

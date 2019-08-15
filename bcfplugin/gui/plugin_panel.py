@@ -56,6 +56,8 @@ class BCFPluginPanel:
 
     def getMainWindow():
 
+        """ Retrieves the global main window reference from Qt. """
+
         mainWindow = None
         topLvl = QApplication.topLevelWidgets()
         for widget in topLvl:
@@ -95,6 +97,8 @@ class BCFPluginPanel:
 
 
     def close(self):
+
+        """ Calls the plugins closeEvent function. """
 
         self.form.closeEvent(None)
 

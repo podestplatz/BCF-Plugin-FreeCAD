@@ -29,16 +29,16 @@ from bcfplugin.rdwr.interfaces.identifiable import Identifiable, XMLIdentifiable
 
 
 class BitmapFormat(Enum):
+
+    """ Defines the two formats a bitmap might assume """
+
     JPG = 1
     PNG = 2
 
 
 class Bitmap(Hierarchy, State, XMLName):
 
-    """
-    Represents a bitmap, to which the according file is stored inside the
-    topic folder
-    """
+    """ Represents the XML type visinfo.xsd:Bitmap """
 
     def __init__(self,
             format: BitmapFormat,
@@ -223,7 +223,7 @@ class Camera(Hierarchy, State, XMLName):
 
 class PerspectiveCamera(Camera, XMLName):
 
-    """ """
+    """ Representing the XML type visinfo.xsd:PerspectiveCamera """
 
     def __init__(self,
             viewPoint: Point,
@@ -287,7 +287,7 @@ class PerspectiveCamera(Camera, XMLName):
 
 class OrthogonalCamera(Camera, XMLName):
 
-    """ """
+    """ Representing the XML type visinfo.xsd:OrthogonalCamera """
 
     def __init__(self,
             viewPoint: Point,
@@ -354,6 +354,8 @@ class OrthogonalCamera(Camera, XMLName):
 
 
 class Component(Hierarchy, State, XMLName):
+
+    """ Representing the XML type visinfo.xsd:Component """
 
     def __init__(self,
             ifcId: UUID = None,
@@ -432,6 +434,8 @@ class Component(Hierarchy, State, XMLName):
 
 class ComponentColour(Hierarchy, State, XMLName):
 
+    """ Representing the XML type visinfo.xsd:ComponentColoring """
+
     def __init__(self,
             colour: str,
             components: List[Component], # has to have at least one element
@@ -485,6 +489,8 @@ class ComponentColour(Hierarchy, State, XMLName):
 
 
 class ViewSetupHints(Hierarchy, State, XMLName):
+
+    """ Representing the XML type visinfo.xsd:ViewSetupHints """
 
     def __init__(self, openingsVisible: bool = False,
             spacesVisible: bool = False,
@@ -546,6 +552,8 @@ class ViewSetupHints(Hierarchy, State, XMLName):
 
 
 class Components(Hierarchy, State, XMLName):
+
+    """ Representing the XML type visinfo.xsd:Components """
 
     def __init__(self,
             visibilityDefault: bool,
@@ -622,6 +630,8 @@ class Components(Hierarchy, State, XMLName):
 
     def _generateComponentList(self, parent, compList):
 
+        """ Serializes `compList` and appens the new nodes to `parent` """
+
         for component in compList:
             newComponent = ET.SubElement(parent, "Component")
             newComponent = component.getEtElement(newComponent)
@@ -667,7 +677,8 @@ class Components(Hierarchy, State, XMLName):
 
 class Viewpoint(Hierarchy, State, XMLName, Identifiable, XMLIdentifiable):
 
-    """
+    """ Representing the XML type visinfo.xsd:Viewpoint
+
     Viewpoint uses the default implementation of getStateList(). Objects of type
     Viewpoint are considered non-mutable, therefore the state
     State.States.MODIFIED is invalid for Viewpoint objects. Also resulting from
@@ -764,6 +775,9 @@ class Viewpoint(Hierarchy, State, XMLName, Identifiable, XMLIdentifiable):
 
 
     def _generateListElements(self, parent, l):
+
+        """ Serializes every item in `l` and appends them to `parent` as child.
+        """
 
         for item in l:
             newElem = ET.SubElement(parent, item.xmlName)

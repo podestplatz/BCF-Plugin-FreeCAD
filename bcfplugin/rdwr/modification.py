@@ -32,16 +32,25 @@ logger = bcfplugin.createLogger(__name__)
 
 
 class ModificationType(Enum):
+
+    """ Enum defining the two types of modifications: creation and
+    modification.
+
+    This is used for the ModificationAuthor and ModificationDate classes, to
+    let them represent both Author and Modified Author and Date and Modified
+    Date types.
+    """
+
     CREATION = 1
     MODIFICATION = 2
 
+
 class ModificationAuthor(p.SimpleElement):
 
-    """ Holds the value of an `Author` xml element.
+    """ Represents the XML type markup.xsd:UserIdType.
 
-    This class represents two kinds of xml elements. CreationAuthor and
-    ModifiedAuthor. To report the correct name a differentiation at creation is
-    done and self.name properly set.
+    But this class is also used to discern between the XML nodes "Author" and
+    "ModifiedAuthor".
     """
 
     def __init__(self,
@@ -76,7 +85,6 @@ class ModificationAuthor(p.SimpleElement):
 
     @author.setter
     def author(self, newVal):
-        logger.debug("set author to {}".format(newVal))
         if not isinstance(newVal, str):
             raise ValueError("Author has to be of type string, current type"\
                     " {}".format(type(newVal)))
@@ -98,11 +106,10 @@ class ModificationAuthor(p.SimpleElement):
 
 class ModificationDate(p.SimpleElement):
 
-    """ Holds the value of an `Date` xml element.
+    """ Represents the XML type datetime.
 
-    This class represents two kinds of xml elements. CreationDate and
-    ModifiedDate. To report the correct name a differentiation at creation is
-    done and self.name properly set.
+    But this class is also used to discern between the XML nodes "Date" and
+    "ModifiedDate".
     """
 
     def __init__(self,
@@ -123,6 +130,11 @@ class ModificationDate(p.SimpleElement):
 
 
     def __str__(self):
+
+        """ Returns a string representation of the set datetime.
+
+        The format is YYYY-MM-DD hh:mm
+        """
 
         ret_str = ""
         if self.value is not None:
@@ -151,7 +163,6 @@ class ModificationDate(p.SimpleElement):
 
     @date.setter
     def date(self, newVal):
-        logger.debug("set date to {}".format(newVal))
         if not isinstance(newVal, datetime):
             raise ValueError("Date has to be of type datetime, current type"\
                     " {}".format(type(newVal)))
