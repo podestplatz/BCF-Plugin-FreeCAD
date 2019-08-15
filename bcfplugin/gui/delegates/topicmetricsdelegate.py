@@ -82,4 +82,4 @@ class TopicMetricsDelegate(QStyledItemDelegate):
         value = (text, util.getAuthor())
         success = model.setData(index, value)
         if not success:
-            util.showError("The value could not be updated.")
+            logger.error("The value could not be updated.")

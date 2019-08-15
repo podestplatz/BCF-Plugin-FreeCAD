@@ -154,7 +154,7 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
 
         # guid is optional in DocumentReference
         defaultValue = self._guid.defaultValue
-        if self.guid != defaultValue:
+        if self.guid != defaultValue and not self.guid is None:
             elem.attrib["Guid"] = str(self.guid)
 
         defaultValue = self._external.defaultValue
