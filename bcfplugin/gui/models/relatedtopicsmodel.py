@@ -33,6 +33,8 @@ logger = bcfplugin.createLogger(__name__)
 
 class RelatedTopicsModel(QAbstractListModel):
 
+    """ Model managing data behind the related topics list in topic metrics
+    dialog. """
 
     def __init__(self, parent = None):
 
@@ -40,7 +42,10 @@ class RelatedTopicsModel(QAbstractListModel):
         # holds a list of all topic objects referenced by the "relatedTopics"
         # list inside the current topic object `topic`
         self.relTopics = list()
+        """ List of instances of `Topic` that are specified as related to
+        `self.topic` """
         self.topic = None
+        """ Current topic to which the related topics shall be displayed. """
 
 
     def flags(self, index):
@@ -59,10 +64,15 @@ class RelatedTopicsModel(QAbstractListModel):
 
     def rowCount(self, parent = QModelIndex()):
 
+        """ Returns the amount of topics related to `self.topic`. """
+
         return len(self.relTopics)
 
 
     def data(self, index, role = Qt.DisplayRole):
+
+        """ Returns the title of the Nth topic (defined by `index`) related to
+        `self.topic`. """
 
         if not index.isValid():
             return None
@@ -84,9 +94,17 @@ class RelatedTopicsModel(QAbstractListModel):
     @Slot()
     def resetItems(self, topic = None):
 
+        """ Either resets the internal state or retrieves related topics to
+        `topic`.
+
+        If `topic is None` the internal list `self.relTopics` is deleted.
+        Otherwise a list of related topics to `topic` is constructed.
+        """
+
         self.beginResetModel()
 
         if topic is None:
+            del self.relTopics
             self.relTopics = list()
             self.topic = None
 
@@ -98,6 +116,14 @@ class RelatedTopicsModel(QAbstractListModel):
 
 
     def createRelatedTopicsList(self, topic):
+
+        """ Compiles a list of `Topic` instances based on a list of UUIDs.
+
+        An instance of `Topic` has a list of UUIDs, each specifying one related
+        topic. This function now searches in the data model for each of these
+        UUIDs and stores a reference to the corresponding `Topic` instance in
+        `relatedTopics` and returns the result.
+        """
 
         if topic is None:
             return False

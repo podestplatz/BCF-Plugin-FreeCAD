@@ -50,20 +50,38 @@ class AdditionalDocumentsModel(QAbstractTableModel):
 
         QAbstractTableModel.__init__(self, parent)
         self.topic = None
+        """ Currently set topic. """
         self.documents = []
+        """ List of documents that are to be displayed. """
 
 
     def rowCount(self, parent = QModelIndex()):
+
+        """ Returns the number of documents to be displayed. """
 
         return len(self.documents)
 
 
     def columnCount(self, parent = QModelIndex()):
 
+        """ Returns the amount of columns needed.
+
+        Two columns are needed. One for the name of the document and one for
+        the path.
+        """
+
         return 2 # external, description, reference
 
 
     def data(self, index, role = Qt.DisplayRole):
+
+        """ Returns the either the path or the name of one the document depending
+        on `index`.
+
+        Special documents, ones whose path exists on the local system, will be
+        colored as link. Documents not to be found on the system will be
+        colored in the default text color.
+        """
 
         if not index.isValid():
             return None
@@ -90,6 +108,8 @@ class AdditionalDocumentsModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role = Qt.DisplayRole):
 
+        """ Defines the two values for the horizontal header. """
+
         if role != Qt.DisplayRole:
             return None
 
@@ -106,6 +126,13 @@ class AdditionalDocumentsModel(QAbstractTableModel):
     @Slot()
     def resetItems(self, topic = None):
 
+        """ Either deletes the internal list of documents or retrieves a new
+        one from `topic`.
+
+        If `topic is None` then the list of documents will be deleted.
+        Otherwise the list of associated documents to that topic is retrieved.
+        """
+
         self.beginResetModel()
 
         if topic is None:
@@ -121,10 +148,20 @@ class AdditionalDocumentsModel(QAbstractTableModel):
 
     def createDocumentsList(self, topic):
 
+        """ Just creates an internal reference to `topic.docRefs`. """
+
         self.documents = topic.docRefs
 
 
     def getFilePath(self, index):
+
+        """ Construct the file path of the document on `index`.
+
+        Here a distinction between external and internal documents is made. For
+        documents marked as internal the path to the working directory is
+        prepended to the document's path. Otherwise the path is assumed to be
+        absolute. The resulting path is to be returned.
+        """
 
         global bcfDir
 
