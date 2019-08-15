@@ -30,6 +30,14 @@ def createNotificationLabel():
     return lbl
 
 
+def hideNotificationHandler(self):
+
+    """ Handler for the notification timer hiding the label again. """
+
+    if self.notificationLabel is not None:
+        self.notificationLabel.hide()
+
+
 def showNotification(self, text):
 
     """ Shows a notification with content `text` in `notificationLabel` of
@@ -43,9 +51,11 @@ def showNotification(self, text):
     if (not hasattr(self, "notificationTimer") and
             self.notificationLabel is not None):
         self.notificationTimer = QTimer()
+        self.notificationTimer.setSingleShot(True)
         self.notificationTimer.timeout.connect(lambda:
-                self.notificationLabel.hide())
-    self.notificationTimer.start(2500)
+                hideNotificationHandler(self))
+        self.notificationTimer.start(2500)
+
 
 __all__ = ["createNotificationLabel", "showNotification", "openAuthorsDialog",
         "TopicMetricsDialog", "TopicAddDialog", "ProjectCreateDialog",

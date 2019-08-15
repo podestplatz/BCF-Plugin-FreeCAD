@@ -29,7 +29,8 @@ from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
         QDir, QPoint, QSize, QTimer)
 
 import bcfplugin
-from bcfplugin.gui.views import openAuthorsDialog, createNotificationLabel
+from bcfplugin.gui.views import (openAuthorsDialog, createNotificationLabel,
+        showNotification)
 
 logger = bcfplugin.createLogger(__name__)
 
@@ -66,7 +67,7 @@ class TopicMetricsDialog(QDialog):
         self.addDocTable.setModel(parent.addDocumentsModel)
         self.setMinVertTableSize(self.addDocTable)
         self.addDocTable.doubleClicked.connect(self.openDocRef)
-        self.addDocTable.clicked.connect(self.showDoubleClickHint)
+        self.addDocTable.pressed.connect(self.showDoubleClickHint)
         self.addDocGroupLayout.addWidget(self.addDocTable)
         if parent.addDocumentsModel.rowCount() == 0:
             self.addDocTable.hide()
@@ -104,6 +105,10 @@ class TopicMetricsDialog(QDialog):
 
         filePath = index.model().getFilePath(index)
         if index.column() == 0:
+            if not os.path.exists(filePath):
+                showNotification(self, "File does not exist locally. Cannot"\
+                        " be opened")
+                return
             if filePath is not None:
                 system = platform.system()
                 if system == "Darwin": # this my dear friend is macOS
@@ -122,8 +127,10 @@ class TopicMetricsDialog(QDialog):
 
         """ Shows a notification, informing about the double click behavior. """
 
+        filePath = index.model().getFilePath(index)
         if index.column() == 0:
-            showNotification(self, "Double click to open document.")
+            if os.path.exists(filePath):
+                showNotification(self, "Double click to open document.")
         elif index.column() == 1:
             showNotification(self, "Double click to copy path.")
 
