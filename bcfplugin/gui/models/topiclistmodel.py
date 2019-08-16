@@ -16,6 +16,16 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+Provides the topicListModel providing the Topiclist with topic names to
+display.
+"""
+
 import logging
 
 from PySide2.QtWidgets import *

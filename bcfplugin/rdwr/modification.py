@@ -16,6 +16,19 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides two classes, one used to represent an author value, the
+other one used to represent a date value.
+Each of those classes can be used to represent an Author/CreationAuthor node as
+well as a ModifiedAuthor node respectively a Date/CreationDate as well as
+ModifiedDate node of the markup.bcf file.
+"""
+
 import logging
 
 import bcfplugin

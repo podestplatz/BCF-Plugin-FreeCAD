@@ -16,6 +16,19 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+util provides the plugin with some miscellaneous functions that are needed in
+multiple places. Its main purpose, however is to store the paths of the
+temporary directory, the directory into which the current project was being
+extracted to, the file that serves as log file and the file in which the E-Mail
+of the author is stored.
+"""
+
 import os
 import sys
 import urllib.request

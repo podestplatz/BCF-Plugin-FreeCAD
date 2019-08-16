@@ -16,6 +16,17 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides the dialog window, that shows up when the user wants to
+modify/add a comment or topic. Its purpose is to request the E-Mail address of
+the user and store it in a temporary file in the working directory.
+"""
+
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)

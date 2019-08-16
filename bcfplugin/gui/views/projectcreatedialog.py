@@ -16,6 +16,17 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+Provides the project create dialog. This dialog is invoked when a new project
+shall be created. Its only responsibility is to request the name of the
+project in order for it to be able to be created.
+"""
+
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,

@@ -16,6 +16,16 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides classes that are necessary to represent the contents of a
+Topic node inside a markup.bcf file.
+"""
+
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from typing import List

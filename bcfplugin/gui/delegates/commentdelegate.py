@@ -16,6 +16,22 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides the CommentDelegate. This delegate is responsible for two
+things:
+    - drawing the comments in a custom fashion
+    - pushing changes of a comment to the comment model.
+
+The values gotten from, and pushed to the comment model are tuples of three
+values with the following type signature:
+    (str, str, date)
+"""
+
 import logging
 from copy import copy
 

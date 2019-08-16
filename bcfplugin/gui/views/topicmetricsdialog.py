@@ -16,6 +16,17 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides the topic metrics dialog. It is responsible for displaying
+the data directly associated with a topic (i.e.: the values of the members of a
+member of an instance of Topic).
+"""
+
 import os
 import sys
 import logging

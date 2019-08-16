@@ -16,6 +16,26 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides a logging handler for the logging framework of python. Its
+purpose is to write the five different kinds of logging messages to their
+appropriate counterparts in FreeCAD's Console framework.
+Following the mapping is depicted:
+            _____
+ Message Type/|\FreeCAD Console Sink
+-------------|||---------------------
+ Debug       \|/PrintLog
+ Info         | PrintMessage
+ Warning      | PrintWarning
+ Error        | PrintError
+ Critical     | PrintError
+"""
+
 import logging
 from logging import Handler
 

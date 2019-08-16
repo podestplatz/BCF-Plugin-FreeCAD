@@ -16,6 +16,17 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides the view part of the comment list. This list has the
+speciality of letting a button appear over the list item the mouse is currently
+hovering over. Its model counter part is the CommentModel.
+"""
+
 import logging
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *

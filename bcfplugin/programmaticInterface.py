@@ -16,6 +16,27 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+The programmaticInterface is like the brain of the whole plugin. It is were
+everything from the frontend comes together and gets distributed to the
+backend.
+It fulfills two purposes:
+    - providing an interface for controlling the plugin over the CLI
+    - providing a library for the GUI part of the plugin, to access the data
+      model.
+
+Every function in here operates on `curProject`, which is the active instance
+of the data model. No object of the data model is passes to the frontend,
+rather for every retrieve operation a deepcopy of the result is created. This
+ensures that the programmaticInterface remains in full control of the data
+model at every point in time.
+"""
+
 import os
 import re
 import sys

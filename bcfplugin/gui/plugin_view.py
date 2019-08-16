@@ -16,6 +16,21 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file contains the class subclassing QWidget which serves as main window of
+the plugin. It therefore is responsible for interacting with the user and
+controlling the user interface.
+
+Every model used as part of the main window implements `resetItems()` which is
+used to reset the internal state of the model in wake of changes like a new
+topic being opened, etc.
+"""
+
 import os
 import sys
 import logging

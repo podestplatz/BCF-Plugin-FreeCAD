@@ -16,6 +16,18 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+BCFPlugin.py is responsible for initializing the plugin in both modes: GUI and
+non-GUI mode. The plugin assumes that it is running in FreeCAD.
+
+The main function, and entry point into this file, is `start()`.
+"""
+
 import sys
 import bcfplugin.util as util
 from bcfplugin import FREECAD, GUI

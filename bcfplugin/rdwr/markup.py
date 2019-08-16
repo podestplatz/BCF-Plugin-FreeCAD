@@ -16,6 +16,16 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides classes used to represent the contents of a markup node.
+Markups also build the second step down the hierarchy in the data model.
+"""
+
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from uuid import UUID

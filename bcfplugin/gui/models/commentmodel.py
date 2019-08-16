@@ -16,6 +16,17 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides the CommentModel. It provides the CommentList with a tuple
+of three values per every row. For a description of these three values please
+see the documentation below.
+"""
+
 import os
 import copy
 import logging

@@ -16,6 +16,22 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+The writer.py file is responsible for writing changes in the data model to the
+XML files in the working directory. It therefore applies an update approach to
+writing. In that sense every change of some integral value (text of a simple
+xml node or value of an attribute) will be written in a separate update to
+file.
+
+The main functions of this file are `processProjectUpdates()` and
+`addProjectUpdate()`. These build the interface to the outside world.
+"""
+
 import os
 import io # used for writing files in utf8
 import sys

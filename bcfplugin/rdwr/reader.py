@@ -16,6 +16,20 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+The reader file is responsible for extracting the contents of a BCF file to a
+temporary directory and subsequently reading the contents of all files in an
+building a instance of the data model out of it.
+
+The main function of this file is therefore `readBcfFile()`. There should be no
+need for any other function to be called from the outside.
+"""
+
 import sys
 import os
 import dateutil.parser
@@ -25,9 +39,6 @@ from xmlschema import XMLSchema
 from uuid import UUID
 from typing import List, Dict
 
-if __name__ == "__main__":
-    sys.path.insert(0, "../")
-    print(sys.path)
 import bcfplugin
 import bcfplugin.util as util
 from bcfplugin.rdwr.project import Project

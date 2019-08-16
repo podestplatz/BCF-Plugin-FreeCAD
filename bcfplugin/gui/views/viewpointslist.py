@@ -16,6 +16,17 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides the view component of the ViewpointsList. It lists the
+viewpoints with their filenames and an icon of the snapshot associated with it.
+The model counterpart to this view is the ViewpointsModel.
+"""
+
 import logging
 from PySide2.QtWidgets import QListView, QLabel, QPushButton
 from PySide2.QtCore import Signal, QSize, Slot, QModelIndex

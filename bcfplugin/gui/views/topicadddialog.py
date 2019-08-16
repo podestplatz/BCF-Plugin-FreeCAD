@@ -16,6 +16,16 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides the topic add dialog. It is responsible for gathering the
+necessary data to add a topic to the currently open project.
+"""
+
 import datetime
 from uuid import uuid4
 
