@@ -150,6 +150,7 @@ def saveProject(dstFile):
 
     """ Save the current state of the working directory to `dstfile` """
 
+    logger.info("Saving the project to {}".format(dstFile))
     bcfRootPath = util.getBcfDir()
     writer.zipToBcfFile(bcfRootPath, dstFile)
 
@@ -164,6 +165,7 @@ def openProject(bcfFile):
 
     global curProject
 
+    logger.info("Opening {}".format(bcfFile))
     if not os.path.exists(bcfFile):
         logger.error("File {} does not exist. Please choose a valid"\
             " file!".format(bcfFile))
@@ -190,6 +192,7 @@ def closeProject():
 
     global curProject
 
+    logger.info("Closing project...")
     if util.getDirtyBit():
 
         answer = "x"
@@ -219,6 +222,7 @@ def _searchRealTopic(topic: Topic):
 
     global curProject
 
+    logger.debug("Retrieving original copy of topic: {}".format(topic.title))
     realTopic = curProject.searchObject(topic)
     if realTopic is None:
         logger.error("Topic {} could not be found in the open project."\
@@ -246,6 +250,7 @@ def openIfcFile(path: str):
 
     """ Opens an IfcFile behind path. IfcOpenShell is required! """
 
+    logger.info("Opening IFC file {} in FreeCAD".format(path))
     if not os.path.exists(path):
         logger.error("File {} could not be found. Please supply a path that"\
                 "exists")
@@ -272,6 +277,7 @@ def activateViewpoint(viewpoint: Viewpoint,
 
     """ Sets the camera view the model from the specified viewpoint."""
 
+    logger.info("Activating viewpoint")
     if not (GUI and FREECAD):
         logger.error("Application is running either not inside FreeCAD or without"\
                 " Gui. Thus cannot set camera position")
@@ -326,6 +332,7 @@ def resetView():
     """ Reset FreeCAD's view to the state it was prior to activating the
     first viewpoint """
 
+    logger.info("Resetting view to original state")
     if not (GUI and FREECAD):
         logger.error("Application is running either not inside FreeCAD or without"\
                 " GUI. Thus cannot set camera position")
@@ -367,6 +374,7 @@ def copyFileToProject(path: str, destName: str = "", topic: Topic = None):
 
     global curProject
 
+    logger.info("Copying file {} into the project".format(path))
     if not os.path.exists(path):
         logger.error("File `{}` does not exist. Nothing is beeing copied.")
         return OperationResults.FAILURE
@@ -407,6 +415,8 @@ def setModDateAuthor(element, author="", addUpdate=True):
 
     """ Update the modAuthor and modDate members of element """
 
+    logger.debug("Updating ModifiedDate and ModifiedAuthor in"\
+            " {}".format(element))
     # timestamp used as modification datetime
     modDate = utc.localize(datetime.datetime.now())
 
@@ -452,6 +462,7 @@ def getTopics():
     an index are shown as last elements.
     """
 
+    logger.debug("Retrieving list of topics in the project")
     if not isProjectOpen():
         return OperationResults.FAILURE
 
@@ -493,6 +504,7 @@ def getComments(topic: Topic, viewpoint: Viewpoint = None):
 
     global curProject
 
+    logger.debug("Retrieving comments to topic {}".format(topic.title))
     if not isProjectOpen():
         return OperationResults.FAILURE
 
@@ -523,6 +535,7 @@ def getViewpoints(topic: Topic, realViewpoint = True):
 
     global curProject
 
+    logger.debug("Retrieving viewpoints to topic {}".format(topic.title))
     if not isProjectOpen():
         return OperationResults.FAILURE
 
@@ -556,6 +569,7 @@ def getSnapshots(topic: Topic):
     joined with the path to the working directory.
     """
 
+    logger.debug("Retrieving snapshots for topic {}".format(topic.title))
     if not isProjectOpen():
         return OperationResults.FAILURE
 
@@ -582,6 +596,8 @@ def getRelevantIfcFiles(topic: Topic):
 
     global curProject
 
+    logger.debug("Retrieving list of relevant IFC files for topic"\
+            " {}".format(topic.title))
     if not isProjectOpen():
         return OperationResults.FAILURE
 
@@ -611,6 +627,8 @@ def getAdditionalDocumentReferences(topic: Topic):
 
     global curProject
 
+    logger.debug("Retrieving list of document references to topic"\
+            " {}".format(topic.title))
     if not isProjectOpen():
         return OperationResults.FAILURE
 
@@ -634,6 +652,7 @@ def getTopic(element):
     returned.
     """
 
+    logger.debug("Retrieving topic associated to {}".format(element))
     realElement = curProject.searchObject(element)
     if realElement is None:
         logger.erroror("Element {} could not be found in the current project.")
@@ -667,6 +686,7 @@ def getTopicFromUUID(uid: UUID):
 
     global curProject
 
+    logger.debug("Searching data model for topic with UUID {}".format(uid))
     if not isProjectOpen():
         logger.error("The project is not open. Open a project before"\
                 " trying to retrieve a topic by UUID.")
@@ -699,6 +719,7 @@ def addProject(name: str, extensionSchemaUri: ""):
 
     global curProject
 
+    logger.info("Adding new project with name {}".format(name))
     newProject = p.Project(uuid4(), name, extensionSchemaUri)
     newProject.state = State.States.ADDED
 
@@ -724,6 +745,7 @@ def addViewpointToComment(comment: Comment, viewpoint: ViewpointReference, autho
 
     global curProject
     projectBackup = copy.deepcopy(curProject)
+    logger.info("Adding new viewpoint reference to comment {}".format(comment))
 
     if author == "":
         logger.info("`author` is empty. Cannot update without an author.")
@@ -776,6 +798,8 @@ def addCurrentViewpoint(topic: Topic):
 
     global curProject
     projectBackup = copy.deepcopy(curProject)
+    logger.info("Adding current view settings as viewpoint to topic"\
+            " {}".format(topic.title))
 
     if not (GUI and FREECAD):
         logger.error("Application is running either not inside FreeCAD or without"\
@@ -846,6 +870,8 @@ def addTopic(title: str, author: str, type: str = "", description = "",
 
     global curProject
     projectBackup = copy.deepcopy(curProject)
+    logger.info("Adding new topic({}) to project({})".format(title,
+        curProject.name))
 
     if not isProjectOpen():
         return OperationResults.FAILURE
@@ -886,6 +912,7 @@ def addComment(topic: Topic, text: str, author: str,
 
     global curProject
     projectBackup = copy.deepcopy(curProject)
+    logger.info("Adding comment {} to topic {}".format(text, topic.title))
 
     if not isProjectOpen():
         return OperationResults.FAILURE
@@ -934,6 +961,7 @@ def addFile(topic: Topic, ifcProject: str = "",
 
     global curProject
     projectBackup = copy.deepcopy(curProject)
+    logger.info("Adding new file({}) to topic({})".format(filename, topic.title))
 
     if not isExternal:
         if not util.doesFileExistInProject(reference):
@@ -1007,6 +1035,8 @@ def addDocumentReference(topic: Topic,
 
     global curProject
     projectBackup = copy.deepcopy(curProject)
+    logger.info("Adding new document reference({}) to topic"\
+            " {}".format(description, topic.title))
 
     if (path == "" and description == ""):
         logger.info("Not adding an empty document reference")
@@ -1066,6 +1096,7 @@ def addLabel(topic: Topic, label: str):
 
     global curProject
     projectBackup = copy.deepcopy(curProject)
+    logger.info("Adding new label({}) to topic {}".format(label, topic.title))
 
     if label == "":
         logger.info("Not adding an empty label.")
@@ -1100,6 +1131,7 @@ def deleteObject(object):
 
     global curProject
     projectBackup = copy.deepcopy(curProject)
+    logger.info("Deleting object {} from project".format(object.__class__))
 
     if not issubclass(type(object), Identifiable):
         logger.error("Cannot delete {} since it doesn't inherit from"\
@@ -1154,6 +1186,7 @@ def modifyComment(comment: Comment, newText: str, author: str):
 
     global curProject
     projectBackup = copy.deepcopy(curProject)
+    logger.info("Modifying comment({})".format(comment))
 
     if newText == "":
         logger.info("newText is empty. Deleting comment now.")
@@ -1195,6 +1228,8 @@ def modifyElement(element, author=""):
 
     global curProject
     projectBackup = copy.deepcopy(curProject)
+    logger.info("Modifying element {} in the"\
+            " project".format(element.__class__))
 
     # ---- Checks ---- #
     if not isProjectOpen():

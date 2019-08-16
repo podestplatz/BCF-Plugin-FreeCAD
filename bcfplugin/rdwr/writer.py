@@ -722,7 +722,7 @@ def addElement(element):
         filePath = os.path.join(bcfPath, fileName)
 
     logger.debug("Element is going to be added to"\
-            " {}".format(filePath.replace(bcfPath, "")))
+            " {}".format(filePath))
     if isinstance(element, p.Project):
         workDir = util.getSystemTmp()
         logger.debug("Creating new project in {}".format(workDir))
@@ -732,7 +732,7 @@ def addElement(element):
     # adds a complete new topic folder to the zip file
     if isinstance(element, m.Markup):
         logger.debug("Creating new markup file in"\
-            " {}".format(topicPath.replace(bcfPath, "")))
+            " {}".format(topicPath))
         _createMarkup(element, topicPath)
         return
 
@@ -754,7 +754,7 @@ def addElement(element):
             element.viewpoint.state == iS.State.States.ADDED):
 
         logger.debug("Creating new viewpoint file in"\
-                " {}".format(topicPath.replace(bcfPath, "")))
+                " {}".format(topicPath))
         _createViewpoint(element, topicPath)
 
     writeXMLFile(xmlroot, filePath)
@@ -806,7 +806,7 @@ def deleteElement(element):
     xmlfile = ET.parse(filePath)
     xmlroot = xmlfile.getroot()
     logger.debug("Element is going to be deleted from file"\
-            " {}".format(filePath.replace(bcfPath, "")))
+            " {}".format(filePath))
 
     # if identifiable then search for the guid using xmlpath.
     if issubclass(type(element), iI.XMLIdentifiable):
@@ -881,7 +881,7 @@ def modifyElement(element, previousValue):
     xmlfile = ET.parse(filePath)
     xmlroot = xmlfile.getroot()
     logger.debug("Modifying element in file"\
-            " {}".format(filePath.replace(bcfPath)))
+            " {}".format(filePath))
 
     # set element to old state to get more reliable matching
     newValue = element.value
