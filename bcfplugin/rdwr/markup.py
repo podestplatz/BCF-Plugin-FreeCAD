@@ -1,3 +1,31 @@
+"""
+Copyright (C) 2019 PODEST Patrick
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+"""
+
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides classes used to represent the contents of a markup node.
+Markups also build the second step down the hierarchy in the data model.
+"""
+
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from uuid import UUID
@@ -20,6 +48,8 @@ logger = bcfplugin.createLogger(__name__)
 
 
 class HeaderFile(Hierarchy, State, XMLName, Identifiable):
+
+    """ Represents the XML type markup.xsd:Header/File """
 
     def __init__(self,
             ifcProjectId: str = "",
@@ -94,6 +124,9 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
 
 
     def __str__(self):
+
+        """ Returns a string representation of the current instance. """
+
         ret_str = ("ContainingElement(\n"\
                 "isExternal: {}\n"\
                 "ifcSpatialStructureElement: {}\n"\
@@ -162,7 +195,9 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
 
         """
         Convert the contents of the object to an xml.etree.ElementTree.Element
-        representation. `element` is the object of type xml.e...Tree.Element
+        representation.
+
+        `element` is the object of type xml.e...Tree.Element
         which shall be modified and returned.
         """
 
@@ -230,17 +265,12 @@ class HeaderFile(Hierarchy, State, XMLName, Identifiable):
 
 class Header(Hierarchy, State, XMLName, Identifiable):
 
-    """
-    Represents the Header Element. It is basically just a list of HeaderFiles as
-    no attributes are defined for it.
-    """
+    """ Represents the XML type markup.xsd:Header. """
 
     def __init__(self,
                 files: List[HeaderFile] = list(),
                 containingElement = None,
                 state: State = State.States.ORIGINAL):
-
-        """ Initialization function for Header """
 
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
@@ -314,7 +344,16 @@ class Header(Hierarchy, State, XMLName, Identifiable):
 class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
         Identifiable):
 
-    """ Base class for Viewpoint. """
+    """ Represents the XML type markup.xsd:ViewPoint
+
+    Holds a reference to an instance of `viewpoint` and some metadata.
+    Metadata include:
+        - the file name
+        - a snapshot that might be associated with a viewpoint
+        - an index for ordering the viewpoint references.
+
+    It represents the XML type markup.xsd:ViewPoint
+    """
 
     def __init__(self,
             id: UUID,
@@ -383,6 +422,9 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
 
 
     def __str__(self):
+
+        """ Returns a string representation of the viewpoint reference. """
+
         ret_str = ("ViewpointReference(id='{}', file='{}', snapshot='{}',"\
                         " index='{}')").format(self.xmlId, self.file, self.snapshot,
                         self.index)
@@ -395,6 +437,9 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
 
     @file.setter
     def file(self, newVal):
+
+        """ Values of types str and Uri are accepted as new file. """
+
         if isinstance(newVal, Uri):
             self._file.value = newVal
         elif isinstance(newVal, str):
@@ -497,7 +542,7 @@ class ViewpointReference(Hierarchy, State, XMLIdentifiable, XMLName,
 
 class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
-    """ Class holding all data about a comment """
+    """ Class representing the XML type markup.bcf:Comment. """
 
     def __init__(self,
             guid: UUID,
@@ -556,9 +601,6 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         if cpy.viewpoint is not None:
             members.append(cpy.viewpoint)
 
-        logger.debug("Containing object of modAuthor = {}, self = {}".format(
-            id(self._modAuthor.containingObject), id(self)))
-
         listSetContainingElement(members, cpy)
         return cpy
 
@@ -593,6 +635,12 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
 
     def __str__(self):
+
+        """ Returns a string representation of the comment.
+
+        The string contains the comment text, its author, the date of creation
+        and the date of last modification, in that order.
+        """
 
         dateFormat = "%Y-%m-%d %X"
         ret_str = "{} -- {}, {}".format(self.comment, self.author,
@@ -635,7 +683,6 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
     @modAuthor.setter
     def modAuthor(self, newVal):
-        logger.debug("setting modAuthor to {}".format(newVal))
         self._modAuthor.author = newVal
 
     @property
@@ -716,8 +763,8 @@ class Comment(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
 
 class Markup(Hierarchy, State, XMLName, Identifiable):
 
-    """ Every topic folder has exactly one markup.bcf file. This forms the
-    starting point for the ui to get the data """
+    """ Represents both the XML type markup.bcf:Markup and the markup.bcf file
+    itself. """
 
     def __init__(self,
             topic: Topic,

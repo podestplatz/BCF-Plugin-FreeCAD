@@ -1,3 +1,36 @@
+"""
+Copyright (C) 2019 PODEST Patrick
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+"""
+
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file contains the class subclassing QWidget which serves as main window of
+the plugin. It therefore is responsible for interacting with the user and
+controlling the user interface.
+
+Every model used as part of the main window implements `resetItems()` which is
+used to reset the internal state of the model in wake of changes like a new
+topic being opened, etc.
+"""
+
 import os
 import sys
 import logging
@@ -10,12 +43,11 @@ from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
         QDir, QPoint, QSize, QTimer)
 
 import bcfplugin
-import bcfplugin.gui.plugin_model as model
-import bcfplugin.gui.plugin_delegate as delegate
 import bcfplugin.util as util
-from bcfplugin.rdwr.viewpoint import Viewpoint
-from bcfplugin.gui.views.topicadddialog import TopicAddDialog
-from bcfplugin.gui.views.projectcreatedialog import ProjectCreateDialog
+import bcfplugin.gui.models as model
+from bcfplugin.gui.models import *
+from bcfplugin.gui.views import *
+from bcfplugin.gui.delegates import *
 
 
 logger = bcfplugin.createLogger(__name__)
@@ -30,384 +62,6 @@ def tr(self, text):
     """ Placeholder for the Qt translate function. """
 
     return self.tr(text)
-
-
-def createNotificationLabel():
-
-    """ Creates a label intended to show raw text notifications. """
-
-    lbl = QLabel()
-    lbl.hide()
-
-    return lbl
-
-
-def showNotification(self, text):
-
-    """ Shows a notification with content `text` in `notificationLabel` of
-    `self`.
-
-    The label is shown for 2 1/2 seconds and then it is hidden again.
-    """
-
-    self.notificationLabel.setText(text)
-    self.notificationLabel.show()
-    if not hasattr(self, "notificationTimer"):
-        self.notificationTimer = QTimer()
-        self.notificationTimer.timeout.connect(lambda:
-                self.notificationLabel.hide())
-    self.notificationTimer.start(2500)
-
-
-class CommentView(QListView):
-
-    """ View showing comment to the user.
-
-    The comment elements are drawn by the CommentDelegate. This class mainly
-    maintains the delete button that appears over the "mouse hovered" comment.
-    It also emits the event where a comment referencing a viewpoint is selected.
-    At all times at most one delete button will be shown/drawn.
-    """
-
-    specialCommentSelected = Signal((Viewpoint))
-    """ Emitted when a comment, referencing a viewpoint is selected. """
-
-
-    def __init__(self, parent = None):
-
-        QListView.__init__(self, parent)
-        self.setMouseTracking(True)
-        self.lastEnteredIndex = None
-        """ Index of the list item over whose are the mouse hovered at last """
-        self.entered.connect(self.mouseEntered)
-        self.delBtn = None
-        """ Reference to the delete button. """
-
-        # create editor for a double left click on a comment
-        self.doubleClicked.connect(lambda idx: self.commentList.edit(idx))
-
-
-    @Slot()
-    def mouseEntered(self, index):
-
-        """ Display a delete button if the mouse hovers over a comment.
-
-        The button is then wired to a dynamically created clicked handler. This
-        handler will be passed the index of the hovered over element as
-        parameter. """
-
-        if self.delBtn is not None:
-            self.deleteDelBtn()
-
-        options = QStyleOptionViewItem()
-        options.initFrom(self)
-
-        btnText = self.tr("Delete")
-        deleteButton = QPushButton(self)
-        deleteButton.setText(btnText)
-        deleteButton.clicked.connect(lambda: self.deleteElement(index))
-
-        buttonFont = deleteButton.font()
-        fontMetric = QFontMetrics(buttonFont)
-        btnMinSize = fontMetric.boundingRect(btnText).size()
-        deleteButton.setMinimumSize(btnMinSize)
-
-        itemRect = self.rectForIndex(index)
-        x = itemRect.width() - deleteButton.geometry().width()
-        vOffset = self.verticalOffset() # scroll offset
-        y = itemRect.y() - vOffset + itemRect.height() - deleteButton.geometry().height()
-        deleteButton.move(x, y)
-
-        deleteButton.show()
-        self.delBtn = deleteButton
-
-
-    def currentChanged(self, current, previous):
-
-        """ If the current comment links to a viewpoint then select that
-        viewpoint in viewpointsList.  """
-
-        model = current.model()
-        if model is None:
-            # no topic is selected, so no comments are loaded
-            return
-
-        viewpoint = model.referencedViewpoint(current)
-        if viewpoint is not None:
-            self.specialCommentSelected.emit(viewpoint)
-
-
-    def resizeEvent(self, event):
-
-        """ Propagates the new width of the widget to the delegate """
-
-        newSize = self.size()
-        self.itemDelegate().setWidth(newSize.width())
-        QListView.resizeEvent(self, event)
-
-
-    @Slot()
-    def deleteDelBtn(self):
-
-        """ Delete the comment delete button from the view. """
-
-        if self.delBtn is not None:
-            self.delBtn.deleteLater()
-            self.delBtn = None
-
-
-    def deleteElement(self, index):
-
-        """ Handler for deleting a comment when the comment delete button was
-        pressed """
-
-        logger.debug("Deleting element at index {}".format(index.row()))
-        success = index.model().removeRow(index)
-        if success:
-            self.deleteDelBtn()
-        else:
-            util.showError("Could not delete comment.")
-
-
-class SnapshotView(QListView):
-
-    """ Custom list, showing elements horizontally and setting their size to fit
-    the window.
-
-    Elements take up equal space in the list view. If there are N elements to be
-    displayed, each one gets WIDTH/N units of the width of the view. In case of
-    resizing the new sizes are calculated automatically.
-    """
-
-    def __init__(self, parent = None):
-
-        QListView.__init__(self, parent)
-        screen = util.getCurrentQScreen()
-        ppm = screen.logicalDotsPerInch() / util.MMPI
-        """ Pixels per millimeter """
-
-        self.minIconSize = QSize(ppm * 20, ppm * 20)
-        """ Minimum size of an icon is 2x2cm. """
-
-        self.doubleClicked.connect(self.openSnapshot)
-        self.setFlow(QListView.LeftToRight)
-
-
-    def resizeEvent(self, event):
-
-        """ Recalculate the size each element is allowed to occupy. """
-
-        QListView.resizeEvent(self, event)
-
-        newSize = self.size()
-        rowCount = self.model().rowCount()
-        rowCount = rowCount if rowCount > 0 else 1
-        marginsLeftRight = (self.contentsMargins().left() +
-                self.contentsMargins().right())
-        marginsTopBottom = (self.contentsMargins().top() +
-                self.contentsMargins().bottom())
-
-        logger.debug("Margins of snapshot list: {}".format(marginsLeftRight))
-        newItemWidth = newSize.width()
-        newItemWidth -= self.spacing() * (rowCount)
-        newItemWidth -= marginsLeftRight
-        newItemWidth /= rowCount
-        newItemSize = QSize(newItemWidth, newSize.height())
-
-        # use minimum values if result is too small
-        if (newItemWidth < self.minIconSize.width()):
-            newItemSize.setWidth(self.minIconSize.width())
-        if (newItemSize.height() < self.minIconSize.height()):
-            newItemSize.setHeight(self.minIconSize.height())
-
-        self.model().setSize(newItemSize)
-        self.setIconSize(newItemSize)
-
-
-    @Slot()
-    def openSnapshot(self, idx):
-
-        """ Opens the snapshot in original resolution an a new label opened in a
-        separate window. """
-
-        img = self.model().realImage(idx)
-        lbl = QLabel(self)
-        lbl.setWindowFlags(Qt.Window)
-        lbl.setPixmap(img)
-        lbl.show()
-
-
-class ViewpointsListView(QListView):
-
-    """ Ordinary ListView, adding hooks to activate a viewpoint in the object
-    view of FreeCAD. """
-
-
-    def __init__(self, parent = None):
-
-        QListView.__init__(self, parent)
-
-
-    @Slot(Viewpoint)
-    def selectViewpoint(self, viewpoint: Viewpoint):
-
-        """ Selects the `viewpoint` in the list. """
-
-        start = self.model().createIndex(0, 0)
-        searchValue = str(viewpoint.file) + " (" + str(viewpoint.id) + ")"
-        matches = self.model().match(start, Qt.DisplayRole, searchValue)
-        if len(matches) > 0:
-            self.setCurrentIndex(matches[0])
-
-
-    @Slot(QModelIndex, QPushButton)
-    def activateViewpoint(self, index, rstBtn):
-
-        """ Activates the viewpoint given by `index` in FreeCAD's object view.
-        """
-
-        result = self.model().activateViewpoint(index)
-        if result:
-            rstBtn.show()
-
-
-    def findViewpoint(self, desired: Viewpoint):
-
-        """ Searches for the `desired` viewpoint in the model.
-
-        Returns the indes in the model if found, otherwise -1 is returned.
-        """
-
-        index = -1
-        for i in range(0, self.model().rowCount()):
-            index = self.model().createIndex(i, 0)
-            data = self.model().data(index, Qt.DisplayRole)
-
-            if str(desired.id) in data:
-                index = i
-                break
-
-        return index
-
-
-class TopicMetricsDialog(QDialog):
-
-    """ Dialog showing details to a topic.
-
-    Details include:
-        - all simple xml nodes contained in the topic node, shown as
-          Property:Value table
-        - a list of additional documents, specified in the topic node
-        - a list of related topics, specified in the topic node
-    """
-
-    def __init__(self, parent = None):
-
-        QDialog.__init__(self, parent)
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-
-        # setup table for simple xml nodes.
-        self.topicMetrics = QTableView()
-        self.topicMetrics.setModel(parent.topicDetailsModel)
-        self.setMinVertTableSize(self.topicMetrics)
-        self.topicMetrics.setItemDelegate(parent.topicDetailsDelegate)
-        self.layout.addWidget(self.topicMetrics)
-
-        # setup list showing additional documents
-        self.addDocGroup = QGroupBox()
-        self.addDocGroup.setTitle(self.addDocGroup.tr("Additional Documents"))
-        self.addDocGroupLayout = QVBoxLayout(self.addDocGroup)
-        self.addDocTable = QTableView()
-        self.addDocTable.setModel(parent.addDocumentsModel)
-        self.setMinVertTableSize(self.addDocTable)
-        self.addDocTable.doubleClicked.connect(self.openDocRef)
-        self.addDocTable.clicked.connect(self.showDoubleClickHint)
-        self.addDocGroupLayout.addWidget(self.addDocTable)
-        if parent.addDocumentsModel.rowCount() == 0:
-            self.addDocTable.hide()
-        self.layout.addWidget(self.addDocGroup)
-
-        # setup list showing related topics.
-        self.relTopGroup = QGroupBox()
-        self.relTopGroup.setTitle(self.relTopGroup.tr("Related Topics"))
-        self.relTopGroupLayout = QVBoxLayout(self.relTopGroup)
-        self.relTopList = QListView()
-        self.relTopList.setModel(parent.relTopModel)
-        self.relTopGroupLayout.addWidget(self.relTopList)
-        if parent.relTopModel.rowCount() == 0:
-            self.relTopList.hide()
-        self.layout.addWidget(self.relTopGroup)
-
-        self.notificationLabel = createNotificationLabel()
-        # add it to the main windows members because it is accessed in
-        # openDocRef()
-        self.layout.addWidget(self.notificationLabel)
-
-
-    @Slot()
-    def openDocRef(self, index):
-
-        """ Opens an additional document specified by `index` or copies the path
-        to clipboard.
-
-        The behavior is determined by the column, in which the double clicked
-        element resides. For elements in the first column it is tried to open
-        them with the default application of the platform.
-        For elements in the second column the content is copied to the
-        clipboard.
-        """
-
-        filePath = index.model().getFilePath(index)
-        if index.column() == 0:
-            if filePath is not None:
-                system = platform.system()
-                if system == "Darwin": # this my dear friend is macOS
-                    subprocess.call(["open", filePath])
-                elif system == "Windows": # ... well, MS Windows
-                    os.startfile(filePath)
-                else: # good old linux derivatives
-                    subprocess.call(["xdg-open", filePath])
-        else: # copy path to clipboard and notify the user about it
-            pyperclip.copy(index.model().data(index))
-            showNotification(self, "Copied path to clipboard.")
-
-
-    @Slot(QModelIndex)
-    def showDoubleClickHint(self, index):
-
-        """ Shows a notification, informing about the double click behavior. """
-
-        if index.column() == 0:
-            showNotification(self, "Double click to open document.")
-        elif index.column() == 1:
-            showNotification(self, "Double click to copy path.")
-
-
-    def setMinVertTableSize(self, table):
-
-        """ This function calculates the minimum vertical size the table needs
-        to display its contents without a scrollbar and sets it.
-
-        This function assumes that it is called after the model is set.
-        This code was adapted from:
-        https://stackoverflow.com/questions/42458735/how-do-i-adjust-a-qtableview-height-according-to-contents
-        """
-
-        totalHeight = 0
-        for i in range(0, table.verticalHeader().count()):
-            if not table.verticalHeader().isSectionHidden(i):
-                totalHeight += table.verticalHeader().sectionSize(i)
-
-        if not table.horizontalScrollBar().isHidden():
-            totalHeight += table.horizontalScrollBar().height()
-
-        if not table.horizontalHeader().isHidden():
-            totalHeight += table.horizontalHeader().height()
-
-        logger.info("Setting size of AddDocTable to {}".format(totalHeight))
-        table.setMinimumHeight(totalHeight)
-
 
 
 class MyMainWindow(QWidget):
@@ -438,9 +92,14 @@ class MyMainWindow(QWidget):
     """
 
     projectOpened = Signal()
+    """ Signal emitted when a BCF file (e.g. project) was opened """
 
     def __init__(self):
+
         QWidget.__init__(self, None)
+
+        self.openFilePath = ""
+        """ Path to the file that was opened last. """
 
         self.setObjectName(OBJECTNAME)
 
@@ -452,24 +111,26 @@ class MyMainWindow(QWidget):
         self.mainLayout.addWidget(self.mainSplitter)
 
         # setup/add of the project/topic section
-        self.projectGroup = self.createProjectTopicGroup()
+        self.projectGroup = self.createProjectTopicSection()
         self.mainSplitter.addWidget(self.projectGroup)
 
         # setup/add of the comment section, initially hidden
-        self.commentGroup = self.createCommentGroup()
-        self.commentGroup.hide()
-        self.mainSplitter.addWidget(self.commentGroup)
+        self.commentSection = self.createCommentSection()
+        self.commentSection.hide()
+        self.mainSplitter.addWidget(self.commentSection)
 
         # setup/add of the snapshot section, initially hidden
-        self.snapshotArea = self.createSnapshotGroup()
+        self.snapshotArea = self.createSnapshotSection()
         self.snapshotArea.hide()
         self.mainSplitter.addWidget(self.snapshotArea)
 
         # create and add a notification label for the main window
+        # it is shown at the bottom of the plugin
         self.notificationLabel = createNotificationLabel()
         self.mainLayout.addWidget(self.notificationLabel)
 
         """ Handlers for buttons associated with a topic """
+        # open a project when the "Open" button was clicked
         self.projectOpenButton.clicked.connect(self.openProjectBtnHandler)
         # after a project is opened, a project cannot be created anymore.
         self.projectOpenButton.clicked.connect(self.projectCreateButton.hide)
@@ -477,57 +138,59 @@ class MyMainWindow(QWidget):
         self.projectCreateButton.clicked.connect(self.showCreateProjectDialog)
 
         """ handlers for an opened project """
+        # reset to the original UI state for every opened project
+        self.projectOpened.connect(lambda:
+                self.setWindowTitle("{} - {}".format(self.windowTitle(),
+                    model.getProjectName())))
         self.projectOpened.connect(self.projectSaveButton.show)
         self.projectOpened.connect(self.openedProjectUiHandler)
-        # reset models for every opened project
-        self.projectOpened.connect(self.topicListModel.projectOpened)
-        self.projectOpened.connect(self.commentModel.resetItems)
+        self.projectOpened.connect(lambda: self.topicListModel.updateTopics())
         self.projectOpened.connect(self.commentList.deleteDelBtn)
+        self.projectOpened.connect(self.topicNameLbl.hide)
+        # reset the models
+        self.projectOpened.connect(self.commentModel.resetItems)
         self.projectOpened.connect(self.snapshotModel.resetItems)
         self.projectOpened.connect(self.viewpointsModel.resetItems)
         self.projectOpened.connect(self.relTopModel.resetItems)
-
-        # reset both the combobox and the stacked widget beneath to the first
-        # index for an opened project
+        # reset both the combobox and the stacked widget
         self.projectOpened.connect(lambda: self.snStack.setCurrentIndex(0))
         self.projectOpened.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
-        self.projectOpened.connect(self.hideCommentSnapshotGroup)
-        self.projectOpened.connect(self.topicNameLbl.hide)
+        self.projectOpened.connect(self.hideCommentSnapshotSection)
 
-
+        """ handlers for a newly selected topic """
+        # show the two lower sections
         self.topicListModel.selectionChanged.connect(lambda x:
-                self.showCommentSnapshotGroup())
+                self.showCommentSnapshotSection())
         self.topicListModel.selectionChanged.connect(lambda x:
                 self.newCommentEdit.setDisabled(False))
-
-        # reset ui after a topic switch, to not display any artifacts from the
-        # previous topic
-        self.topicListModel.selectionChanged.connect(self.showCommentSnapshotGroup)
-        self.topicListModel.selectionChanged.connect(self.commentModel.resetItems)
+        # remove any artifacts from the previous topic
         self.topicListModel.selectionChanged.connect(self.commentList.deleteDelBtn)
+        self.topicListModel.selectionChanged.connect(lambda topic:
+                self.topicNameLbl.setText(topic.title))
+        self.topicListModel.selectionChanged.connect(lambda: self.snStack.setCurrentIndex(0))
+        self.topicListModel.selectionChanged.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
+        # set up UI to accommodate new topic
+        self.topicListModel.selectionChanged.connect(self.topicDetailsBtn.show)
+        self.topicListModel.selectionChanged.connect(self.showCommentSnapshotSection)
+        self.topicListModel.selectionChanged.connect(lambda x:
+                self.topicNameLbl.show())
+        # tell the models about the new topic
+        self.topicListModel.selectionChanged.connect(self.commentModel.resetItems)
         self.topicListModel.selectionChanged.connect(self.snapshotModel.resetItems)
         self.topicListModel.selectionChanged.connect(self.viewpointsModel.resetItems)
-        self.topicListModel.selectionChanged.connect(self.topicDetailsBtn.show)
         self.topicListModel.selectionChanged.connect(self.topicDetailsModel.resetItems)
         self.topicListModel.selectionChanged.connect(self.addDocumentsModel.resetItems)
         self.topicListModel.selectionChanged.connect(self.relTopModel.resetItems)
-        self.topicListModel.selectionChanged.connect(lambda x:
-                self.topicNameLbl.show())
-        self.topicListModel.selectionChanged.connect(lambda topic:
-                self.topicNameLbl.setText(topic.title))
-        # reset both the combobox and the stacked widget beneath to the first
-        # index for a topic switch
-        self.topicListModel.selectionChanged.connect(lambda: self.snStack.setCurrentIndex(0))
-        self.topicListModel.selectionChanged.connect(lambda: self.snStackSwitcher.setCurrentIndex(0))
-        # connect the stacked widget with the combobox
+
+        """ Handlers for other UI actions """
+        # link combobox and stack widget
         self.snStackSwitcher.activated.connect(self.snStack.setCurrentIndex)
-        # select a viewpoint if a referncing comment is selected
+        # autoselect viewpoint for selected special comment
         self.commentList.specialCommentSelected.connect(lambda x:
                 self.snStack.setCurrentIndex(1))
         self.commentList.specialCommentSelected.connect(lambda x:
                 self.snStackSwitcher.setCurrentIndex(1))
         self.commentList.specialCommentSelected.connect(self.viewpointList.selectViewpoint)
-        # open the topic metrics window
         self.topicDetailsBtn.pressed.connect(self.showTopicMetrics)
         self.topicAddBtn.pressed.connect(self.showAddTopicForm)
         # activate a viewpoint using viewController.py
@@ -541,17 +204,32 @@ class MyMainWindow(QWidget):
 
         self.setLayout(self.mainLayout)
 
-        self.openFilePath = ""
-
 
     def setupSplitter(self):
+
+        """ Creates a QSplitter element with orientation set to vertical. """
 
         splitter = QSplitter(self)
         splitter.setOrientation(Qt.Vertical)
         return splitter
 
+    """
+    The following three create*() functions:
+        - createProjectTopicSection
+        - createCommentSection
+        - createSnapshotSection
+    all create a QFrame containing the UI elements comprising the respective
+    section. No signals are connected to any sinks here. This is reserved for
+    the init funcion to collect the connections all in one place.
+    """
 
-    def createProjectTopicGroup(self):
+    def createProjectTopicSection(self):
+
+        """ Creates a QFrame containing elements comprising the topic and
+        project section.
+
+        The margins of the layouts, that share an edge with the plugin, are set
+        to 0 to move the elements to the right and left edge respectively."""
 
         topFrame = QFrame()
         topLayout = QHBoxLayout(topFrame)
@@ -608,11 +286,10 @@ class MyMainWindow(QWidget):
         self.topicNameLbl = QLabel()
 
         self.topicList = QListView()
-        self.topicListModel = model.TopicCBModel()
+        self.topicListModel = model.TopicListModel()
         self.topicList.setModel(self.topicListModel)
         self.topicList.setObjectName("topicList")
         self.topicList.doubleClicked.connect(self.topicListModel.newSelection)
-        logger.debug("Connected double click signal to newSelection slot")
         self.topicList.hide()
 
         topicLayout.addWidget(self.topicNameLbl)
@@ -621,27 +298,30 @@ class MyMainWindow(QWidget):
 
         # setup models for topic details window
         self.topicDetailsModel = model.TopicMetricsModel()
-        self.topicDetailsDelegate = delegate.TopicMetricsDelegate()
+        self.topicDetailsDelegate = TopicMetricsDelegate()
         self.addDocumentsModel = model.AdditionalDocumentsModel()
         self.relTopModel = model.RelatedTopicsModel()
 
         return topFrame
 
 
-    def createCommentGroup(self):
+    def createCommentSection(self):
 
-        commentGroup = QFrame()
-        commentGroup.setObjectName("commentGroup")
+        """ Creates a QFrame containing only the comment list and the new
+        comment line edit. """
 
-        self.commentLayout = QVBoxLayout(commentGroup)
-        self.commentLayout.setSpacing(0)
+        commentSection = QFrame()
+        commentSection.setObjectName("commentSection")
+
+        self.commentLayout = QVBoxLayout(commentSection)
+        self.commentLayout.setSpacing(3)
         self.commentLayout.setMargin(0)
         self.commentList = CommentView()
 
         self.commentModel = model.CommentModel()
         self.commentList.setModel(self.commentModel)
 
-        self.commentDelegate = delegate.CommentDelegate()
+        self.commentDelegate = CommentDelegate()
         self.commentList.setItemDelegate(self.commentDelegate)
 
         self.commentLayout.addWidget(self.commentList)
@@ -654,14 +334,25 @@ class MyMainWindow(QWidget):
 
         self.commentLayout.addWidget(self.newCommentEdit)
 
-        return commentGroup
+        return commentSection
 
 
-    def createSnapshotGroup(self):
+    def createSnapshotSection(self):
+
+        """ Creates the snapshot section consisting of a combobox and a stacked
+        widget.
+
+        The stacked widget contains itself two widgets:
+            - The snapshot list: horizontal list showing at most three
+              scaled versions snapshots
+            - The viewpoints list: a (normal) vertical list showing viewpoints
+              contained in the current topic.
+        The combobox is used to switch between these two widgets.
+        """
 
         snGroup = QFrame()
         self.snGroupLayout = QVBoxLayout(snGroup)
-        self.snGroupLayout.setSpacing(0)
+        self.snGroupLayout.setSpacing(3)
         self.snGroupLayout.setMargin(0)
 
         self.snapshotModel = model.SnapshotModel()
@@ -669,7 +360,7 @@ class MyMainWindow(QWidget):
         self.snapshotList.setModel(self.snapshotModel)
 
         self.viewpointsModel = model.ViewpointsListModel(self.snapshotModel)
-        self.viewpointList = ViewpointsListView()
+        self.viewpointList = ViewpointsView()
         self.viewpointList.setModel(self.viewpointsModel)
 
         self.snStack = QStackedWidget()
@@ -693,6 +384,11 @@ class MyMainWindow(QWidget):
     @Slot()
     def openedProjectUiHandler(self):
 
+        """ Handler invoked when the "Open" button is pressed.
+
+        It only does some UI configurations.
+        """
+
         logger.info("setting up view")
 
         self.projectOpenButton.setText(self.tr("Open other"))
@@ -701,21 +397,31 @@ class MyMainWindow(QWidget):
 
 
     @Slot()
-    def hideCommentSnapshotGroup(self):
+    def hideCommentSnapshotSection(self):
 
-        self.commentGroup.hide()
+        """ Hide the comment and snapshot section. """
+
+        self.commentSection.hide()
         self.snapshotArea.hide()
 
 
     @Slot()
-    def showCommentSnapshotGroup(self):
+    def showCommentSnapshotSection(self):
 
-        self.commentGroup.show()
+        """ Show the comment and snapshot section. """
+
+        self.commentSection.show()
         self.snapshotArea.show()
 
 
     @Slot()
     def openProjectBtnHandler(self):
+
+        """ Handler invoked when the "Open" button is pressed.
+
+        It causes the plugin to open a file open dialog and then subsequently
+        opening the, by the user, selected file.
+        """
 
         lastPath = self.openFilePath
         dflPath = lastPath if lastPath != "" else QDir.homePath()
@@ -731,50 +437,65 @@ class MyMainWindow(QWidget):
     @Slot()
     def checkAndAddComment(self):
 
+        """ Handler invoked when the editing of a new comment is finished.
+
+        It checks whether already an author was set during the lifetime of the
+        plugin. If not the authors-dialog will be opened.
+        The model associated with the comment list will be called to add the
+        new comment with the set author's email address (`modAuthor`)"""
+
         editor = self.newCommentEdit
         text = editor.text()
 
-        if util.isAuthorSet():
-            modAuthor = util.getAuthor()
-        else:
-            delegate.openAuthorsDialog(None)
+        if not util.isAuthorSet():
+            openAuthorsDialog(None)
+        modAuthor = util.getAuthor()
 
-        self.addComment()
-
-
-    @Slot()
-    def addComment(self):
-
-        text = self.newCommentEdit.text()
-        success = self.commentModel.addComment((text, util.getAuthor()))
+        success = self.commentModel.addComment((text, modAuthor))
         if not success:
             util.showError(self.tr("Could not add a new comment"))
             return
 
-        # delete comment on successful addition
+        # reset line edit
         self.newCommentEdit.setText("")
 
 
     @Slot()
     def saveProjectHandler(self):
 
+        """ Handler invoked when the "Save" button was pressed.
+
+        Opens a save file dialog and starts the saving of the current state of
+        the project.
+        """
+
         dflPath = self.openFilePath
         filename = QFileDialog.getSaveFileName(self, self.tr("Save BCF File"),
                 dflPath,  self.tr("BCF Files (*.bcf *.bcfzip)"))
         if filename[0] != "":
-            logger.debug("Got a file to write to: {}.".format(filename))
             model.saveProject(filename[0])
 
 
     @Slot()
     def showTopicMetrics(self):
 
+        """ Shows the topic metrics dialog.
+
+        While the dialog is active, the main window of the UI cannot be used.
+        """
+
         metricsWindow = TopicMetricsDialog(self)
-        metricsWindow.show()
+        metricsWindow.exec()
 
 
     @Slot()
     def showAddTopicForm(self):
+
+        """ Shows the form gathering necessary info to add a new topic to the
+        project.
+
+        During the time this window is open the main window is inactive.
+        """
 
         addTopicForm = TopicAddDialog(self)
         addTopicForm.exec()
@@ -783,20 +504,23 @@ class MyMainWindow(QWidget):
 
     def closeEvent(self, event):
 
+        """ Overrides QWidget's closeEvent function.
+
+        If the project's state state contains unsaved modifications the user is
+        asked whether to save the project or not.
+        """
+
         if util.getDirtyBit():
             self.showExitSaveDialog()
 
-        logger.debug("Deleting temporary directory {}".format(util.getSystemTmp()))
         util.deleteTmp()
 
 
-    def closeSaveProject(self, dialog):
-
-        self.saveProjectHandler()
-        dialog.done(0)
-
-
     def showExitSaveDialog(self):
+
+        """ Shows the dialog asking the user whether or not to save.
+
+        While this dialog is active the main window is inactive. """
 
         dialog = QDialog(self)
         buttons = QDialogButtonBox(QDialogButtonBox.Save |
@@ -813,30 +537,23 @@ class MyMainWindow(QWidget):
         dialog.exec()
 
 
+    def closeSaveProject(self, dialog):
+
+        """ Handler invoked when the Close-Dialog's save button is pressed. """
+
+        self.saveProjectHandler()
+        dialog.done(0)
+
+
     def showCreateProjectDialog(self):
+
+        """ Show the dialog for creating a new project.
+
+        Following the `projectOpened` signal is emitted, to let the plugin
+        build up the UI accordingly.
+        """
 
         dialog = ProjectCreateDialog(self)
         dialog.exec()
 
         self.projectOpened.emit()
-
-
-    def deleteStretch(self):
-
-        """ Delete the first QSpacerItem found in mainLayout """
-
-        for idx in range(0, self.mainLayout.count()):
-            child = self.mainLayout.itemAt(idx)
-            if issubclass(type(child), QSpacerItem):
-                self.mainLayout.takeAt(idx)
-                break
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    plugin = MyMainWindow()
-    plugin.show()
-
-    app.exec_()
-    sys.exit()

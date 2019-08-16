@@ -1,3 +1,34 @@
+"""
+Copyright (C) 2019 PODEST Patrick
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+"""
+
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides two classes, one used to represent an author value, the
+other one used to represent a date value.
+Each of those classes can be used to represent an Author/CreationAuthor node as
+well as a ModifiedAuthor node respectively a Date/CreationDate as well as
+ModifiedDate node of the markup.bcf file.
+"""
+
 import logging
 
 import bcfplugin
@@ -14,16 +45,25 @@ logger = bcfplugin.createLogger(__name__)
 
 
 class ModificationType(Enum):
+
+    """ Enum defining the two types of modifications: creation and
+    modification.
+
+    This is used for the ModificationAuthor and ModificationDate classes, to
+    let them represent both Author and Modified Author and Date and Modified
+    Date types.
+    """
+
     CREATION = 1
     MODIFICATION = 2
 
+
 class ModificationAuthor(p.SimpleElement):
 
-    """ Holds the value of an `Author` xml element.
+    """ Represents the XML type markup.xsd:UserIdType.
 
-    This class represents two kinds of xml elements. CreationAuthor and
-    ModifiedAuthor. To report the correct name a differentiation at creation is
-    done and self.name properly set.
+    But this class is also used to discern between the XML nodes "Author" and
+    "ModifiedAuthor".
     """
 
     def __init__(self,
@@ -58,7 +98,6 @@ class ModificationAuthor(p.SimpleElement):
 
     @author.setter
     def author(self, newVal):
-        logger.debug("set author to {}".format(newVal))
         if not isinstance(newVal, str):
             raise ValueError("Author has to be of type string, current type"\
                     " {}".format(type(newVal)))
@@ -80,11 +119,10 @@ class ModificationAuthor(p.SimpleElement):
 
 class ModificationDate(p.SimpleElement):
 
-    """ Holds the value of an `Date` xml element.
+    """ Represents the XML type datetime.
 
-    This class represents two kinds of xml elements. CreationDate and
-    ModifiedDate. To report the correct name a differentiation at creation is
-    done and self.name properly set.
+    But this class is also used to discern between the XML nodes "Date" and
+    "ModifiedDate".
     """
 
     def __init__(self,
@@ -105,6 +143,11 @@ class ModificationDate(p.SimpleElement):
 
 
     def __str__(self):
+
+        """ Returns a string representation of the set datetime.
+
+        The format is YYYY-MM-DD hh:mm
+        """
 
         ret_str = ""
         if self.value is not None:
@@ -133,7 +176,6 @@ class ModificationDate(p.SimpleElement):
 
     @date.setter
     def date(self, newVal):
-        logger.debug("set date to {}".format(newVal))
         if not isinstance(newVal, datetime):
             raise ValueError("Date has to be of type datetime, current type"\
                     " {}".format(type(newVal)))

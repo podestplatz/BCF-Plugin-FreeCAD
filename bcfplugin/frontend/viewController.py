@@ -1,3 +1,36 @@
+"""
+Copyright (C) 2019 PODEST Patrick
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+"""
+
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+The viewController is responsible for controlling the object view of FreeCAD.
+It provides functions to add elements (lines, clippingPlanes), set properties
+of existing elements (like the colour or the selection status) as well as
+functoins to set the camera's position and orientation.
+
+It mainly operates as library and assumes that a document is already loaded in
+FreeCAD, as well as FreeCAD is running in GUI mode.
+"""
+
 import re
 import copy
 from typing import List

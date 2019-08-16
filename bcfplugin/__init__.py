@@ -1,3 +1,36 @@
+"""
+Copyright (C) 2019 PODEST Patrick
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+"""
+
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file initializes the plugin global variables and imports everything from
+the programmaticInterface into the plugin global namespace. It further is
+responsible for checking whether all dependency requirements are met by the
+system.
+It further initializes the logging system of python and provides
+`createLogger()` which is intended to be called by every submodule to attain a
+separate instance of logging.Logger.
+"""
+
 import os
 import sys
 import logging
@@ -11,7 +44,7 @@ from bcfplugin.loghandlers.stdoutfilter import StdoutFilter
 excPath = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, excPath)
 
-__all__ = ["programmaticInterface.py", "ui"]
+__all__ = ["programmaticInterface", "ui"]
 
 FREECAD = False
 """ Set by BCFPlugin.py when running inside FreeCAD """

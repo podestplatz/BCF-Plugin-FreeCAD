@@ -1,3 +1,37 @@
+"""
+Copyright (C) 2019 PODEST Patrick
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+"""
+
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides the CommentDelegate. This delegate is responsible for two
+things:
+    - drawing the comments in a custom fashion
+    - pushing changes of a comment to the comment model.
+
+The values gotten from, and pushed to the comment model are tuples of three
+values with the following type signature:
+    (str, str, date)
+"""
+
 import logging
 from copy import copy
 
@@ -7,55 +41,36 @@ from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
 
 import bcfplugin
 import bcfplugin.util as util
+from bcfplugin.gui.views import openAuthorsDialog
 
 
 logger = bcfplugin.createLogger(__name__)
 
-dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
-emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
-
-author = ""
-""" Holds the entered email address of the author """
-
-authorsDialog = None
-authorsLineEdit = None
-@Slot()
-def setAuthor():
-
-    global authorsDialog
-    global authorsLineEdit
-
-    author = authorsLineEdit.text()
-    authorsDialog.author = author
-    authorsDialog.done(0)
-
-
-def openAuthorsDialog(parent):
-
-    global authorsDialog
-    global authorsLineEdit
-
-    authorsDialog = QDialog(parent)
-    authorsDialog.setWindowTitle("Enter your e-Mail")
-
-    form = QFormLayout()
-    emailValidator = QRegExpValidator()
-    emailValidator.setRegExp(emailRegex)
-
-    authorsLineEdit = QLineEdit(parent)
-    authorsLineEdit.setValidator(emailValidator)
-    authorsLineEdit.editingFinished.connect(setAuthor)
-
-    form.addRow("E-Mail:", authorsLineEdit)
-    authorsDialog.setLayout(form)
-    authorsDialog.exec()
-
-    author = authorsDialog.author
-    logger.debug("We got something very nice {}".format(author))
-    util.setAuthor(author)
-
 
 class CommentDelegate(QStyledItemDelegate):
+
+    """ This delegate draws the custom comment elements and handles udpates.
+
+    The offsets/distances used in for drawing are all configured in Millimeter.
+    These Mm values are then converted to pixels depending on the screen the
+    application is viewed upon. Thus every variable describing an
+    offset/distance does have a counterpart which is equally named except for
+    a 'Q' inserted before the last word of the variable name.
+
+    Comments are drawn with two (logical) rows. The first row containing the
+    comment text, and the second row houses the date of last modification as
+    well as the author of the last change. These two rows are separated by a
+    separation line. Consider the following depiction as an example.
+
+    This is some example text.
+    ---------------------------------
+    e@mail.com YYYY-MM-DD
+
+    For correct resizing, this class maintains a dictionary with one entry for
+    every comment. The values are the sizes of the bounding rectangle of anyone
+    comment. If during some event, one value changes the
+    `self.sizeHintChanged()` event is emitted.
+    """
 
 
     def __init__(self, parent = None):
@@ -85,6 +100,8 @@ class CommentDelegate(QStyledItemDelegate):
 
 
     def paint(self, painter, option, index):
+
+        """ Paints the comment element specified by `index`. """
 
         if option.state & QStyle.State_Selected:
             painter.fillRect(option.rect, option.palette.highlight())
@@ -261,6 +278,8 @@ class CommentDelegate(QStyledItemDelegate):
 
     def computeSizes(self):
 
+        """ Converts the offsets/distances from millimeters to pixels. """
+
         screen = util.getCurrentQScreen()
         # pixels per millimeter
         ppm = screen.logicalDotsPerInch() / util.MMPI
@@ -274,6 +293,8 @@ class CommentDelegate(QStyledItemDelegate):
 
 
     def drawComment(self, comment, painter, option, fontMetric, leftX, topY, brush):
+
+        """ Helper function of `self.paint()` drawing only the comment text. """
 
         painter.save()
         pen = painter.pen()
@@ -299,6 +320,7 @@ class CommentDelegate(QStyledItemDelegate):
 
     def drawSeparationLine(self, painter, pen, start: QPoint, width):
 
+        """ Helper function for `self.paint()`, drawing the separation line """
         end = QPoint(start.x() + width,
                 start.y() + self._separationLineQThickness)
         separationRect = QRect(start, end)
@@ -308,6 +330,8 @@ class CommentDelegate(QStyledItemDelegate):
     def drawAuthorDate(self, comment,
             painter, pen,
             start: QPoint, end: QPoint):
+
+        """ Helper function for `self.paint()`, drawing author and date """
 
         fontMetric = QFontMetrics(self.authorFont)
         pen.setColor(QColor("#666699"))
@@ -337,6 +361,9 @@ class CommentDelegate(QStyledItemDelegate):
     @Slot()
     def setWidth(self, newWidth):
 
+        """ Sets the width of the plugin and recomputes the sizes of the
+        comments. """
+
         self.width = newWidth
         self.checkSizes()
 
@@ -363,55 +390,3 @@ class CommentDelegate(QStyledItemDelegate):
                 self.sizeHintChanged.emit(index)
                 # mark the changed size hint for recomputation
                 self.sizeHints[index] = None
-
-
-class TopicMetricsDelegate(QStyledItemDelegate):
-
-    """
-    This delegate class is used for controlling the data entry of in the topic
-    metrics window.
-
-    It also, like the comment delegate, checks whether the user already has
-    entered his/her email address that will be set inserted ModifiedAuthor in
-    the data model.
-    """
-
-    def __init__(self, parent = None):
-
-        QStyledItemDelegate.__init__(self, parent)
-
-
-    def createEditor(self, parent, option, index):
-
-        modAuthor = ""
-        if util.isAuthorSet():
-            modAuthor = util.getAuthor()
-        else:
-            openAuthorsDialog(None)
-            modAuthor = util.getAuthor()
-
-        logger.debug("The email you entered is: {}".format(modAuthor))
-
-        model = index.model()
-        dueDateIndex = model.members.index(model.topic._dueDate)
-
-        startValue = "" # TODO: use current value
-        editor = QLineEdit(startValue, parent)
-        if index.row() == dueDateIndex:
-            validator = QRegExpValidator()
-            validator.setRegExp(dueDateRegex)
-
-            editor.setValidator(validator)
-            editor.setFrame(True)
-        return editor
-
-
-    def setModelData(self, editor, model, index):
-
-        """ Updates the model at `index` with the current text of the editor """
-
-        text = editor.text()
-        value = (text, util.getAuthor())
-        success = model.setData(index, value)
-        if not success:
-            util.showError("The value could not be updated.")

@@ -1,5 +1,5 @@
 """
-Copyright (C) 2019 PODEST Patrick
+Copyright (C) 2019 PODEST Patrick 
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -22,30 +22,29 @@ Date: 2019-08-16
 Github: @podestplatz
 
 **** Description ****
-This file just provides a filter for the logging framework of python, that
-filters out every validation error message that should be printed to Stdout.
+This file builds the entry point for FreeCAD into the plugin. It also adds BCF
+files as new import type to FreeCAD. 
 """
 
-from logging import Filter
+__Name__ = "BCF-Plugin"
+__Comment__ = "Lets you open and operate on BCF file in FreeCAD"
+__License__ = "LGPL-2.1"
+__Web__ = "https://github.com/podestplatz/BCF-Plugin-FreeCAD"
+__Wiki__ = "https://github.com/podestplatz/BCF-Plugin-FreeCAD/wiki/Home"
+__Icon__ = ""
+__Help__ = "Let's"
+__Author__ = "Patrick Podest"
+__Version__ = ""
+__Status__ = "Alpha"
+__Requires__ = "FreeCAD >= 0.18"
+__Communication__ = "https://github.com/podestplatz/BCF-Plugin-FreeCAD/issues"
 
-class StdoutFilter(Filter):
 
-    """ This filter filters out all error messages created orginally by the
-    xmlschema library. """
+import bcfplugin
+import bcfplugin.BCFPlugin as plugin
 
-    def __init__(self, name=""):
+import FreeCAD
+FreeCAD.addImportType("BCF-Document (*.bcf *.bcfzip)",
+    "bcfplugin.filehandlers")
 
-        Filter.__init__(self, name)
-
-
-    def filter(self, record):
-
-        msg = record.getMessage()
-        requiredWords = ["Reason", "Instance", "Schema", "Path"]
-
-        log = 0
-        for word in requiredWords:
-            if word not in msg:
-                log = 1
-
-        return log
+plugin.start()

@@ -22,30 +22,12 @@ Date: 2019-08-16
 Github: @podestplatz
 
 **** Description ****
-This file just provides a filter for the logging framework of python, that
-filters out every validation error message that should be printed to Stdout.
+This file's purpose is just to provide some RegExp used by some parts of the
+plugin.
 """
 
-from logging import Filter
+dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
+""" RegExp for the DueDate field """
 
-class StdoutFilter(Filter):
-
-    """ This filter filters out all error messages created orginally by the
-    xmlschema library. """
-
-    def __init__(self, name=""):
-
-        Filter.__init__(self, name)
-
-
-    def filter(self, record):
-
-        msg = record.getMessage()
-        requiredWords = ["Reason", "Instance", "Schema", "Path"]
-
-        log = 0
-        for word in requiredWords:
-            if word not in msg:
-                log = 1
-
-        return log
+emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
+""" RegExp to check entered E-Mail addresses for validity. """

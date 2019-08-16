@@ -1,3 +1,31 @@
+"""
+Copyright (C) 2019 PODEST Patrick
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+"""
+
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides the topic add dialog. It is responsible for gathering the
+necessary data to add a topic to the currently open project.
+"""
+
 import datetime
 from uuid import uuid4
 
@@ -8,9 +36,9 @@ from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
 
 import bcfplugin
 import bcfplugin.util as util
-import bcfplugin.gui.plugin_delegate as delegate
-import bcfplugin.gui.plugin_view as view
-import bcfplugin.gui.plugin_model as model
+import bcfplugin.gui.views as view
+import bcfplugin.gui.models as model
+from bcfplugin.gui.regex import dueDateRegex, emailRegex
 from bcfplugin.rdwr.topic import Topic
 
 logger = bcfplugin.createLogger(__name__)
@@ -25,14 +53,15 @@ class TopicAddDialog(QDialog):
     prioRegex = descRegex
     idxRegex = "^[0-9]*$"
     lblRegex = "^[a-zA-Z0-9]*(,\s?[a-zA-Z0-9]+)*$"
-    dueDateRegex = delegate.dueDateRegex
-    assigneeRegex = delegate.emailRegex
+    dueDateRegex = dueDateRegex
+    assigneeRegex = emailRegex
     stageRegex = descRegex
 
 
     def __init__(self, parent = None):
 
         QDialog.__init__(self, parent)
+        self.setWindowTitle("Add Topic")
 
         mainLayout = QVBoxLayout()
         formLayout = QFormLayout()
@@ -71,6 +100,8 @@ class TopicAddDialog(QDialog):
 
     def createEditFields(self):
 
+        todayDateStr = datetime.datetime.now().strftime("%Y-%m-%d")
+
         self.titleEdit = QLineEdit()
         self.titleEdit.setValidator(self.titleValidator)
         self.titleEdit.setObjectName("Title")
@@ -86,15 +117,19 @@ class TopicAddDialog(QDialog):
         self.idxEdit = QLineEdit()
         self.idxEdit.setValidator(self.idxValidator)
         self.idxEdit.setObjectName("Index")
+        self.idxEdit.setPlaceholderText("Enter a number")
         self.lblEdit = QLineEdit()
         self.lblEdit.setValidator(self.lblValidator)
         self.lblEdit.setObjectName("Labels")
+        self.lblEdit.setPlaceholderText("Comma separated list")
         self.dueDateEdit = QLineEdit()
         self.dueDateEdit.setValidator(self.dueDateValidator)
         self.dueDateEdit.setObjectName("DueDate")
+        self.dueDateEdit.setPlaceholderText(todayDateStr)
         self.assigneeEdit = QLineEdit()
         self.assigneeEdit.setValidator(self.assigneeValidator)
         self.assigneeEdit.setObjectName("Assignee")
+        self.assigneeEdit.setPlaceholderText("tim@example.org")
         self.descEdit = QLineEdit()
         self.descEdit.setValidator(self.descValidator)
         self.descEdit.setObjectName("Description")
@@ -138,7 +173,7 @@ class TopicAddDialog(QDialog):
             return
 
         if not util.isAuthorSet():
-            delegate.openAuthorsDialog(None)
+            view.openAuthorsDialog(None)
         creationAuthor = util.getAuthor()
 
         dueDate = None

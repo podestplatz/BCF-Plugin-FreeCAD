@@ -1,3 +1,32 @@
+"""
+Copyright (C) 2019 PODEST Patrick
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+"""
+
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file instantiates the main window of plugin_view.py and puts the main
+window into the task panel of FreeCAD. It also sets up the button array above the
+main window with just a "Close" button.
+"""
+
 import logging
 
 import FreeCADGui
@@ -38,6 +67,8 @@ class BCFPluginPanel:
 
     def getMainWindow():
 
+        """ Retrieves the global main window reference from Qt. """
+
         mainWindow = None
         topLvl = QApplication.topLevelWidgets()
         for widget in topLvl:
@@ -77,6 +108,8 @@ class BCFPluginPanel:
 
 
     def close(self):
+
+        """ Calls the plugins closeEvent function. """
 
         self.form.closeEvent(None)
 

@@ -1,3 +1,31 @@
+"""
+Copyright (C) 2019 PODEST Patrick
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+"""
+
+"""
+Author: Patrick Podest
+Date: 2019-08-16
+Github: @podestplatz
+
+**** Description ****
+This file provides a lightweight implementation of vectors which is used to
+represent Lines, Points, Directions and a ClippingPlane.
+"""
+
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
@@ -72,7 +100,10 @@ class ThreeDVector(Hierarchy, State, XMLName):
 
 class Point(ThreeDVector):
 
-    """ Represents a point in the three dimensional space """
+    """ Represents the XML type visinfo.xsd:Point.
+
+    Therefore it represents a point in the three dimensional space
+    """
 
     def __init__(self,
             x: float,
@@ -109,7 +140,10 @@ class Point(ThreeDVector):
 
 class Direction(ThreeDVector, XMLName):
 
-    """ Represents a vector in the three dimensional space """
+    """ Represents the XML type visinfo.xsd:Direction.
+
+    Therefore it represents a vector in the three dimensional space
+    """
 
     def __init__(self,
             x: float,
@@ -135,10 +169,11 @@ class Direction(ThreeDVector, XMLName):
 
     def getEtElement(self, elem):
 
-        """
-        Convert the contents of the object to an xml.etree.ElementTree.Element
-        representation. `element` is the object of type xml.e...Tree.Element
-        which shall be modified and returned.
+        """ Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation.
+
+        `element` is the object of type xml.e...Tree.Element which shall be
+        modified and returned.
         """
 
         return ThreeDVector.getEtElement(self, elem)
@@ -146,7 +181,10 @@ class Direction(ThreeDVector, XMLName):
 
 class Line(Hierarchy, State, XMLName):
 
-    """ Represents a line that goes throught the three dimensional space """
+    """ Represents the XML type visinfo.xsd:Line.
+
+    Represents a line that goes throught the three dimensional space.
+    """
 
     def __init__(self,
             start: Point,
@@ -212,6 +250,13 @@ class Line(Hierarchy, State, XMLName):
 
 
 class ClippingPlane(Hierarchy, State, XMLName):
+
+    """ Represents the XML type visinfo.xsd:ClippingPlane.
+
+    It represents a plane through one or more objects. Everything pointing from
+    the plane in `direction` shall be "clipped" away from the object,
+    everything else shall be left visible.
+    """
 
     def __init__(self,
             location: Point,
