@@ -61,27 +61,6 @@ def modifyVisinfoSchema(schema):
     return schema
 
 
-def readFile(path: str):
-
-    """
-    Tries to open the supplied file (`path`) and returns the ZipFile object.
-    If an exception is raised `None` is returned.
-    """
-
-    if not os.path.exists(str):
-        raise ValueError
-
-    file = None
-    try:
-        file = ZipFile(path)
-    except Exception as e:
-        logger.error("The supplied BCF file ({}) could not be opened.\nError:\
-                {}".format(path, str(e)))
-        return None
-
-    return file
-
-
 def extractFileToTmp(zipFilePath: str):
 
     """
@@ -109,6 +88,7 @@ def getVersion(extrBcfPath: str, versionSchemaPath: str):
     does not parse against versionSchema then `None` is returned.
     """
 
+    logger.debug("Retrieving version from the BCF project")
     versionFileName = "bcf.version"
     versionFilePath = os.path.join(extrBcfPath, versionFileName)
     if not os.path.exists(versionFilePath):
@@ -122,7 +102,9 @@ def getVersion(extrBcfPath: str, versionSchemaPath: str):
         return None
 
     versionDict = versionSchema.to_dict(versionFilePath)
-    return versionDict["@VersionId"]
+    version = versionDict["@VersionId"]
+    logger.debug("Version of the BCF project is {}".format(version))
+    return version
 
 
 def getFileListByExtension(topDir: str, extension: str):
@@ -199,16 +181,24 @@ enough.
 
 def buildProject(projectFilePath: str, projectSchema: str):
 
+    logger.debug("Building new project object.")
     if projectFilePath is None or projectSchema is None:
+        logger.warning("No file and/or no schema file is given.")
         return None
     if not os.path.exists(projectFilePath):
+        logger.error("Path of the project file does not exist"\
+                " '{}'".format(projectFilePath))
         return None
     if not os.path.exists(projectSchema):
+        logger.error("Path of the schema file does not exist"\
+                " '{}'".format(projectSchema))
         return None
 
     schema = XMLSchema(projectSchema)
     (projectDict, errors) = schema.to_dict(projectFilePath, validation="lax")
-    logger.error([ str(err) for err in errors ])
+    errorList = [ str(err) for err in errors ]
+    if len(errorList) > 0:
+        logger.error(errorList)
 
     # can do that because the project file is valid and ProjectId is required
     # by the schema
@@ -221,11 +211,13 @@ def buildProject(projectFilePath: str, projectSchema: str):
         pExtensionSchema = projectDict["ExtensionSchema"]
 
     p = Project(pId, pName, pExtensionSchema)
+    logger.debug("New project object created '{}'".format(p))
     return p
 
 
 def buildComment(commentDict: Dict):
 
+    logger.debug("Building new comment object")
     id = UUID(commentDict["@Guid"])
     commentDate = dateutil.parser.parse(commentDict["Date"]) # parse ISO 8601 datetime
     commentAuthor = commentDict["Author"]
@@ -244,11 +236,13 @@ def buildComment(commentDict: Dict):
     comment = Comment(id, commentDate, commentAuthor,
             commentString, viewpointRef, modifiedDate, modifiedAuthor)
 
+    logger.debug("New comment object created {}".format(comment))
     return comment
 
 
 def buildBimSnippet(snippetDict: Dict):
 
+    logger.debug("Building new BimSnippet object")
     reference = Uri(snippetDict["Reference"])
     referenceSchema = Uri(snippetDict["ReferenceSchema"])
     snippetType = snippetDict["@SnippetType"]
@@ -256,11 +250,13 @@ def buildBimSnippet(snippetDict: Dict):
 
     bimSnippet = BimSnippet(snippetType, isExternal, reference, referenceSchema)
 
+    logger.debug("New BimSnippet object created {}".format(bimSnippet))
     return bimSnippet
 
 
 def buildDocRef(docDict: Dict):
 
+    logger.debug("Building new DocumentReference object")
     docUri = getOptionalFromDict(docDict, "ReferencedDocument", None)
     if docUri: # envelope a uri string into an object of Uri
         docUri = Uri(docUri)
@@ -272,11 +268,14 @@ def buildDocRef(docDict: Dict):
 
     docExternal = getOptionalFromDict(docDict, "@isExternal", False)
 
-    return DocumentReference(docId, docExternal, docUri, docName)
+    docRef = DocumentReference(docId, docExternal, docUri, docName)
+    logger.debug("New document reference object created")
+    return docRef
 
 
 def buildTopic(topicDict: Dict):
 
+    logger.debug("Creating new Topic object")
     id = UUID(topicDict["@Guid"])
     title = topicDict["Title"]
 
@@ -322,11 +321,13 @@ def buildTopic(topicDict: Dict):
             assignee, description, stage,
             relatedTopics, bimSnippet)
 
+    logger.debug("New Topic object created")
     return topic
 
 
 def buildFile(fileDict):
 
+    logger.debug("Building new HeaderFile object")
     filename = getOptionalFromDict(fileDict, "Filename", "")
     filedate = getOptionalFromDict(fileDict, "Date", None)
     if filedate:
@@ -354,21 +355,25 @@ def buildFile(fileDict):
             filedate,
             reference)
 
+    logger.debug("New HeaderFile object created")
     return headerfile
 
 
 def buildHeader(headerDict):
 
+    logger.debug("Building new Header object")
     filelist = getOptionalFromDict(headerDict, "File", list())
     files = [ buildFile(f) for f in filelist if f is not None ]
 
     header = Header(files)
 
+    logger.debug("New Header object created")
     return header
 
 
 def buildViewpointReference(viewpointDict):
 
+    logger.debug("Building new ViewpointReference object")
     id = UUID(viewpointDict["@Guid"])
     viewpointFile = getOptionalFromDict(viewpointDict, "Viewpoint", None)
     if viewpointFile:
@@ -383,24 +388,30 @@ def buildViewpointReference(viewpointDict):
 
     vpReference = ViewpointReference(id, viewpointFile, snapshotFile, index)
 
+    logger.debug("New ViewpointReference object created")
     return vpReference
 
 
 def buildSnapshotList(topicDir: str):
 
+    logger.debug("Building SnapshotList")
     isPNG = lambda img: ".png" in img or ".PNG" in img
     snList = list()
     for sn in filter(isPNG, os.listdir(topicDir)):
         snList.append(os.path.join(topicDir, sn))
 
+    logger.debug("New SnapshotList created")
     return snList
 
 
 def buildMarkup(markupFilePath: str, markupSchemaPath: str):
 
+    logger.debug("Building new Markup object")
     markupSchema = XMLSchema(markupSchemaPath)
     (markupDict, errors) = markupSchema.to_dict(markupFilePath, validation="lax")
-    logger.error([ str(err) for err in errors ])
+    errorList = [ str(err) for err in errors ]
+    if len(errorList) > 0:
+        logger.error(errorList)
 
     commentList = getOptionalFromDict(markupDict, "Comment", list())
     comments = [ buildComment(comment) for comment in commentList ]
@@ -429,11 +440,13 @@ def buildMarkup(markupFilePath: str, markupSchemaPath: str):
             viewpointRef = markup.getViewpointRefByGuid(cViewpointRefGuid)
             comment.viewpoint = viewpointRef
 
+    logger.debug("New Markup object created")
     return markup
 
 
 def buildViewSetupHints(vshDict: Dict):
 
+    logger.debug("Building new ViewSetupHints object")
     spacesVisible = getOptionalFromDict(vshDict, "@SpacesVisible", False)
     spaceBoundariesVisible = getOptionalFromDict(vshDict,
             "@SpaceBoundariesVisible", False)
@@ -441,11 +454,13 @@ def buildViewSetupHints(vshDict: Dict):
 
     vsh = ViewSetupHints(openingsVisible, spacesVisible,
             spaceBoundariesVisible)
+    logger.debug("New ViewSetupHints object created")
     return vsh
 
 
 def buildComponent(componentDict: Dict):
 
+    logger.debug("Building new Component object")
     id = getOptionalFromDict(componentDict, "@IfcGuid", None) # is no UUID
 
     authoringToolId = getOptionalFromDict(componentDict,
@@ -455,11 +470,13 @@ def buildComponent(componentDict: Dict):
             "OriginatingSystem", "")
 
     component = Component(id, originatingSystem, authoringToolId)
+    logger.debug("New Component object created")
     return component
 
 
 def buildComponentColour(ccDict: Dict):
 
+    logger.debug("Building new ComponentColour object")
     colour = getOptionalFromDict(ccDict, "@Color", None)
     colourComponents = list()
     cc = None
@@ -468,11 +485,14 @@ def buildComponentColour(ccDict: Dict):
                                 for cp in ccDict["Component"] ]
         cc = ComponentColour(colour, colourComponentList)
 
+
+    logger.debug("New ComponentColour object created")
     return cc
 
 
 def buildComponents(componentsDict: Dict):
 
+    logger.debug("Building new Components object")
     vshDict = getOptionalFromDict(componentsDict, "ViewSetupHints", None)
     vsh = None
     if vshDict:
@@ -504,33 +524,38 @@ def buildComponents(componentsDict: Dict):
     components = Components(defaultVisibility, exceptions, sel,
             vsh, componentColours)
 
+    logger.debug("New Components object created")
     return components
 
 
 def buildPoint(pointDict: Dict):
 
+    logger.debug("Building new Point object")
     return Point(pointDict["X"], pointDict["Y"], pointDict["Z"])
 
 
 def buildDirection(dirDict: Dict):
 
+    logger.debug("Building new Direction object")
     return Direction(dirDict["X"], dirDict["Y"], dirDict["Z"])
 
 
 def buildOrthogonalCamera(oCamDict: Dict):
 
+    logger.debug("Building new OrthogonalCamera object")
     camViewpoint = buildPoint(oCamDict["CameraViewPoint"])
     camDirection = buildDirection(oCamDict["CameraDirection"])
     camUpVector = buildDirection(oCamDict["CameraUpVector"])
     vWorldScale = oCamDict["ViewToWorldScale"]
 
     cam = OrthogonalCamera(camViewpoint, camDirection, camUpVector, vWorldScale)
-
+    logger.debug("New OrthogonalCamera object created")
     return cam
 
 
 def buildPerspectiveCamera(pCamDict: Dict):
 
+    logger.debug("Building new PerspectiveCamera object")
     camViewpoint = buildPoint(pCamDict["CameraViewPoint"])
     camDirection = buildDirection(pCamDict["CameraDirection"])
     camUpVector = buildDirection(pCamDict["CameraUpVector"])
@@ -539,31 +564,35 @@ def buildPerspectiveCamera(pCamDict: Dict):
     cam = PerspectiveCamera(camViewpoint, camDirection, camUpVector,
             fieldOfView)
 
+    logger.debug("New PerspectiveCamera object created")
     return cam
 
 
 def buildLine(lineDict: Dict):
 
+    logger.debug("Building new Line object")
     start = buildPoint(lineDict["StartPoint"])
     end = buildPoint(lineDict["EndPoint"])
 
     line = Line(start, end)
 
+    logger.debug("New Line object created")
     return line
-
 
 def buildClippingPlane(clipDict: Dict):
 
+    logger.debug("Building new ClippingPlane object")
     location = buildPoint(clipDict["Location"])
     direction = buildDirection(clipDict["Direction"])
 
     cPlane = ClippingPlane(location, direction)
 
+    logger.debug("New ClippingPlane object created")
     return cPlane
-
 
 def buildBitmap(bmDict: Dict):
 
+    logger.debug("Building new Bitmap object")
     bmFormatStr = bmDict["Bitmap"] # either JPG or PNG
     bmFormat = BitmapFormat.PNG if bmFormatStr == "PNG" else BitmapFormat.JPG
 
@@ -575,22 +604,21 @@ def buildBitmap(bmDict: Dict):
 
     bitmap = Bitmap(bmFormat, reference, location, normal, up, height)
 
+    logger.debug("New Bitmap object created")
     return bitmap
 
 
 def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
 
-    """
-    Builds an object of type viewpoint.
-    """
-
+    logger.debug("Building new Viewpoint object")
     vpSchema = XMLSchema(viewpointSchemaPath)
     vpSchema = modifyVisinfoSchema(vpSchema)
     (vpDict, errors) = vpSchema.to_dict(viewpointFilePath, validation="lax")
-    logger.error([ str(err) for err in errors ])
+    errorList = [ str(err) for err in errors ]
+    if len(errorList) > 0:
+        logger.error(errorList)
 
     id = UUID(vpDict["@Guid"])
-
     componentsDict = getOptionalFromDict(vpDict, "Components", None)
     components = None
     if componentsDict:
@@ -626,6 +654,7 @@ def buildViewpoint(viewpointFilePath: str, viewpointSchemaPath: str):
     viewpoint = Viewpoint(id, components, oCam,
             pCam, lines, clippingPlanes, bitmaps)
 
+    logger.debug("New Viewpoint object created")
     return viewpoint
 
 """ ************ End of build functions ***************** """
@@ -642,6 +671,8 @@ def validateFile(validateFilePath: str,
     returned.
     """
 
+    logger.debug("Validating file {} against {}".format(validateFilePath,
+        schemaPath))
     schema = XMLSchema(schemaPath)
     try:
         schema.validate(validateFilePath)
@@ -665,6 +696,8 @@ def readBcfFile(bcfFile: str):
     value other than a object of type Project is returned.
     """
 
+    logger.debug("Reading file {} and instantiating the data"\
+            " model".format(bcfFile))
     tmpDir = util.getSystemTmp()
     (projectSchemaPath, extensionsSchemaPath,\
         markupSchemaPath, versionSchemaPath,\
@@ -717,6 +750,7 @@ def readBcfFile(bcfFile: str):
     ### Iterate over the topic directories ###
     topicDirectories = util.getDirectories(bcfExtractedPath)
     for topic in topicDirectories:
+        logger.debug("Topic {} gets builded next".format(topic))
         ### Validate all viewpoint files in the directory, and build them ###
         topicDir = os.path.join(bcfExtractedPath, topic)
 
@@ -754,14 +788,6 @@ def readBcfFile(bcfFile: str):
         proj.topicList.append(markup)
 
     util.setBcfDir(bcfExtractedPath)
-    logger.debug("BCF file is extracted to and open in"\
+    logger.debug("BCF file is read in and open in"\
             " {}".format(bcfExtractedPath))
     return proj
-
-
-if __name__ == "__main__":
-    argFile = "test_data/Issues_BIMcollab_Example.bcf"
-    if len(sys.argv) >= 2:
-        argFile = sys.argv[1]
-    project = readBcfFile(argFile)
-    print(project)

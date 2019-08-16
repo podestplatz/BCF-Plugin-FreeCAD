@@ -120,8 +120,11 @@ def getUniqueIdOfListElementInHierarchy(element):
     returned.
     """
 
+    logger.debug("Looking for list element in Hierarchy of {} and "
+            " retrieving its id".format(element.__class__))
     elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy:
+        logger.debug("No hierarchy could be found")
         return None
 
     listElement = None
@@ -132,7 +135,10 @@ def getUniqueIdOfListElementInHierarchy(element):
             break
 
     if isinstance(listElement, iI.XMLIdentifiable):
+        logger.debug("Id of list element found {}".format(item.xmlId))
         return item.xmlId
+
+    logger.debug("No id found for the list item")
     return None
 
 
@@ -140,13 +146,14 @@ def getFileOfElement(element):
 
     """ Returns the name of the file `element` has to be written to. """
 
-    logger.debug("retrieving hierarchy for {}".format(element))
+    logger.debug("Getting file {} is to be written to".format(element.__class__))
     elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy: # element cannot be modified
-        logger.debug("Could not find a hierarchy {}")
+        logger.debug("No hierarchy could be generated => no file can be found")
         return None
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
+    file = ""
     if "Viewpoint" in strHierarchy:
         try:
             vpRefIndex = strHierarchy.index("ViewpointReference")
@@ -154,15 +161,20 @@ def getFileOfElement(element):
             logger.error("ViewpointReference is not in Hierarchy of Viewpoint")
             raise e
         else:
-            viewpointFile = elementHierarchy[vpRefIndex].file
+            file = elementHierarchy[vpRefIndex].file
             return viewpointFile
 
     elif "Markup" in strHierarchy:
-        return markupFileName
+        file = markupFileName
     elif "Project" in strHierarchy:
-        return projectFileName
-    else: # This can only happen if someone wants to change the version file, which is not editable in the plugin
+        file = projectFileName
+
+    if file == "":
+        # This can only happen if someone wants to change the version file, which is not editable in the plugin
         return None
+    logger.debug("File {} belongs to is {}".format(element.__class__,
+        file))
+    return file
 
 
 def getTopicOfElement(element):
@@ -172,8 +184,12 @@ def getTopicOfElement(element):
     This is used to generate the right path to the file that shall be edited.
     """
 
+    logger.debug("Getting reference to instance of topic associated with"\
+            " {}".format(element))
     elementHierarchy = iH.Hierarchy.checkAndGetHierarchy(element)
     if not elementHierarchy: # just check for sanity
+        logger.debug("No hierarchy could be generated => element cannot be"\
+            " associated to a topic")
         return None
 
     strHierarchy = [ item.__class__.__name__ for item in elementHierarchy ]
@@ -183,6 +199,8 @@ def getTopicOfElement(element):
             if isinstance(item, m.Markup):
                 markupElem = item
                 break
+        logger.debug("Element {} is associated to topic {}".format(element,
+            markupElem.topic))
         return markupElem.topic
 
     return None
@@ -198,6 +216,7 @@ def getEtElementById(elemId, elemName, etRoot):
             elemName, elemId))
     etParent = etRoot.find(".//{}[@Guid='{}']".format(elemName,
             str(elemId)))
+    logger.debug("Found {}".format(etParent))
     return etParent
 
 
@@ -229,6 +248,8 @@ def getParentElement(element, etRoot):
     Returns the XML parent of `element` if found.
     """
 
+    logger.debug("Getting parent of {} in subtree of"\
+            " {}".format(element, etRoot))
     elementHierarchy = element.getHierarchyList()
     strHierarchy = [ elem.xmlName for elem in elementHierarchy ]
     parentName = strHierarchy[1]
@@ -239,7 +260,7 @@ def getParentElement(element, etRoot):
 
     # the topmost element will always be Project
     if strHierarchy[-2] != etRoot.tag:
-        print("Root element of hierarchy and root tag of file do not match."\
+        logger.warning("Root element of hierarchy and root tag of file do not match."\
             " {} != {}".format(strHierarchy[-1], etRoot.tag), file=sys.stderr)
 
     etParent = None
@@ -269,7 +290,7 @@ def getParentElement(element, etRoot):
                         "for element {} inside {}".format(element,
                             etListAncestor))
 
-    logger.debug("found {} as parent of {}".format(etParent, element.xmlName))
+    logger.debug("Found {} as parent of {}".format(etParent, element.xmlName))
     return etParent
 
 
@@ -284,6 +305,8 @@ def getInsertionIndex(element, etParent):
     then `element` will be inserted last.
     """
 
+    logger.debug("Searching for index at which element {} shall be "\
+            " inserted into parent {}".format(element.__class__, etParent))
     definedSequence = elementOrder[etParent.tag]
     # order of elements how they are found in the file in etParent
     actualSequence = [ elem.tag for elem in list(etParent) ]
@@ -312,8 +335,7 @@ def getInsertionIndex(element, etParent):
                     insertionIndex = actualSequence.index(elem)
                     break
 
-    logger.debug("writer.{}(): index at which element is inserted {}".format(
-            getInsertionIndex.__name__, insertionIndex))
+    logger.debug("Index at which element is inserted {}".format(insertionIndex))
     return insertionIndex
 
 
@@ -330,7 +352,8 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
     for searching `rootElem` for the list of possible candidates.
     """
 
-    logger.debug("searching in {} for {}".format(rootElem, wantedElement))
+    logger.debug("Searching {} for matches likely to equal {}".format(
+        rootElem, wantedElement.__class__))
     elementHierarchy = wantedElement.getHierarchyList()
     elementHierarchy.reverse()
 
@@ -342,8 +365,10 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
 
     # rootElem is not contained in hierarchy => cannot search for element then
     if elementHierarchy == []:
+        logger.debug("{} is no child of {}".format(wantedElement.__class__, rootElem))
         return []
 
+    # building xmlpath expression with which to search in rootElem
     xmlPathExpression = "./"
     for element in elementHierarchy:
         if issubclass(type(element), p.Attribute):
@@ -355,9 +380,11 @@ def getXMLNodeCandidates(rootElem: ET.Element, wantedElement):
         if issubclass(type(element), iI.XMLIdentifiable):
             # add guid for deterministicness
             xmlPathExpression += "[@Guid='{}']".format(element.xmlId)
-    logger.debug("searching with XMLPath expression {}".format(xmlPathExpression))
 
-    return rootElem.findall(xmlPathExpression)
+    matches = rootElem.findall(xmlPathExpression)
+    logger.debug("Matches retrieved with {} are {}".format(xmlPathExpression,
+        matches))
+    return matches
 
 
 def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
@@ -377,8 +404,8 @@ def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
     no match is found then `None` is returned.
     """
 
-    logger.debug("Getting xml element to {} in the tree {}".format(wantedElement,
-        rootElem))
+    logger.debug("Search for {} in {} while ignoring {} in the subelement"\
+            " checks".format(wantedElement, rootElem, ignoreNames))
     # candidates are the set of elements that have the same tag as
     # containingElement
     candidates = getXMLNodeCandidates(rootElem, wantedElement)
@@ -442,6 +469,7 @@ def getEtElementFromFile(rootElem: ET.Element, wantedElement, ignoreNames=[]):
             raise RuntimeError("Could not find any matching element that could"\
                     "be modified")
 
+    logger.debug("Found best match {}".format(match))
     return match
 
 
@@ -455,6 +483,8 @@ def generateViewpointFileName(markup: m.Markup):
     combination with `base_name`. The first hit is returned.
     """
 
+    logger.debug("Generating new filename for viewpoints file in topic"\
+            " {}".format(markup.topic.title))
     filenames = [ vpRef.file for vpRef in markup.viewpoints ]
     base_name = "viewpoint{}.bcfv"
 
@@ -464,6 +494,7 @@ def generateViewpointFileName(markup: m.Markup):
         idx += 1
         name_candidate = base_name.format(idx)
 
+    logger.debug("New viewpoints file is: {}".format(name_candidate))
     return name_candidate
 
 
@@ -476,6 +507,8 @@ def xmlPrettify(element: ET.Element):
     The formatted string is returned.
     """
 
+    logger.debug("Serializing, formatting and encoding element"\
+            " {}".format(element.__class__))
     unformatted = ET.tostring(element, encoding="utf8")
     domParsed = MD.parseString(unformatted)
     formatted = domParsed.toprettyxml(encoding="UTF-8", indent="\t").decode("utf-8")
@@ -503,6 +536,7 @@ def writeXMLFile(xmlroot, filePath):
 
     """ Formats `xmlroot` and then writes it to `filePath` (UTF8 encoded) """
 
+    logger.debug("Writing {} to file {}".format(xmlroot, filePath))
     xmlPrettyText = xmlPrettify(xmlroot)
     with open(filePath, "wb") as f:
         f.write(xmlPrettyText)
@@ -653,6 +687,8 @@ def addElement(element):
     conform anymore.
     """
 
+    logger.debug("Adding element {} to the working"\
+            " directory.".format(element.__class__))
     addToProject = False
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
@@ -674,24 +710,29 @@ def addElement(element):
             raise RuntimeError("Element {} could not be associated to any topic."\
                 "This may be the case if properties in project.bcfp should be"\
                 "modified, which is currently not implemented!".format(str(element)))
-
         topicPath = os.path.join(bcfPath, topicDir)
 
     filePath = ""
     if not addToProject:
         filePath = os.path.join(topicPath, fileName)
+
     # file path shall only be set if an element shall be added to project.bcfp
     # and not project.bcfp shall be created in the first place
     elif addToProject and not isinstance(element, p.Project):
         filePath = os.path.join(bcfPath, fileName)
 
-    logger.debug("adding new element {}".format(element))
+    logger.debug("Element is going to be added to"\
+            " {}".format(filePath.replace(bcfPath, "")))
     if isinstance(element, p.Project):
         workDir = util.getSystemTmp()
+        logger.debug("Creating new project in {}".format(workDir))
         _createProject(element, workDir)
         return
+
     # adds a complete new topic folder to the zip file
     if isinstance(element, m.Markup):
+        logger.debug("Creating new markup file in"\
+            " {}".format(topicPath.replace(bcfPath, "")))
         _createMarkup(element, topicPath)
         return
 
@@ -700,9 +741,11 @@ def addElement(element):
 
     # different handling for attributes and elements
     if isinstance(element, p.Attribute):
+        logger.debug("Element is added as attribute.")
         xmlroot = _addAttribute(element, xmlroot)
 
     else:
+        logger.debug("Element is added as XML node.")
         xmlroot = _addElement(element, xmlroot)
 
     # generate viewpoint.bcfv file for added viewpoint
@@ -710,6 +753,8 @@ def addElement(element):
             element.viewpoint is not None and
             element.viewpoint.state == iS.State.States.ADDED):
 
+        logger.debug("Creating new viewpoint file in"\
+                " {}".format(topicPath.replace(bcfPath, "")))
         _createViewpoint(element, topicPath)
 
     writeXMLFile(xmlroot, filePath)
@@ -741,6 +786,8 @@ def deleteElement(element):
     and their accompanying viewpoint references are also deleted.
     """
 
+    logger.debug("Deleting element {} from the working"\
+            " directory".format(element.__class__))
     elementHierarchy = element.getHierarchyList()
 
     logger.debug("Deleting element {}".format(element))
@@ -758,9 +805,12 @@ def deleteElement(element):
     # parsed version of the file
     xmlfile = ET.parse(filePath)
     xmlroot = xmlfile.getroot()
+    logger.debug("Element is going to be deleted from file"\
+            " {}".format(filePath.replace(bcfPath, "")))
 
     # if identifiable then search for the guid using xmlpath.
     if issubclass(type(element), iI.XMLIdentifiable):
+        logger.debug("Deleting element by its GUID {}".format(element.xmlId))
         deleteXMLIdentifiableElement(element, xmlroot)
 
         if isinstance(element, m.ViewpointReference):
@@ -772,12 +822,13 @@ def deleteElement(element):
                     raise ValueError("No file could be found for element {}"\
                         "\nSo the element won't be deleted.".format(vpElem))
 
+                logger.debug("Also deleting viewpoint file {}".format(vpFile))
                 vpFilePath = os.path.join(topicPath, str(vpFile))
                 os.remove(vpFilePath)
-                logger.debug("Removed file {}".format(vpFilePath))
 
     # attributes have to be deleted from the attrib dictionary
     elif isinstance(element, p.Attribute):
+        logger.debug("Deleting element as attribute")
         parentElem = element.containingObject
         parentEtElem = getEtElementFromFile(xmlroot, parentElem, [])
 
@@ -785,6 +836,7 @@ def deleteElement(element):
 
     # otherwise employ getEtElementFromFile to get the right element
     else:
+        logger.debug("Element does not have an Id. Deleting it anyway.")
         fileEtElement = getEtElementFromFile(xmlroot, element, [])
         parentEtElement = getParentElement(element, xmlroot)
         #parentEtElement = getEtElementFromFile(xmlroot,
@@ -806,13 +858,14 @@ def modifyElement(element, previousValue):
     modification is inside an child-member.
     """
 
+    logger.debug("Modifying element {}, its previous value was"\
+            " '{}'".format(element.__class__, previousValue))
     if not (issubclass(type(element), p.SimpleElement) or
             issubclass(type(element), p.Attribute)):
         raise ValueError("Element is not an attribute or simple element. Only"\
                 " these two types can be updated. Actual type of element:"\
                 " {}".format(type(element)))
 
-    logger.debug("Modifying element {}".format(element))
     # filename in which `element` will be found
     fileName = getFileOfElement(element)
     if not fileName:
@@ -827,16 +880,20 @@ def modifyElement(element, previousValue):
     # parsed version of the file
     xmlfile = ET.parse(filePath)
     xmlroot = xmlfile.getroot()
+    logger.debug("Modifying element in file"\
+            " {}".format(filePath.replace(bcfPath)))
 
     # set element to old state to get more reliable matching
     newValue = element.value
     element.value = previousValue
     if issubclass(type(element), p.SimpleElement):
+        logger.debug("Modifying the text of a simple xml node")
         parentElem = element.containingObject
         etElem = getEtElementFromFile(xmlroot, element, [])
         etElem.text = str(newValue)
 
     elif issubclass(type(element), p.Attribute):
+        logger.debug("Modifying the value of an attribute")
         parentElem = element.containingObject
         parentEtElem = getEtElementFromFile(xmlroot, parentElem, [])
         parentEtElem.attrib[element.xmlName] = str(newValue)
@@ -866,6 +923,9 @@ def addProjectUpdate(project: p.Project, element, prevVal):
         prevValCpy = copy.deepcopy(prevVal)
 
     if element.state != iS.State.States.ORIGINAL:
+        logger.debug("Adding update of {} to"
+                " projectUpdates. Its state is {}".format(element.__class__,
+                    element.state))
         projectUpdates.append((projectCpy, elementCpy, prevValCpy))
         util.setDirty(True)
     else:
@@ -971,6 +1031,8 @@ def updateProjectSnapshots(newUpdates):
     """ Adds the elements of processed updates (`newUpdates`) to the snapshot
     deque. """
 
+    logger.debug("Adding {} new snapshots to snapshot"\
+            " dequeue".format(len(newUpdates)))
     for newUpdate in newUpdates:
         projectSnapshots.append(newUpdate)
 
@@ -981,6 +1043,8 @@ def updateProjectUpdates(successfullyProcessed):
 
     global projectUpdates
 
+    logger.debug("Removing {} successfully processed update(s) from the"\
+        " projectUpdates list".format(len(successfullyProcessed)))
     for success in successfullyProcessed:
         projectUpdates.remove(success)
 
@@ -999,6 +1063,7 @@ def processProjectUpdates():
 
     global projectUpdates
 
+    logger.debug("Processing {} update(s)".format(len(projectUpdates)))
     # list of all updates that were successfully processed
     processedUpdates = list()
     # holds the update that failed to be able to revert back
@@ -1008,29 +1073,26 @@ def processProjectUpdates():
         oldVal = update[2]
         updateType = element.state
 
-        if  updateType == iS.State.States.ADDED:
-            logger.debug("Adding an element")
-            if handleAddElement(element, oldVal):
-                processedUpdates.append(update)
-            else:
-                errorenousUpdate = update
-                break
+        # selecting right handler
+        handler = None
+        if updateType == iS.State.States.ADDED:
+            handler = handleAddElement
+        elif updateType == iS.State.States.DELETED:
+            handler = handleDeleteElement
+        elif updateType == iS.State.States.MODIFIED:
+            handler = handleModifyElement
 
-        if updateType == iS.State.States.DELETED:
-            logger.debug("Deleting an element")
-            if handleDeleteElement(element, oldVal):
+        if handler is not None:
+            if handler(element, oldVal):
                 processedUpdates.append(update)
             else:
                 errorenousUpdate = update
                 break
-
-        if updateType == iS.State.States.MODIFIED:
-            logger.debug("Modifying an element")
-            if handleModifyElement(element, oldVal):
-                processedUpdates.append(update)
-            else:
-                errorenousUpdate = update
-                break
+        else:
+            logger.debug("Element has a state associated with it that is"\
+                " unknown {}".format(updateType))
+            errorenousUpdate = update
+            break
 
     # delete processed updates from pending updates list `projectUpdates`
     updateProjectUpdates(processedUpdates)
@@ -1078,6 +1140,7 @@ def zipToBcfFile(bcfRootPath, dstFile):
     Returns the path of the zipped file `dstFile`
     """
 
+    logger.debug("Writing working directory to file {}".format(dstFile))
     with util.cd(bcfRootPath):
         with zipfile.ZipFile(dstFile, "w") as zipFile:
             recursiveZipping("./", zipFile)
@@ -1094,6 +1157,7 @@ def createNewBcfFile(name):
     comprised of. To generate the actual BCF file call zipToBcfFile
     """
 
+    logger.debug("Creating new working directory {}".format(name))
     project = p.Project(uuid4(), name)
     newTmpDir = util.getSystemTmp(createNew = True)
 
