@@ -61,6 +61,7 @@ class TopicAddDialog(QDialog):
     def __init__(self, parent = None):
 
         QDialog.__init__(self, parent)
+        self.setWindowTitle("Add Topic")
 
         mainLayout = QVBoxLayout()
         formLayout = QFormLayout()
@@ -99,6 +100,8 @@ class TopicAddDialog(QDialog):
 
     def createEditFields(self):
 
+        todayDateStr = datetime.datetime.now().strftime("%Y-%m-%d")
+
         self.titleEdit = QLineEdit()
         self.titleEdit.setValidator(self.titleValidator)
         self.titleEdit.setObjectName("Title")
@@ -114,15 +117,19 @@ class TopicAddDialog(QDialog):
         self.idxEdit = QLineEdit()
         self.idxEdit.setValidator(self.idxValidator)
         self.idxEdit.setObjectName("Index")
+        self.idxEdit.setPlaceholderText("Enter a number")
         self.lblEdit = QLineEdit()
         self.lblEdit.setValidator(self.lblValidator)
         self.lblEdit.setObjectName("Labels")
+        self.lblEdit.setPlaceholderText("Comma separated list")
         self.dueDateEdit = QLineEdit()
         self.dueDateEdit.setValidator(self.dueDateValidator)
         self.dueDateEdit.setObjectName("DueDate")
+        self.dueDateEdit.setPlaceholderText(todayDateStr)
         self.assigneeEdit = QLineEdit()
         self.assigneeEdit.setValidator(self.assigneeValidator)
         self.assigneeEdit.setObjectName("Assignee")
+        self.assigneeEdit.setPlaceholderText("tim@example.org")
         self.descEdit = QLineEdit()
         self.descEdit.setValidator(self.descValidator)
         self.descEdit.setObjectName("Description")

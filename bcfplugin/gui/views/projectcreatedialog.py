@@ -46,6 +46,7 @@ class ProjectCreateDialog(QDialog):
     def __init__(self, parent = None):
 
         QDialog.__init__(self, parent)
+        self.setWindowTitle("Create new Project")
 
         mainLayout = QVBoxLayout(self)
         formLayout = QFormLayout()

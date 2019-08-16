@@ -139,6 +139,9 @@ class MyMainWindow(QWidget):
 
         """ handlers for an opened project """
         # reset to the original UI state for every opened project
+        self.projectOpened.connect(lambda:
+                self.setWindowTitle("{} - {}".format(self.windowTitle(),
+                    model.getProjectName())))
         self.projectOpened.connect(self.projectSaveButton.show)
         self.projectOpened.connect(self.openedProjectUiHandler)
         self.projectOpened.connect(lambda: self.topicListModel.updateTopics())

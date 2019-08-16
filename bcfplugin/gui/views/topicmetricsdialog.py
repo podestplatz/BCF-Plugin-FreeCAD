@@ -60,6 +60,7 @@ class TopicMetricsDialog(QDialog):
     def __init__(self, parent = None):
 
         QDialog.__init__(self, parent)
+        self.setWindowTitle("Topic metrics")
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
