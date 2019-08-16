@@ -1,3 +1,18 @@
+v1.0:
+This is the last release before GSoC'19 ends. Changes since the last release: 
+General: 
+  - Every source file got documented properly
+  - Sensible debug outputs were added
+  - The tutorial on the wiki page reaches a final state
+  - every model, delegate and view got its own file
+  - LGPL-2.1 License was added to every source file
+  - The dialog windows now have useful window titles.
+
+Fixed: 
+  - Exception when a notification was to be shown in the topic metrics window.
+  - Bug where the document reference member would not assume its default value
+    if none was provided in the file. 
+
 v0.3:
 General:
   - No error is reported when parsing camera nodes with field of view values >
