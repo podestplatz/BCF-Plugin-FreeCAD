@@ -29,7 +29,7 @@ the user and store it in a temporary file in the working directory.
 
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
+from PySide2.QtCore import *
 
 import bcfplugin
 import bcfplugin.util as util

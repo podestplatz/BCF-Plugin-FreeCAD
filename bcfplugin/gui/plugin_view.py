@@ -40,7 +40,7 @@ import subprocess
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
-        QDir, QPoint, QSize, QTimer)
+        QDir, QPoint, QSize, QTimer, Qt)
 
 import bcfplugin
 import bcfplugin.util as util
