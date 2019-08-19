@@ -30,8 +30,7 @@ hovering over. Its model counter part is the CommentModel.
 import logging
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
-        QDir, QPoint, QSize, QTimer)
+from PySide2.QtCore import *
 
 import bcfplugin
 from bcfplugin.rdwr.viewpoint import Viewpoint

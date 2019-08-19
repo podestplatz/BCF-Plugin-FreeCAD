@@ -29,7 +29,7 @@ The model counterpart to this view is the ViewpointsModel.
 
 import logging
 from PySide2.QtWidgets import QListView, QLabel, QPushButton
-from PySide2.QtCore import Signal, QSize, Slot, QModelIndex
+from PySide2.QtCore import *
 from PySide2.QtGui import *
 
 import bcfplugin
