@@ -36,8 +36,7 @@ import subprocess
 
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
-from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
-        QDir, QPoint, QSize, QTimer)
+from PySide2.QtCore import *
 
 import bcfplugin
 from bcfplugin.gui.views import (openAuthorsDialog, createNotificationLabel,
@@ -69,6 +68,7 @@ class TopicMetricsDialog(QDialog):
         self.topicMetrics.setModel(parent.topicDetailsModel)
         self.setMinVertTableSize(self.topicMetrics)
         self.topicMetrics.setItemDelegate(parent.topicDetailsDelegate)
+        self.topicMetrics.horizontalHeader().setStretchLastSection(True)
         self.layout.addWidget(self.topicMetrics)
 
         # setup list showing additional documents
