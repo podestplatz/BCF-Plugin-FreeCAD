@@ -169,7 +169,7 @@ def check_dependencies():
             break
 
     if not available:
-        printError("Could not find the module `{}`. Install it through"\
+        printErr("Could not find the module `{}`. Install it through"\
                 " pip\n\tpip install {}\nYou also might want to"\
                 " install it in a virtual environment. To create and initialise"\
                 " said env execute\n\tpython -m venv <NAME>\n\tsource"\
