@@ -3,7 +3,21 @@ It is a standalone plugin for the free, open source CAD tool
 [FreeCAD](https://github.com/FreeCAD). The aim is it to integrate
 collaboration in the BIM space through support of the [BCF (BIM Collaboration Format)](https://en.wikipedia.org/wiki/BIM_Collaboration_Format). 
 
-# Download
+# Install
+
+There are two options on how you can install the plugin: 
+
+  - the "automatic" way, which utilizes the Addon-Manager of FreeCAD
+  - the manual way where you will have to clone or download the whole repository
+    and create two symbolic links
+
+## Addon-Manager
+
+To install the plugin through FreeCAD's Addon-Manager: open `FreeCAD` -> `Tools` -> `Addon manager` -> Select `BCFPlugin` -> Press
+`Install/Update selected`
+
+## Manual
+
 To use the plugin, in its current state in FreeCAD, clone it to some directory of your liking. To be able to import the modules/packages of the plugin we need to symlink the source folder (`bcfplugin`) to your FreeCAD Mod directory and also create a symlink for the BCFPlugin.FCMacro file in the FreeCAD Macro directory.
 ```bash
 $> git clone git@github.com:podestplatz/BCF-Plugin-FreeCAD.git /path/to/repo/dir

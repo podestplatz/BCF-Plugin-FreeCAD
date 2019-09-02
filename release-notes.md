@@ -1,3 +1,8 @@
+v1.0.2:
+This release mostly only contains changes to the README.md file. It now also
+contains a section explaining the install procedure using the Addon-manager of
+FreeCAD. 
+
 v1.0:
 This is the last release before GSoC'19 ends. Changes since the last release: 
 General: 
