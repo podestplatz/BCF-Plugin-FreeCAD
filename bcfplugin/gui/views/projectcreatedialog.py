@@ -33,7 +33,7 @@ from PySide2.QtCore import *
 
 import bcfplugin
 import bcfplugin.util as util
-import bcfplugin.gui.views as view
+from bcfplugin.gui import views as view
 import bcfplugin.gui.models as model
 from bcfplugin.rdwr.topic import Topic
 

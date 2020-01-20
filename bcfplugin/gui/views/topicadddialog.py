@@ -35,7 +35,7 @@ from PySide2.QtCore import *
 
 import bcfplugin
 import bcfplugin.util as util
-import bcfplugin.gui.views as view
+from bcfplugin.gui import views as view
 import bcfplugin.gui.models as model
 from bcfplugin.gui.regex import dueDateRegex, emailRegex
 from bcfplugin.rdwr.topic import Topic
@@ -200,7 +200,7 @@ class TopicAddDialog(QDialog):
 
         if not model.addTopic(newTopic):
             logger.error("Could not add topic {}".format(newTopic))
-            view.showNotification("Addition of the topic was unsuccessful.")
+            view.showNotification(self, "Addition of the topic was unsuccessful.")
         else:
             logger.info("New topic added!")
             self.done(0)
