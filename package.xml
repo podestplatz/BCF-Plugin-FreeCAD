@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+  <name>BCF Plugin</name>
+  <description>Integrate collaboration in the BIM space through support of the BCF (BIM Collaboration Format).</description>
+  <version>1.0.0</version>
+  <date>2020-01-22</date>
+  <maintainer email="podestplatz@somewhere.com">Patrick Podest (podestplatz)</maintainer>
+  <license file="Licence.txt">LGPLv2.1</license>
+  <url type="repository" branch="master">https://github.com/podestplatz/BCF-Plugin-FreeCAD</url>
+  <url type="website">https://podestplatz.github.io/FreeCAD-blog/</url>
+  <icon>icons/BCFPlugin_workbench_icon.svg</icon>
+
+  <content>
+    <workbench>
+      <classname>BCF Plugin</classname>
+      <subdirectory>./</subdirectory>
+      <tag>Arch</tag>
+      <tag>BIM</tag>
+    </workbench>
+  </content>
+
+</package>
