@@ -1,3 +1,6 @@
+## ❗Not actively maintained❗
+Maybe some of the [forks](https://github.com/podestplatz/BCF-Plugin-FreeCAD/network/members) are better maintained than this repo. I unfortunately don't have the time to support it.
+
 # BCF-Plugin-FreeCAD
 It is a standalone plugin for the free, open source CAD tool
 [FreeCAD](https://github.com/FreeCAD). The aim is it to integrate
