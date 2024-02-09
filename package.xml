@@ -5,7 +5,7 @@
   <version>1.0.0</version>
   <date>2020-01-22</date>
   <maintainer email="podestplatz@somewhere.com">Patrick Podest (podestplatz)</maintainer>
-  <license file="Licence.txt">LGPLv2.1</license>
+  <license file="Licence.txt">LGPL-2.1-only</license>
   <url type="repository" branch="master">https://github.com/podestplatz/BCF-Plugin-FreeCAD</url>
   <url type="website">https://podestplatz.github.io/FreeCAD-blog/</url>
   <icon>icons/BCFPlugin_workbench_icon.svg</icon>
