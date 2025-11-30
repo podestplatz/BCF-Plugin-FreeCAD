@@ -30,9 +30,9 @@ pushes the newly entered data to the model.
 import logging
 from copy import copy
 
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
 
 import bcfplugin
 import bcfplugin.util as util

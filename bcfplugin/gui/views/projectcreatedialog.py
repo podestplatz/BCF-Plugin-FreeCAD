@@ -27,9 +27,9 @@ shall be created. Its only responsibility is to request the name of the
 project in order for it to be able to be created.
 """
 
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import *
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import *
 
 import bcfplugin
 import bcfplugin.util as util

@@ -29,9 +29,9 @@ only the topic title of a topic related to the current topic.
 
 import logging
 
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import (QAbstractListModel, QAbstractTableModel,
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import (QAbstractListModel, QAbstractTableModel,
         QModelIndex, Slot, Signal, Qt, QSize)
 
 import bcfplugin

@@ -28,9 +28,9 @@ hovering over. Its model counter part is the CommentModel.
 """
 
 import logging
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import *
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import *
 
 import bcfplugin
 from bcfplugin.rdwr.viewpoint import Viewpoint

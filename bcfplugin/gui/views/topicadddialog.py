@@ -29,9 +29,9 @@ necessary data to add a topic to the currently open project.
 import datetime
 from uuid import uuid4
 
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import *
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import *
 
 import bcfplugin
 import bcfplugin.util as util

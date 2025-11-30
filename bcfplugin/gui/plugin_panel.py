@@ -31,7 +31,7 @@ import logging
 
 import FreeCADGui
 import FreeCAD
-from PySide2.QtWidgets import QDialogButtonBox, QWidget, QPushButton, QApplication
+from PySide.QtWidgets import QDialogButtonBox, QWidget, QPushButton, QApplication
 
 import bcfplugin
 import bcfplugin.util as util

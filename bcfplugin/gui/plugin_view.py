@@ -37,9 +37,9 @@ import logging
 import platform
 import pyperclip
 import subprocess
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
         QDir, QPoint, QSize, QTimer, Qt)
 
 import bcfplugin
