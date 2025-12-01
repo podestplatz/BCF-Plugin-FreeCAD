@@ -38,7 +38,7 @@ import logging
 from enum import Enum
 from urllib.error import URLError
 
-from PySide.QtWidgets import QApplication
+from PySide.QtWidgets import QApplication, QMessageBox
 from PySide.QtGui import QCursor
 
 
@@ -527,6 +527,10 @@ def initializeErrorLog():
         logging.basicConfig(filename=errFilePath,
                 level=logging.ERROR)
         logInitialized = True
+
+
+def showError(msg):
+    QMessageBox.critical(None, "Error", msg)
 
 
 class cd:

@@ -277,7 +277,7 @@ def getParentElement(element, etRoot):
     # the topmost element will always be Project
     if strHierarchy[-2] != etRoot.tag:
         logger.warning("Root element of hierarchy and root tag of file do not match."\
-            " {} != {}".format(strHierarchy[-1], etRoot.tag), file=sys.stderr)
+            " {} != {}".format(strHierarchy[-1], etRoot.tag))
 
     etParent = None
     listElemId = getUniqueIdOfListElementInHierarchy(element)
@@ -936,7 +936,7 @@ def addProjectUpdate(project: p.Project, element, prevVal):
                 " {}".format(element.id, projectCpy))
     prevValCpy = None
     if prevVal is not None:
-        prevValCpy = copy.deepcopy(prevVal)
+        prevValCpy = c.deepcopy(prevVal)
 
     if element.state != iS.State.States.ORIGINAL:
         logger.debug("Adding update of {} to"
