@@ -41,7 +41,7 @@ from bcfplugin.gui.views import openAuthorsDialog
 
 logger = bcfplugin.createLogger(__name__)
 
-dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
+dueDateRegex = r"\d{4}-[01]\d-[0-3]\d"
 
 
 class TopicMetricsDelegate(QStyledItemDelegate):
@@ -83,8 +83,8 @@ class TopicMetricsDelegate(QStyledItemDelegate):
         startValue = "" # TODO: use current value
         editor = QLineEdit(startValue, parent)
         if index.row() == dueDateIndex:
-            validator = QRegExpValidator()
-            validator.setRegExp(dueDateRegex)
+            validator = QRegularExpressionValidator()
+            validator.setRegularExpression(dueDateRegex)
 
             editor.setValidator(validator)
             editor.setFrame(True)

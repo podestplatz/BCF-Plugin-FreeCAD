@@ -45,13 +45,13 @@ logger = bcfplugin.createLogger(__name__)
 
 class TopicAddDialog(QDialog):
 
-    titleRegex = "^[a-zA-Z0-9]+$"
-    descRegex = "^[ a-zA-Z0-9]*$"
+    titleRegex = r"^[a-zA-Z0-9]+$"
+    descRegex = r"^[ a-zA-Z0-9]*$"
     typeRegex = descRegex
     statusRegex = descRegex
     prioRegex = descRegex
-    idxRegex = "^[0-9]*$"
-    lblRegex = "^[a-zA-Z0-9]*(,\s?[a-zA-Z0-9]+)*$"
+    idxRegex = r"^[0-9]*$"
+    lblRegex = r"^[a-zA-Z0-9]*(,\s?[a-zA-Z0-9]+)*$"
     dueDateRegex = dueDateRegex
     assigneeRegex = emailRegex
     stageRegex = descRegex
@@ -143,26 +143,26 @@ class TopicAddDialog(QDialog):
 
     def createValidators(self):
 
-        self.titleValidator = QRegExpValidator()
-        self.titleValidator.setRegExp(self.titleRegex)
-        self.descValidator = QRegExpValidator()
-        self.descValidator.setRegExp(self.descRegex)
-        self.typeValidator = QRegExpValidator()
-        self.typeValidator.setRegExp(self.typeRegex)
-        self.statusValidator = QRegExpValidator()
-        self.statusValidator.setRegExp(self.statusRegex)
-        self.prioValidator = QRegExpValidator()
-        self.prioValidator.setRegExp(self.prioRegex)
-        self.idxValidator = QRegExpValidator()
-        self.idxValidator.setRegExp(self.idxRegex)
-        self.lblValidator = QRegExpValidator()
-        self.lblValidator.setRegExp(self.lblRegex)
-        self.dueDateValidator = QRegExpValidator()
-        self.dueDateValidator.setRegExp(self.dueDateRegex)
-        self.assigneeValidator = QRegExpValidator()
-        self.assigneeValidator.setRegExp(self.assigneeRegex)
-        self.stageValidator = QRegExpValidator()
-        self.stageValidator.setRegExp(self.stageRegex)
+        self.titleValidator = QRegularExpressionValidator()
+        self.titleValidator.setRegularExpression(self.titleRegex)
+        self.descValidator = QRegularExpressionValidator()
+        self.descValidator.setRegularExpression(self.descRegex)
+        self.typeValidator = QRegularExpressionValidator()
+        self.typeValidator.setRegularExpression(self.typeRegex)
+        self.statusValidator = QRegularExpressionValidator()
+        self.statusValidator.setRegularExpression(self.statusRegex)
+        self.prioValidator = QRegularExpressionValidator()
+        self.prioValidator.setRegularExpression(self.prioRegex)
+        self.idxValidator = QRegularExpressionValidator()
+        self.idxValidator.setRegularExpression(self.idxRegex)
+        self.lblValidator = QRegularExpressionValidator()
+        self.lblValidator.setRegularExpression(self.lblRegex)
+        self.dueDateValidator = QRegularExpressionValidator()
+        self.dueDateValidator.setRegularExpression(self.dueDateRegex)
+        self.assigneeValidator = QRegularExpressionValidator()
+        self.assigneeValidator.setRegularExpression(self.assigneeRegex)
+        self.stageValidator = QRegularExpressionValidator()
+        self.stageValidator.setRegularExpression(self.stageRegex)
 
 
     @Slot()

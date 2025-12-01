@@ -61,8 +61,7 @@ def openAuthorsDialog(parent):
     authorsDialog.setWindowTitle("Enter your e-Mail")
 
     form = QFormLayout()
-    emailValidator = QRegExpValidator()
-    emailValidator.setRegExp(emailRegex)
+    emailValidator = QRegularExpressionValidator(QRegularExpression(emailRegex))
 
     authorsLineEdit = QLineEdit(parent)
     authorsLineEdit.setValidator(emailValidator)
