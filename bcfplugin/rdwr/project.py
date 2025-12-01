@@ -333,7 +333,7 @@ class Attribute(XMLName, Hierarchy, State, Identifiable):
 
 class Project(Hierarchy, State, XMLName, XMLIdentifiable, Identifiable):
 
-    """ Represents for one the XML type project.xsd:Project and for the other
+    r""" Represents for one the XML type project.xsd:Project and for the other
     the complete BCF file.
 
     From it a path to every other, properly instantiated object of the data

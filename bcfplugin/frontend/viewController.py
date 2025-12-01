@@ -63,8 +63,8 @@ class CamType(Enum):
     ORTHOGONAL = 1
     PERSPECTIVE = 2
 
-pCamClassTypeId = coin.SoPerspectiveCamera_getClassTypeId
-oCamClassTypeId = coin.SoOrthographicCamera_getClassTypeId
+pCamClassTypeId = coin.SoPerspectiveCamera.getClassTypeId()
+oCamClassTypeId = coin.SoOrthographicCamera.getClassTypeId()
 
 doc = FreeCAD.ActiveDocument
 """ Reference to the document the model to the BCF file is open in """

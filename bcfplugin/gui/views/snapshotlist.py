@@ -28,9 +28,9 @@ amount of space, depending on the current width of the widget.
 """
 
 import logging
-from PySide2.QtWidgets import QListView, QLabel
-from PySide2.QtCore import *
-from PySide2.QtGui import *
+from PySide.QtWidgets import QListView, QLabel
+from PySide.QtCore import *
+from PySide.QtGui import *
 
 import bcfplugin
 import bcfplugin.util as util

@@ -31,7 +31,7 @@ import logging
 
 import FreeCADGui
 import FreeCAD
-from PySide2.QtWidgets import QDialogButtonBox, QWidget, QPushButton, QApplication
+from PySide.QtWidgets import QDialogButtonBox, QWidget, QPushButton, QApplication
 
 import bcfplugin
 import bcfplugin.util as util
@@ -100,11 +100,11 @@ class BCFPluginPanel:
             self.close()
 
 
-    def getStandardButtons(self):
+    # def getStandardButtons(self):
 
-        """ Show the close and a open button be visible in the row above the panel """
+    #     """ Show the close and a open button be visible in the row above the panel """
 
-        return int(QDialogButtonBox.Close)
+    #     return int(QDialogButtonBox.Close)
 
 
     def close(self):

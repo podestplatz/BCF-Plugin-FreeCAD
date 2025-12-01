@@ -31,9 +31,9 @@ import os
 import copy
 import logging
 
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import (QAbstractListModel, QAbstractTableModel,
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import (QAbstractListModel, QAbstractTableModel,
         QModelIndex, Slot, Signal, Qt, QSize)
 
 import bcfplugin
@@ -175,7 +175,7 @@ class CommentModel(QAbstractListModel):
 
 
     def setData(self, index, value, role=Qt.EditRole):
-        # https://doc.qt.io/qtforpython/PySide2/QtCore/QAbstractItemModel.html#PySide2.QtCore.PySide2.QtCore.QAbstractItemModel.roleNames
+        # https://doc.qt.io/qtforpython-6.5/PySide6/QtCore/QAbstractItemModel.html#PySide6.QtCore.PySide6.QtCore.QAbstractItemModel.roleNames
 
         """ Updates a comment specified by `index` with the new `value`.
 

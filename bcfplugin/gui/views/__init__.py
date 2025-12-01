@@ -27,8 +27,8 @@ a model class associated with it.
 This file further provides functions handling notifications.
 """
 
-from PySide2.QtWidgets import QLabel
-from PySide2.QtCore import QTimer
+from PySide.QtWidgets import QLabel
+from PySide.QtCore import QTimer
 
 
 def createNotificationLabel():

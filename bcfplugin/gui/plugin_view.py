@@ -37,9 +37,9 @@ import logging
 import platform
 import pyperclip
 import subprocess
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import (QAbstractListModel, QModelIndex, Slot, Signal,
         QDir, QPoint, QSize, QTimer, Qt)
 
 import bcfplugin
@@ -315,7 +315,7 @@ class MyMainWindow(QWidget):
 
         self.commentLayout = QVBoxLayout(commentSection)
         self.commentLayout.setSpacing(3)
-        self.commentLayout.setMargin(0)
+        self.commentLayout.setContentsMargins(0, 0, 0, 0)
         self.commentList = CommentView()
 
         self.commentModel = model.CommentModel()
@@ -353,7 +353,7 @@ class MyMainWindow(QWidget):
         snGroup = QFrame()
         self.snGroupLayout = QVBoxLayout(snGroup)
         self.snGroupLayout.setSpacing(3)
-        self.snGroupLayout.setMargin(0)
+        self.snGroupLayout.setContentsMargins(0, 0, 0, 0)
 
         self.snapshotModel = model.SnapshotModel()
         self.snapshotList = SnapshotView()

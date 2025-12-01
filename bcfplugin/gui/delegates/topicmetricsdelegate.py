@@ -30,9 +30,9 @@ pushes the newly entered data to the model.
 import logging
 from copy import copy
 
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
 
 import bcfplugin
 import bcfplugin.util as util
@@ -41,7 +41,7 @@ from bcfplugin.gui.views import openAuthorsDialog
 
 logger = bcfplugin.createLogger(__name__)
 
-dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
+dueDateRegex = r"\d{4}-[01]\d-[0-3]\d"
 
 
 class TopicMetricsDelegate(QStyledItemDelegate):
@@ -83,8 +83,8 @@ class TopicMetricsDelegate(QStyledItemDelegate):
         startValue = "" # TODO: use current value
         editor = QLineEdit(startValue, parent)
         if index.row() == dueDateIndex:
-            validator = QRegExpValidator()
-            validator.setRegExp(dueDateRegex)
+            validator = QRegularExpressionValidator()
+            validator.setRegularExpression(dueDateRegex)
 
             editor.setValidator(validator)
             editor.setFrame(True)

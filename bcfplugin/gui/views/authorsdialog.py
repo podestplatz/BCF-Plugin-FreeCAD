@@ -27,9 +27,9 @@ modify/add a comment or topic. Its purpose is to request the E-Mail address of
 the user and store it in a temporary file in the working directory.
 """
 
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import *
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import *
 
 import bcfplugin
 import bcfplugin.util as util
@@ -61,8 +61,7 @@ def openAuthorsDialog(parent):
     authorsDialog.setWindowTitle("Enter your e-Mail")
 
     form = QFormLayout()
-    emailValidator = QRegExpValidator()
-    emailValidator.setRegExp(emailRegex)
+    emailValidator = QRegularExpressionValidator(QRegularExpression(emailRegex))
 
     authorsLineEdit = QLineEdit(parent)
     authorsLineEdit.setValidator(emailValidator)

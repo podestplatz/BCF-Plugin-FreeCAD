@@ -26,8 +26,8 @@ This file's purpose is just to provide some RegExp used by some parts of the
 plugin.
 """
 
-dueDateRegex = "\d{4}-[01]\d-[0-3]\d"
+dueDateRegex = r"\d{4}-[01]\d-[0-3]\d"
 """ RegExp for the DueDate field """
 
-emailRegex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
+emailRegex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)|(^\s*$)"
 """ RegExp to check entered E-Mail addresses for validity. """

@@ -35,9 +35,9 @@ values with the following type signature:
 import logging
 from copy import copy
 
-from PySide2.QtWidgets import *
-from PySide2.QtGui import *
-from PySide2.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
+from PySide.QtWidgets import *
+from PySide.QtGui import *
+from PySide.QtCore import (QModelIndex, Slot, QSize, QPoint, Signal, Qt, QRect)
 
 import bcfplugin
 import bcfplugin.util as util
@@ -136,7 +136,7 @@ class CommentDelegate(QStyledItemDelegate):
         # draw author
         authorStart = QPoint(lineStart.x(),
                 lineStart.y() + fontMetric.height())
-        authorWidth = fontMetric.width(comment[1])
+        authorWidth = fontMetric.horizontalAdvance(comment[1])
         authorEnd = QPoint(authorStart.x() + authorWidth,
                 authorStart.y())
         self.drawAuthorDate(comment, painter, pen, authorStart,
@@ -223,10 +223,10 @@ class CommentDelegate(QStyledItemDelegate):
         commentWidth = commentBoundRect.width()
         authorDateWidth = 0
         if comment[1] is not None:
-            authorDateWidth = authorFontMetric.width(comment[1] + comment[2]) + self._authorDateQSeparation
+            authorDateWidth = authorFontMetric.horizontalAdvance(comment[1] + comment[2]) + self._authorDateQSeparation
             authorDateWidth += self._authorDateQSeparation
         else:
-            authorDateWidth = authorFontMetric.width(comment[2])
+            authorDateWidth = authorFontMetric.horizontalAdvance(comment[2])
 
         # +1 is the separation line that is drawn
         # commentTextHeight / 2 is the offset from the comment text towards the

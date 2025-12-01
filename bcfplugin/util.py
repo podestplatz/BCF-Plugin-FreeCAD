@@ -38,7 +38,9 @@ import logging
 from enum import Enum
 from urllib.error import URLError
 
-from PySide2.QtWidgets import QMessageBox, QApplication
+from PySide.QtWidgets import QApplication, QMessageBox
+from PySide.QtGui import QCursor
+
 
 PREFIX = "bcfplugin_"
 """ Prefix for every created folder and file. """
@@ -267,12 +269,8 @@ def getCurrentQScreen():
     """ Return a reference to the QScreen object associated with the screen the
     application is currently running on. """
 
-    from PySide2.QtWidgets import QMessageBox, QApplication
-
-    desktop = QApplication.desktop()
-    screenNumber = desktop.screenNumber()
-
-    return QApplication.screens()[screenNumber]
+    pos = QCursor.pos()
+    return QApplication.screenAt(pos)
 
 
 def isAuthorSet():
@@ -529,6 +527,10 @@ def initializeErrorLog():
         logging.basicConfig(filename=errFilePath,
                 level=logging.ERROR)
         logInitialized = True
+
+
+def showError(msg):
+    QMessageBox.critical(None, "Error", msg)
 
 
 class cd:
