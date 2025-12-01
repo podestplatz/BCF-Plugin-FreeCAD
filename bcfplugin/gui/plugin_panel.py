@@ -100,11 +100,11 @@ class BCFPluginPanel:
             self.close()
 
 
-    def getStandardButtons(self):
+    # def getStandardButtons(self):
 
-        """ Show the close and a open button be visible in the row above the panel """
+    #     """ Show the close and a open button be visible in the row above the panel """
 
-        return int(QDialogButtonBox.Close)
+    #     return int(QDialogButtonBox.Close)
 
 
     def close(self):
